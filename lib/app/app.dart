@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unified_popups/unified_popups.dart';
 
 import '../theme/ts.dart';
+import 'local_data_boundary.dart';
 import '../theme/app_metrics.dart';
 import '../router/router.dart';
 
@@ -42,7 +43,10 @@ class PbApp extends ConsumerWidget {
             value: TS
                 .of(context)
                 .overlayStyleFor(TS.of(context).colors.background),
-            child: Pop.hostBuilder(context, child ?? const SizedBox.shrink()),
+            child: Pop.hostBuilder(
+              context,
+              LocalDataBoundary(child: child ?? const SizedBox.shrink()),
+            ),
           ),
           initialRoute: AppRoutes.bootstrap,
           routes: appRoutes,

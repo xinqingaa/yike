@@ -15,6 +15,10 @@ import '../../../common/widgets/yike/dial.dart';
 import '../../../common/widgets/yike/layout.dart';
 import '../../../theme/ts.dart';
 
+String recordIdentity(FocusRecordView record) => record.sessionId.isEmpty
+    ? '${record.date}/${record.time}/${record.mode}'
+    : record.sessionId;
+
 String modeLabel(TimerMode mode) => const ['番茄钟', '正计时', '倒计时'][mode.index];
 
 class ReviewPage extends ConsumerWidget {
@@ -36,7 +40,7 @@ class ReviewPage extends ConsumerWidget {
         .expand((h) => h.dates)
         .where((d) => d.compareTo(from) >= 0 && d.compareTo(through) <= 0)
         .length;
-    final total = records.fold(0, (sum, r) => sum + r.seconds);
+    final total = records.fold<num>(0, (sum, r) => sum + r.seconds);
     final current = !selected.last.isBefore(
       selected.month ? DateTime.utc(today.year, today.month) : weekStart(today),
     );
@@ -143,7 +147,7 @@ class ReviewPage extends ConsumerWidget {
               selected.month ? '专注天数' : '专注次数',
               selected.month
                   ? '${records.map((r) => r.date).toSet().length} 天'
-                  : '${records.length} 次',
+                  : '${records.map(recordIdentity).toSet().length} 次',
             ),
             _summary(ts, '打卡', '$checkins 次'),
           ],
@@ -197,7 +201,7 @@ class ReviewPage extends ConsumerWidget {
                 day: day,
                 seconds: records
                     .where((r) => r.date == day.date)
-                    .fold(0, (sum, r) => sum + r.seconds),
+                    .fold<num>(0, (sum, r) => sum + r.seconds),
               ),
             )
           else
@@ -222,7 +226,7 @@ class ReviewPage extends ConsumerWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${records.where((r) => r.mode == mode).length} 次 · ${durationLabel(records.where((r) => r.mode == mode).fold(0, (sum, r) => sum + r.seconds))}',
+                    '${records.where((r) => r.mode == mode).map(recordIdentity).toSet().length} 次 · ${durationLabel(records.where((r) => r.mode == mode).fold<num>(0, (sum, r) => sum + r.seconds))}',
                     style: ts.textStyle.caption,
                   ),
                 ],
@@ -242,7 +246,7 @@ class ReviewPage extends ConsumerWidget {
                         widthFactor:
                             records
                                 .where((r) => r.mode == mode)
-                                .fold(0, (sum, r) => sum + r.seconds) /
+                                .fold<num>(0, (sum, r) => sum + r.seconds) /
                             total,
                         child: ColoredBox(
                           color: ts.colors.primary,
@@ -294,7 +298,7 @@ class _WeekChart extends StatelessWidget {
             .where(
               (r) => r.date == dayId(selection.first.add(Duration(days: i))),
             )
-            .fold(0, (sum, r) => sum + r.seconds),
+            .fold<num>(0, (sum, r) => sum + r.seconds),
     ];
     final maxSeconds = math.max(7500, values.reduce(math.max));
     return Column(
@@ -470,7 +474,7 @@ class _WeekColumn extends StatelessWidget {
 class _MonthDay extends StatelessWidget {
   const _MonthDay({required this.day, required this.seconds});
   final CommonCalendarDay day;
-  final int seconds;
+  final num seconds;
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
@@ -669,7 +673,7 @@ class _DayDetailSheetState extends ConsumerState<DayDetailSheet> {
                       ),
                       Text(
                         durationLabel(
-                          records.fold(0, (sum, r) => sum + r.seconds),
+                          records.fold<num>(0, (sum, r) => sum + r.seconds),
                         ),
                         style: ts.textStyle.caption,
                       ),

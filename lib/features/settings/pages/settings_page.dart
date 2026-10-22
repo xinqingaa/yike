@@ -1,7 +1,5 @@
 import '../../focus/focus.dart';
-import '../../habits/habits.dart';
-import '../../review/review.dart';
-import '../../../app/navigation.dart';
+import '../../../app/reset_data.dart';
 import '../../../common/time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -231,14 +229,6 @@ class YikeSettingsPage extends ConsumerWidget {
                           longMinutes: item == 'long' ? value ~/ 60 : null,
                         ),
                       );
-                  final view = ref.read(focusViewProvider);
-                  if (item == 'focus' &&
-                      view.ready &&
-                      view.mode == TimerMode.pomodoro) {
-                    ref
-                        .read(focusViewProvider.notifier)
-                        .set(view.copyWith(seconds: value, target: value));
-                  }
                 }
               },
               onChanged: (_, item, value) => ref
@@ -308,13 +298,7 @@ class YikeSettingsPage extends ConsumerWidget {
       ),
     );
     if (result != true || !context.mounted) return;
-    ref.invalidate(habitsProvider);
-    ref.invalidate(focusViewProvider);
-    ref.invalidate(timingPreferencesProvider);
-    ref.invalidate(reviewSelectionProvider);
-    ref.read(rootTabProvider.notifier).set(0);
-    ref.read(themePackProvider.notifier).select('yike/mechanical');
-    ref.read(themeModeProvider.notifier).setMode(ThemeMode.system);
+    if (!resetYikeData(ref)) return;
     Navigator.of(context).popUntil(
       (route) => route.settings.name == AppRoutes.home || route.isFirst,
     );

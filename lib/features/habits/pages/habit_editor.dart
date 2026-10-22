@@ -1,4 +1,6 @@
 import '../models/habit_view.dart';
+import '../../local_data/local_data.dart';
+import '../../../common/identity.dart';
 import '../providers/habits_presentation.dart';
 import '../../../common/time.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +38,7 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
   late final initial =
       widget.habit ??
       HabitViewData(
-        id: 'habit-${DateTime.now().microsecondsSinceEpoch}',
+        id: 'habit-${ref.read(identityProvider)()}',
         name: '',
         created: dayId(ref.read(todayProvider)),
       );
@@ -61,7 +63,10 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
     final ts = TS.of(context);
     final draft = ref.watch(_draft);
     final submitted = ref.watch(_submitted);
-    final nameError = submitted && draft.name.trim().isEmpty
+    final nameError =
+        submitted &&
+            !validHabitName(draft.name) &&
+            draft.name.characters.length <= 30
         ? '写一个习惯名称'
         : draft.name.trim().characters.length > 30
         ? '名称最多 30 个字符'
@@ -71,6 +76,11 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (ref.watch(localDataProvider).writeError != null)
+            Text(
+              '尚未保存，请重试保存；关闭后可能丢失',
+              style: ts.textStyle.caption.copyWith(color: ts.colors.error),
+            ),
           CommonTextField(
             controller: _name,
             label: '习惯名称',
@@ -171,15 +181,18 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
         onPressed: () {
           final draft = ref.read(_draft);
           ref.read(_submitted.notifier).set(true);
-          if (draft.name.trim().isEmpty ||
+          if (!validHabitName(draft.name) ||
               draft.name.trim().characters.length > 30 ||
               (draft.reminder && ref.read(_timeError) != null)) {
             return;
           }
-          ref
+          final saved = ref
               .read(habitsProvider.notifier)
-              .save(draft.copyWith(name: draft.name.trim()));
-          widget.onSaved();
+              .save(
+                draft.copyWith(name: normalizeHabitName(draft.name)),
+                create: widget.habit == null,
+              );
+          if (saved) widget.onSaved();
         },
       ),
     );

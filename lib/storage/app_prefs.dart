@@ -2,6 +2,7 @@
 abstract class AppPrefs {
   static const themeModeKey = 'theme_mode';
   static const themePackKey = 'theme_pack';
+  static const snapshotKey = 'yike_snapshot_v1';
 
   String? readString(String key);
   void writeString(String key, String value);

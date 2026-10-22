@@ -1,4 +1,4 @@
-import '../../../app/navigation.dart';
+import '../../local_data/local_data.dart';
 import '../providers/habits_presentation.dart';
 import '../../../common/time.dart';
 import 'package:flutter/material.dart';
@@ -213,23 +213,28 @@ class CheckinPage extends ConsumerWidget {
                               ? CommonIconButtonVariant.tonal
                               : CommonIconButtonVariant.outlined,
                           onPressed: () {
-                            ref
+                            final ticket = ref
                                 .read(habitsProvider.notifier)
-                                .toggle(habit.id, id);
+                                .toggle(
+                                  habit.id,
+                                  id,
+                                  undoDuration: ts.motion.durationToast,
+                                );
+                            if (ticket == null) return;
                             AppPop.toast(
                               context,
-                              '「${habit.name}」${checked ? '已取消打卡' : '今天已打卡'}',
+                              '「${habit.name}」${checked ? '已取消打卡' : '今天已打卡'}${ref.read(localDataProvider).writeError == null ? '' : '（尚未保存）'}',
                               actionLabel: '撤销',
+                              replacementKey: 'habit-checkin',
                               bottomInset:
                                   ts.sizing.bottomNavigation +
                                   ts.spacing.md +
                                   ts.spacing.xs,
                               onAction: () {
-                                if (ref.read(rootTabProvider) == 1 &&
-                                    dayId(ref.read(todayProvider)) == id) {
+                                if (context.mounted) {
                                   ref
                                       .read(habitsProvider.notifier)
-                                      .toggle(habit.id, id);
+                                      .undo(ticket);
                                 }
                               },
                             );
@@ -248,6 +253,7 @@ class CheckinPage extends ConsumerWidget {
   }
 
   void _showArchived(BuildContext context, WidgetRef ref) {
+    final navigator = Navigator.of(context);
     AppPop.sheet<void>(
       context,
       title: '已归档习惯',
@@ -273,10 +279,12 @@ class CheckinPage extends ConsumerWidget {
               leading: HabitGlyph(icon: habits[index].icon),
               onNavigate: () async {
                 await handle.dismiss();
-                if (!context.mounted) return;
-                Navigator.of(
-                  context,
-                ).pushNamed(AppRoutes.habitDetail, arguments: habits[index].id);
+                if (navigator.mounted) {
+                  navigator.pushNamed(
+                    AppRoutes.habitDetail,
+                    arguments: habits[index].id,
+                  );
+                }
               },
             ),
           );

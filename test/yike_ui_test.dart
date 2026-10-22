@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yike/app/app.dart';
-import 'package:yike/common/state/local_value.dart';
 import 'package:yike/common/widgets.dart';
 import 'package:yike/common/widgets/yike/dial.dart';
 import 'package:yike/features/focus/focus.dart';
 import 'package:yike/features/habits/habits.dart';
 import 'package:yike/features/review/review.dart';
 import 'package:yike/common/time.dart';
+import 'package:yike/common/clock.dart';
+import 'package:yike/features/focus/focus_models.dart';
+import 'package:yike/features/local_data/local_data.dart';
 import 'package:yike/features/home/pages/home_page.dart';
 import 'package:yike/features/habits/pages/habit_editor.dart';
 import 'package:yike/storage/providers.dart';
+import 'package:yike/storage/app_prefs.dart';
 import 'support/fake_app_prefs.dart';
 
 Future<ProviderContainer> pumpYike(
@@ -19,8 +22,10 @@ Future<ProviderContainer> pumpYike(
   Size size = const Size(390, 844),
   String theme = 'mechanical',
   String mode = 'light',
-  FocusViewData focus = const FocusViewData(),
-  List<FocusRecordView> records = const [],
+  FocusViewData? focus,
+  List<FocusRecordView>? records,
+  AppPrefs? preferences,
+  DateTime Function()? clock,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -30,17 +35,67 @@ Future<ProviderContainer> pumpYike(
     ProviderScope(
       overrides: [
         appPrefsProvider.overrideWithValue(
-          FakeAppPrefs({'theme_pack': 'yike/$theme', 'theme_mode': mode}),
+          preferences ??
+              FakeAppPrefs({'theme_pack': 'yike/$theme', 'theme_mode': mode}),
         ),
         todayProvider.overrideWithValue(DateTime.utc(2026, 10, 16)),
-        focusViewProvider.overrideWith(() => LocalValue(focus)),
-        focusRecordsProvider.overrideWithValue(records),
+        clockProvider.overrideWithValue(
+          clock ?? () => DateTime.utc(2026, 10, 16, 12),
+        ),
+        if (records != null) focusRecordsProvider.overrideWithValue(records),
       ],
       child: const PbApp(),
     ),
   );
   await tester.pumpAndSettle();
-  return ProviderScope.containerOf(tester.element(find.byType(YikeHomePage)));
+  final container = ProviderScope.containerOf(
+    tester.element(find.byType(YikeHomePage)),
+  );
+  if (focus != null) {
+    final now = DateTime.utc(2026, 10, 16, 12);
+    final elapsed =
+        (focus.mode == TimerMode.stopwatch
+            ? focus.seconds
+            : focus.target - focus.seconds) *
+        1000;
+    container
+        .read(localDataProvider.notifier)
+        .commit(
+          container
+              .read(localDataProvider)
+              .data
+              .copyWith(
+                focus: FocusData(
+                  mode: focus.mode,
+                  countdown: focus.target,
+                  session: focus.ready
+                      ? null
+                      : FocusSession(
+                          id: 'fixture-session',
+                          mode: focus.mode,
+                          stage: focus.stage,
+                          status: focus.status,
+                          startedAt: now.subtract(
+                            Duration(milliseconds: elapsed),
+                          ),
+                          targetMs: focus.target * 1000,
+                          elapsedMs: elapsed,
+                          round: focus.round,
+                          longRest: false,
+                          days: focus.resting
+                              ? const {}
+                              : {'2026-10-16': elapsed},
+                          laps: focus.laps.map((v) => v * 1000).toList(),
+                          anchor: focus.status == TimerStatus.running
+                              ? now
+                              : null,
+                        ),
+                ),
+              ),
+        );
+    await tester.pumpAndSettle();
+  }
+  return container;
 }
 
 Future<void> navigateTab(WidgetTester tester, String title) async {

@@ -57,6 +57,28 @@ class FocusViewData {
           0,
           1,
         );
+  @override
+  bool operator ==(Object other) =>
+      other is FocusViewData &&
+      mode == other.mode &&
+      status == other.status &&
+      stage == other.stage &&
+      seconds == other.seconds &&
+      target == other.target &&
+      round == other.round &&
+      recovered == other.recovered &&
+      listEquals(laps, other.laps);
+  @override
+  int get hashCode => Object.hash(
+    mode,
+    status,
+    stage,
+    seconds,
+    target,
+    round,
+    recovered,
+    Object.hashAll(laps),
+  );
   FocusViewData copyWith({
     TimerMode? mode,
     TimerStatus? status,
@@ -85,9 +107,10 @@ class FocusRecordView {
     required this.time,
     required this.seconds,
     required this.mode,
+    this.sessionId = '',
   });
-  final String date, time;
-  final int seconds;
+  final String date, time, sessionId;
+  final num seconds;
   final TimerMode mode;
 }
 

@@ -6,6 +6,7 @@ import 'package:unified_popups/liquid_glass.dart';
 import '../common/widgets/navigation/screen_transition.dart';
 import '../storage/providers.dart';
 import '../storage/app_prefs.dart';
+import '../storage/preference_writer.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 import 'app_tokens.dart';
@@ -19,7 +20,12 @@ export 'theme_pack.dart';
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
-    final stored = ref.watch(appPrefsProvider).readThemeMode();
+    String? stored;
+    try {
+      stored = ref.watch(appPrefsProvider).readThemeMode();
+    } catch (_) {
+      stored = null;
+    }
     return switch (stored) {
       'dark' => ThemeMode.dark,
       'light' => ThemeMode.light,
@@ -28,7 +34,9 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   }
 
   void setMode(ThemeMode mode) {
-    ref.read(appPrefsProvider).writeThemeMode(mode.name);
+    ref
+        .read(preferenceWriterProvider.notifier)
+        .save(AppPrefs.themeModeKey, mode.name);
     state = mode;
   }
 
@@ -40,7 +48,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 /// 当前亮度（对齐 pbwork light/dark 主题），经 [AppPrefs] 持久化。
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
   ThemeModeNotifier.new,
-  dependencies: [appPrefsProvider],
+  dependencies: [appPrefsProvider, preferenceWriterProvider],
 );
 
 final themePacksProvider = Provider<List<AppThemePack>>(
@@ -57,9 +65,12 @@ class ThemePackNotifier extends Notifier<AppThemePack> {
         packs.map((pack) => pack.id).toSet().length != packs.length) {
       throw StateError('Theme packs must have nonempty, unique identities.');
     }
-    final stored = ref
-        .watch(appPrefsProvider)
-        .readString(AppPrefs.themePackKey);
+    String? stored;
+    try {
+      stored = ref.watch(appPrefsProvider).readString(AppPrefs.themePackKey);
+    } catch (_) {
+      stored = null;
+    }
     return packs.firstWhere(
       (pack) => pack.id == stored,
       orElse: () => packs.firstWhere(
@@ -73,14 +84,18 @@ class ThemePackNotifier extends Notifier<AppThemePack> {
     final pack = ref
         .read(themePacksProvider)
         .firstWhere((pack) => pack.id == id);
-    ref.read(appPrefsProvider).writeString(AppPrefs.themePackKey, id);
+    ref.read(preferenceWriterProvider.notifier).save(AppPrefs.themePackKey, id);
     state = pack;
   }
 }
 
 final themePackProvider = NotifierProvider<ThemePackNotifier, AppThemePack>(
   ThemePackNotifier.new,
-  dependencies: [appPrefsProvider, themePacksProvider],
+  dependencies: [
+    appPrefsProvider,
+    themePacksProvider,
+    preferenceWriterProvider,
+  ],
 );
 
 /// ThemeExtension owned by the nearest Material Theme, never a global singleton.

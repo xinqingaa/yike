@@ -27,6 +27,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
     vsync: this,
   )..addListener(_tabChanged);
   final _switching = localValueProvider(false);
+  final _recordPromptOpen = localValueProvider(false);
 
   void _tabChanged() {
     if (!_tabs.indexIsChanging &&
@@ -60,31 +61,22 @@ class _FocusPageState extends ConsumerState<FocusPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && ref.read(focusViewProvider).recovered) _recovery();
+      if (mounted && ref.read(focusViewProvider).recovered) {
+        _recovery();
+      } else if (mounted &&
+          (ref.read(focusDataProvider).session?.promptShort ?? false)) {
+        _shortRecord();
+      }
     });
   }
 
-  void _set(FocusViewData value) =>
-      ref.read(focusViewProvider.notifier).set(value);
+  FocusActions get _actions => ref.read(focusActionsProvider);
   void _reset([TimerMode? mode]) {
-    final current = ref.read(focusViewProvider);
-    final selected = mode ?? current.mode;
-    final prefs = ref.read(timingPreferencesProvider);
-    final target = selected == TimerMode.stopwatch
-        ? 0
-        : selected == TimerMode.countdown
-        ? prefs.presets.whereType<int>().contains(300)
-              ? 300
-              : prefs.presets.whereType<int>().firstOrNull ?? 300
-        : prefs.focusMinutes * 60;
-    _set(
-      FocusViewData(
-        mode: selected,
-        seconds: target,
-        target: target,
-        round: current.round,
-      ),
-    );
+    if (mode == null) {
+      _actions.discard();
+    } else {
+      _actions.switchMode(mode);
+    }
   }
 
   Future<void> _selectMode(String value) async {
@@ -133,18 +125,22 @@ class _FocusPageState extends ConsumerState<FocusPage>
       );
       if (!mounted || result == null) return;
       if (result == 'record' && !await _shortRecord()) return;
+      _actions.switchMode(next, record: result == 'record');
+      return;
     }
-    _reset(next);
+    _actions.switchMode(next);
   }
 
   Future<bool> _shortRecord() async {
+    if (ref.read(_recordPromptOpen)) return false;
+    if (!_actions.prepareFinish()) return true;
+    ref.read(_recordPromptOpen.notifier).set(true);
     final value = ref.read(focusViewProvider);
     final elapsed = value.mode == TimerMode.stopwatch
         ? value.seconds
         : value.target - value.seconds;
     final threshold = ref.read(timingPreferencesProvider).threshold;
-    if (value.resting || elapsed >= threshold) return true;
-    return AppPop.confirm(
+    final accepted = await AppPop.confirm(
       context,
       title: '记录这次短时专注？',
       content:
@@ -153,10 +149,18 @@ class _FocusPageState extends ConsumerState<FocusPage>
       confirmText: '仍然记录',
       material: CommonSurfaceMaterial.glass,
     );
+    if (!mounted) return false;
+    ref.read(_recordPromptOpen.notifier).set(false);
+    if (accepted) {
+      _actions.acceptShort();
+    } else {
+      _actions.dismissPrompt();
+    }
+    return accepted;
   }
 
   Future<void> _finish() async {
-    if (await _shortRecord() && mounted) _reset();
+    if (await _shortRecord() && mounted) _actions.finish();
   }
 
   Future<void> _abandon() async {
@@ -212,65 +216,49 @@ class _FocusPageState extends ConsumerState<FocusPage>
               onPressed: () => handle.complete('resume'),
             ),
             CommonButton(
-              label: '结束并记录',
+              label: ref.read(focusViewProvider).resting ? '跳过休息' : '结束并记录',
               size: CommonControlSize.lg,
               shape: CommonButtonShape.pill,
               kind: CommonButtonKind.secondary,
               onPressed: () => handle.complete('finish'),
             ),
-            CommonButton(
-              label: '放弃本次',
-              kind: CommonButtonKind.quiet,
-              onPressed: () => handle.complete('discard'),
-            ),
+            if (!ref.read(focusViewProvider).resting)
+              CommonButton(
+                label: '放弃本次',
+                kind: CommonButtonKind.quiet,
+                onPressed: () => handle.complete('discard'),
+              ),
           ],
         ),
       ),
     );
     if (!mounted) return;
-    if (result == 'resume') {
-      _set(
-        ref
-            .read(focusViewProvider)
-            .copyWith(status: TimerStatus.running, recovered: false),
-      );
+    if (result == 'resume') _actions.resume();
+    if (result == 'finish') {
+      if (ref.read(focusViewProvider).resting) {
+        _actions.discard();
+      } else {
+        await _finish();
+      }
     }
-    if (result == 'finish') await _finish();
     if (result == 'discard') await _abandon();
   }
 
-  void _primary() {
+  Future<void> _primary() async {
+    _actions.calibrate();
     final value = ref.read(focusViewProvider);
-    final prefs = ref.read(timingPreferencesProvider);
     if (value.finished) {
-      if (value.mode == TimerMode.countdown || value.resting) {
-        _reset();
-        return;
+      if (value.mode == TimerMode.pomodoro && !value.resting) {
+        if (await _shortRecord() && mounted) _actions.beginBreak();
+      } else {
+        _actions.discard();
       }
-      final stage = value.round == prefs.interval
-          ? TimerStage.longBreak
-          : TimerStage.shortBreak;
-      final seconds =
-          (stage == TimerStage.longBreak
-              ? prefs.longMinutes
-              : prefs.shortMinutes) *
-          60;
-      _set(
-        value.copyWith(
-          stage: stage,
-          status: TimerStatus.running,
-          seconds: seconds,
-          target: seconds,
-        ),
-      );
+    } else if (value.ready) {
+      _actions.start();
+    } else if (value.paused) {
+      _actions.resume();
     } else {
-      _set(
-        value.copyWith(
-          status: value.status == TimerStatus.running
-              ? TimerStatus.paused
-              : TimerStatus.running,
-        ),
-      );
+      _actions.pause();
     }
   }
 
@@ -278,6 +266,16 @@ class _FocusPageState extends ConsumerState<FocusPage>
   Widget build(BuildContext context) {
     final ts = TS.of(context);
     final value = ref.watch(focusViewProvider);
+    ref.listen(
+      focusDataProvider.select((d) => d.session?.promptShort ?? false),
+      (before, after) {
+        if (after && before != after) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !ref.read(_recordPromptOpen)) _shortRecord();
+          });
+        }
+      },
+    );
     ref.listen(focusViewProvider.select((value) => value.mode), (_, mode) {
       if (_tabs.index != mode.index) _tabs.animateTo(mode.index);
     });
@@ -286,7 +284,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
     final todaySeconds = ref
         .watch(focusRecordsProvider)
         .where((r) => r.date == dayId(today))
-        .fold(0, (sum, r) => sum + r.seconds);
+        .fold<num>(0, (sum, r) => sum + r.seconds);
     return Column(
       children: [
         Padding(
@@ -538,9 +536,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                               tone: value.target == preset
                                   ? CommonChipTone.primary
                                   : CommonChipTone.secondary,
-                              onTap: () => _set(
-                                value.copyWith(seconds: preset, target: preset),
-                              ),
+                              onTap: () => _actions.selectCountdown(preset),
                             ),
                           CommonButton(
                             label: '自定义',
@@ -553,12 +549,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                                 confirm: '确认时长',
                               );
                               if (duration != null) {
-                                _set(
-                                  value.copyWith(
-                                    seconds: duration,
-                                    target: duration,
-                                  ),
-                                );
+                                _actions.selectCountdown(duration);
                               }
                             },
                           ),
@@ -575,16 +566,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                             label: '计圈',
                             kind: CommonButtonKind.secondary,
                             shape: CommonButtonShape.pill,
-                            onPressed: () {
-                              if (value.seconds >
-                                  (value.laps.lastOrNull ?? 0)) {
-                                _set(
-                                  value.copyWith(
-                                    laps: [...value.laps, value.seconds],
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _actions.lap,
                           ),
                           SizedBox(width: ts.spacing.sm),
                         ],
@@ -605,6 +587,12 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       ],
                     ),
                     SizedBox(height: ts.spacing.sm),
+                    if (value.paused && value.recovered)
+                      CommonButton(
+                        label: '查看恢复选项',
+                        kind: CommonButtonKind.quiet,
+                        onPressed: _recovery,
+                      ),
                     if (value.resting ||
                         (value.finished && value.mode == TimerMode.pomodoro))
                       CommonButton(
@@ -619,12 +607,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                         label:
                             '再计${durationLabel(value.target, compact: true)}',
                         kind: CommonButtonKind.quiet,
-                        onPressed: () => _set(
-                          value.copyWith(
-                            status: TimerStatus.running,
-                            seconds: value.target,
-                          ),
-                        ),
+                        onPressed: _actions.again,
                       )
                     else if (!value.ready)
                       Row(

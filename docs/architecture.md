@@ -7,7 +7,7 @@ lib/
 ├── app/              MaterialApp 和应用启动
 ├── router/           命名路由常量和注册表
 ├── theme/            颜色、文字、尺寸和 ThemeExtension
-├── storage/          AppPrefs：MMKV 偏好，不存业务数据
+├── storage/          AppPrefs：MMKV 偏好与业务快照
 ├── common/
 │   ├── widgets/      可复用 UI 组件
 │   └── overlay/      AppPop 共享弹层入口
@@ -45,8 +45,13 @@ theme    -> storage（仅主题偏好）
 
 - `theme_mode`：`light` | `dark` | `system`（一刻默认跟随系统）
 - `theme_pack`：已注册的类型化主题包 ID
+- `yike_snapshot_v1`：版本化业务快照，包含初始化日期、计时偏好、会话、周期、专注记录、习惯与打卡身份。由 `features/local_data` 负责组合序列化和原子保存；feature 只通过 AppPrefs，禁止直接 MMKV。
 
-不要为列表、表单、Evidence 固定文案或截图 Case 创建存储。需要新 key 时先改本文白名单，再改 `AppPrefs`。
+计时与习惯各自保留模型与规则；跨模块快照协调放在 local_data 模块。公开的 focus_models.dart / habit_models.dart 只导出模型和纯逻辑，避免反向导入页面。单一 LocalData Notifier 拥有业务事实，页面 Provider 只派生投影；tick 不写存储，阶段边界和用户操作才保存。
+
+`app/local_data_boundary.dart` 处理读取阻断和保存失败重试；`storage/preference_writer.dart` 保留失败的外观写入。重置由 `app/reset_data.dart` 协调业务快照、外观、根导航、回顾选择和撤销提示，feature 不相互导入私有页面。业务快照为单 key 写入，外观两项独立保存；重置任一写入失败均显示未保存状态，重试当前结果。
+
+不要为未提交表单、Evidence 固定文案或截图 Case 创建存储。需要新 key 时先改本文白名单，再改 `AppPrefs`。
 
 ## 页面落点
 

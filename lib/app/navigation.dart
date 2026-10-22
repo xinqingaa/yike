@@ -1,6 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../common/state/local_value.dart';
 
-final rootTabProvider = NotifierProvider<LocalValue<int>, int>(
+final rootNavigationEpochProvider = NotifierProvider<LocalValue<int>, int>(
   () => LocalValue(0),
 );
+
+class RootTabs extends LocalValue<int> {
+  RootTabs() : super(0);
+  @override
+  void set(int value) {
+    if (value == state) return;
+    ref.read(rootNavigationEpochProvider.notifier).update((n) => n + 1);
+    super.set(value);
+  }
+
+  @override
+  void update(int Function(int) change) => set(change(state));
+}
+
+final rootTabProvider = NotifierProvider<RootTabs, int>(RootTabs.new);

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'clock.dart';
 
 String dayId(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -13,7 +14,15 @@ String timerDigits(int seconds) {
       : '${two(seconds ~/ 60)}:${two(seconds % 60)}';
 }
 
-String durationLabel(int seconds, {bool compact = false}) {
+String durationLabel(num value, {bool compact = false}) {
+  final seconds = value.floor();
+  if (value > 0 && value < 1) {
+    final fraction = value
+        .toStringAsFixed(3)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+    return '$fraction${compact ? '秒' : ' 秒'}';
+  }
   if (seconds == 0) return '0 分钟';
   final parts = <String>[];
   if (seconds >= 3600) parts.add('${seconds ~/ 3600}${compact ? '小时' : ' 小时'}');
@@ -24,4 +33,6 @@ String durationLabel(int seconds, {bool compact = false}) {
   return parts.join(compact ? '' : ' ');
 }
 
-final todayProvider = Provider<DateTime>((ref) => dayOnly(DateTime.now()));
+final todayProvider = Provider<DateTime>(
+  (ref) => dayOnly(ref.watch(clockPulseProvider)),
+);

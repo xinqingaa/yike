@@ -41,6 +41,7 @@ abstract final class AppPop {
     String? actionLabel,
     VoidCallback? onAction,
     double bottomInset = 0,
+    String? replacementKey,
   }) {
     assert((actionLabel == null) == (onAction == null));
     final ts = TS.of(context);
@@ -71,6 +72,10 @@ abstract final class AppPop {
           position: PopupPosition.bottom,
           style: style,
           lifetime: lifetime,
+          behavior: PopupBehaviorConfig(
+            key: replacementKey,
+            conflictPolicy: PopupConflictPolicy.replaceExisting,
+          ),
         ),
       );
       return;
@@ -108,10 +113,16 @@ abstract final class AppPop {
         position: PopupPosition.bottom,
         style: style,
         lifetime: lifetime,
+        behavior: PopupBehaviorConfig(
+          key: replacementKey,
+          conflictPolicy: PopupConflictPolicy.replaceExisting,
+        ),
       ),
     );
     handle = opened.handleOrNull;
   }
+
+  static Future<void> clearToasts() => Pop.dismissChannel(PopupChannel.toast);
 
   static void loading(
     BuildContext context, {
