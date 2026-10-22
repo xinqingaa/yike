@@ -1,0 +1,52 @@
+# Theme 与 Token
+
+主题采用唯一的类型化 `AppThemePack`，通过 `TS extends ThemeExtension<TS>` 放入 Material Theme。组件从当前 BuildContext 读取，局部 Theme 与弹层不会改写全局主题实例。
+
+```dart
+final ts = TS.of(context);
+Text('标题', style: ts.textStyle.title);
+```
+
+## 主题包
+
+`lib/theme/theme_pack.dart` 定义唯一的类型化主题模型；`generated_theme_packs.dart` 是 Core 解析表到 Flutter 的生成结果，不手工维护。身份使用 `packId/themeId`，明暗模式独立；注册表来自 `generatedThemePacks`，没有样例包或旧主题兼容实现。
+
+展示工程通过「主题」入口或右上角「展示设置」切换主题和浅深色，作用于所有页面、组件及弹层，并由 AppPrefs / MMKV 恢复。`themePackProvider` 与 `themeModeProvider` 是唯一选择状态；组件通过最近的 TS ThemeExtension 读取。
+
+在 Producer 仓库运行 `node scripts/export-flutter-themes.mjs` 默认同步全部包。指定 `--prototype <id>` 只选择真实原型绑定包及继承依赖；可配合 `--target <directory>`。公共基础组件保留为共享能力，不复制原型业务页面。主题的组件键也参与解析；资源按模式选择，仅输出高分辨率图片，组件明确设置逻辑尺寸。
+
+`proto-bridge.themes.json` 记录选择范围、主题与模式矩阵、源摘要和解析值。同步门禁同时核对生成的 Dart 内容和这个矩阵，不能只凭 accessor 存在或源端 fingerprint 声明主题已落地。固定 Handoff 实现仍以其中固定的主题表为准，不读取 active/latest。
+
+## Token 职责
+
+`ts.colors`、`ts.textStyle`、`ts.spacing`、`ts.sizing`、`ts.radius`、`ts.opacity`、`ts.motion`、`ts.elevation`、`ts.border`、`ts.layout`、`ts.layer`、`ts.effect`、`ts.assets` 是组件使用入口。具体设计量只放在主题目录；页面和公共组件不得另建平行常量或复制颜色数值。
+
+`protoBridgeTokenSnapshot(ts)` 接收明确的上下文主题，用于调试和映射验证。`proto-bridge.target.json` 维护 当前可绑定主题键的精确 accessor。映射有效仅说明落点可访问；组件的视觉、状态和实际消费仍需单独验证。
+
+`transparent` / `none` 是绑定字面量，不建立 Token accessor。资源未提供时由组件按 Contract 回退。Flutter 用逻辑像素、比例、Curve、BoxShadow 表达 Web 对应语义。相对字距保留为类型化 AppLetterSpacing，在使用处按实际字号解析；不把 em 直接当作像素。CSS 内阴影、滤镜饱和度和连续字重使用明确的平台翻译，不宣称逐像素一致。
+
+## 主题切换
+
+Material Theme 和 TS 使用同一主题包。颜色在主题动画中插值；非颜色 Token 在切换中采用对应端点值，避免枚举和资源出现无意义的中间值。组件不得缓存 BuildContext 对应的主题供其它页面使用。
+
+## 同步门禁
+
+主题及映射修改运行 `node tool/ds-theme.mjs`，组件和完整 surface 运行 `node tool/ds-sync.mjs`。先验证所选主题矩阵与实际生成实现，再更新同步基线；未完成的部分保持 drift 或 pending 可见。
+
+## 原稿与分层资源
+
+`proto-bridge.themes.json.artwork` 按所属包登记主题图形：`source` 仅记录 PBWork 来源包、相对 DS glyphs/ 的源文件标识和源摘要；`raster` 与 `layers` 记录 Flutter PNG 路径、viewBox、逻辑尺寸及专注过程变体关联。SVG 原稿只在 PBWork 维护，Flutter 同步只生成 PNG，不复制 SVG。
+
+PNG 按原始画布与主题 size.plot 中较大的宽度、3 倍像素密度计算。相同状态图层通过 `layerAsset` 显式共用，元数据指向唯一 PNG。资源按主题包选择范围同步；同步资源不代表已完成业务表盘动画。
+
+PBWork 提供原稿及状态图层的预览和手动下载。主题图形默认 1 倍 PNG，原始 SVG 直接下载；手动下载倍率独立于 Flutter 同步尺寸。同步检查读取 PBWork 源文件及摘要，检查 Flutter 元数据与 PNG 尺寸，不依赖 Target 内的 SVG 副本。
+
+## 视口与文字适配
+
+应用的准备、失败重试与正式页面共用 `AppViewport`，以 PBWork 手机基准 390×844 初始化 flutter_screenutil。`AppMetrics` 在初始化后捕获不可变的转换因子，窗口尺寸变化时重建 Theme。类型化主题包保留 Producer 原始数值；TS 在消费层转换一次，组件直接使用 TS，不再追加 `.w`、`.h`、`.r` 或 `.sp`。
+
+横向边界与宽度使用 `.w`，纵向控件和面板高度使用 `.h`；圆角、等比图形、通用间距、边框与阴影使用 `.r`；字号使用 `.sp`。长宽和等比缩放因子有上下限，字号的视口因子不超过 1，避免大窗口持续放大文字。具体边界与文字角色上限唯一维护在 `lib/theme/app_metrics.dart`。字体行高倍数、字重、比例、行数、动画时间及真实屏幕/锚点坐标不缩放；相对字距按转换后的字号解析。
+
+Flutter 的正文、标签与标题使用 Target 的紧凑文字档位上限，原型数字展示保留独立角色。系统 TextScaler 仍由 Flutter 生效，不通过屏蔽系统字号解决偏大。ThemeData 的默认文本样式与显式组件样式使用同一套 TS。无视口转换的 TS 用于校验原始设计值，不作为应用入口主题。
+
+菜单定位、边缘翻转、锚点跟随和滚动由 unified_popups 处理；AppPop 按库示例传入菜单与主题样式，保留其默认有限宽度，仅设置主题最大高度，不另建屏幕几何算法；点击区域与图片大小独立，输入框前后缀中的 CommonIcon 在槽位内按主题尺寸居中。平台原生工具栏等框架规格保留原生尺寸，菜单边界和点击目标不因比例适配丢失约束。静态资源目录遵循 [资源规范](assets.md)。

@@ -1,0 +1,31 @@
+name: yike
+description: "Yike Flutter target generated from flutter_pb_app."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.4.3
+  mmkv: ^2.4.3
+  pull_to_refresh_flutter3: ^2.0.2
+  unified_popups: 2.2.1
+  flutter_screenutil: ^5.9.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  config:
+    enable-swift-package-manager: false
+  uses-material-design: true
+  assets:
+    - asset/yike/artwork/
+    - asset/base/icons/
+    - asset/yike/icons/

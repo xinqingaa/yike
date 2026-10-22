@@ -1,0 +1,4 @@
+interface:
+  display_name: "ProtoBridge Consumer"
+  short_description: "Implement fixed Evidence in this Flutter app"
+  default_prompt: "Use $proto-bridge-consumer to implement and verify the selected fixed ProtoBridge Evidence scope in this Flutter app."

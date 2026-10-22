@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "proto-bridge": {
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/tool/mcp.mjs"
+      ]
+    }
+  }
+}

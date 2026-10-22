@@ -1,0 +1,4 @@
+[mcp_servers.proto-bridge]
+command = "node"
+args = ["/Users/lrq/work/yike/tool/mcp.mjs"]
+startup_timeout_sec = 20

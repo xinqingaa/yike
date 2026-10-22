@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "proto-bridge": {
+      "command": "node",
+      "args": [
+        "/Users/lrq/work/yike/tool/mcp.mjs"
+      ]
+    }
+  }
+}

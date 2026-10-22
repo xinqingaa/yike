@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "base": "apps/flutter_pb_app",
+  "protoBridgeRoot": "../proto-bridge",
+  "workspaceConfig": "proto-bridge.json",
+  "targetRoot": ".",
+  "packageName": "yike",
+  "displayName": "Yike",
+  "bundleId": "com.protobridge.yike",
+  "baseSurfaceDigest": "sha256:8a841a118065c52b6a3782085474a491efdfd21204f9906e62d81cfebd932c1d",
+  "baseSyncStatus": "synced",
+  "createdAt": "2026-10-21T10:16:43.773Z"
+}

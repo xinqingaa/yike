@@ -1,0 +1,1 @@
+enum CommonDensity { regular, compact }

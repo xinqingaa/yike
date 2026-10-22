@@ -1,0 +1,503 @@
+{
+  "scope": {
+    "prototype": "yike"
+  },
+  "sourceDigest": "1667aa39c85ab9759dcb65217d4318c52a2fc5d1a2904920c59314e7229c3e98",
+  "icons": [
+    {
+      "id": "more",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/more.png"
+    },
+    {
+      "id": "plus",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/plus.png"
+    },
+    {
+      "id": "search",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/search.png"
+    },
+    {
+      "id": "settings",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/settings.png"
+    },
+    {
+      "id": "home",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/home.png"
+    },
+    {
+      "id": "list",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/list.png"
+    },
+    {
+      "id": "user",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/user.png"
+    },
+    {
+      "id": "inbox",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/inbox.png"
+    },
+    {
+      "id": "check",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/check.png"
+    },
+    {
+      "id": "chevron-down",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/chevron-down.png"
+    },
+    {
+      "id": "chevron-left",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/chevron-left.png"
+    },
+    {
+      "id": "chevron-right",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/chevron-right.png"
+    },
+    {
+      "id": "alert-triangle",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/alert-triangle.png"
+    },
+    {
+      "id": "alert-circle",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/alert-circle.png"
+    },
+    {
+      "id": "clock",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/clock.png"
+    },
+    {
+      "id": "refresh-cw",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/refresh-cw.png"
+    },
+    {
+      "id": "clipboard-check",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/clipboard-check.png"
+    },
+    {
+      "id": "shield-check",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/shield-check.png"
+    },
+    {
+      "id": "folder-open",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/folder-open.png"
+    },
+    {
+      "id": "thermometer",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/thermometer.png"
+    },
+    {
+      "id": "snowflake",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/snowflake.png"
+    },
+    {
+      "id": "copy",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/copy.png"
+    },
+    {
+      "id": "file-text",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/file-text.png"
+    },
+    {
+      "id": "sliders-horizontal",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/sliders-horizontal.png"
+    },
+    {
+      "id": "map-pin",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/map-pin.png"
+    },
+    {
+      "id": "radio",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/radio.png"
+    },
+    {
+      "id": "truck",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/truck.png"
+    },
+    {
+      "id": "dumbbell",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/dumbbell.png"
+    },
+    {
+      "id": "eye",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/eye.png"
+    },
+    {
+      "id": "eye-off",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/eye-off.png"
+    },
+    {
+      "id": "footprints",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/footprints.png"
+    },
+    {
+      "id": "person-standing",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/person-standing.png"
+    },
+    {
+      "id": "sparkles",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/sparkles.png"
+    },
+    {
+      "id": "x",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/x.png"
+    },
+    {
+      "id": "calendar-current",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/calendar-current.png"
+    },
+    {
+      "id": "yike-mechanical-calendar",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-mechanical-calendar.png"
+    },
+    {
+      "id": "yike-mechanical-focus-high",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-mechanical-focus-high.png"
+    },
+    {
+      "id": "yike-mechanical-focus-low",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-mechanical-focus-low.png"
+    },
+    {
+      "id": "yike-mechanical-focus-medium",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-mechanical-focus-medium.png"
+    },
+    {
+      "id": "yike-mode-countdown",
+      "owner": "yike",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/yike/icons/yike-mode-countdown.png"
+    },
+    {
+      "id": "yike-mode-pomodoro",
+      "owner": "yike",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/yike/icons/yike-mode-pomodoro.png"
+    },
+    {
+      "id": "yike-mode-stopwatch",
+      "owner": "yike",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/yike/icons/yike-mode-stopwatch.png"
+    },
+    {
+      "id": "yike-sundial-focus-high",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-sundial-focus-high.png"
+    },
+    {
+      "id": "yike-sundial-focus-low",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-sundial-focus-low.png"
+    },
+    {
+      "id": "yike-sundial-focus-medium",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-sundial-focus-medium.png"
+    },
+    {
+      "id": "yike-water-focus-high",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-water-focus-high.png"
+    },
+    {
+      "id": "yike-water-focus-low",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-water-focus-low.png"
+    },
+    {
+      "id": "yike-water-focus-medium",
+      "owner": "yike",
+      "width": 44,
+      "height": 44,
+      "scale": 3,
+      "colorMode": "intrinsic",
+      "file": "asset/yike/icons/yike-water-focus-medium.png"
+    },
+    {
+      "id": "circle-check",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/circle-check.png"
+    },
+    {
+      "id": "chart-column",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/chart-column.png"
+    },
+    {
+      "id": "book-open",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/book-open.png"
+    },
+    {
+      "id": "glass-water",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/glass-water.png"
+    },
+    {
+      "id": "leaf",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/leaf.png"
+    },
+    {
+      "id": "moon",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/moon.png"
+    },
+    {
+      "id": "stretch-horizontal",
+      "owner": "shared",
+      "width": 24,
+      "height": 24,
+      "scale": 3,
+      "colorMode": "theme",
+      "file": "asset/base/icons/stretch-horizontal.png"
+    }
+  ]
+}

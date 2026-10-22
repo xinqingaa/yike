@@ -1,0 +1,1000 @@
+{
+  "version": 1,
+  "technology": "flutter",
+  "policyEntrypoints": [
+    "AGENts.md",
+    "docs/proto-bridge.md",
+    "docs/components.md",
+    "docs/theme.md"
+  ],
+  "components": {
+    "action-sheet": {
+      "symbol": "AppPop.actionSheet",
+      "import": "lib/common/overlay/app_pop.dart",
+      "definition": "lib/common/overlay/app_pop.dart"
+    },
+    "app-bar": {
+      "symbol": "CommonAppBar",
+      "import": "lib/common/widgets/navigation/app_bar.dart",
+      "definition": "lib/common/widgets/navigation/app_bar.dart"
+    },
+    "avatar": {
+      "symbol": "CommonAvatar",
+      "import": "lib/common/widgets/display/avatar.dart",
+      "definition": "lib/common/widgets/display/avatar.dart"
+    },
+    "badge": {
+      "symbol": "CommonBadge",
+      "import": "lib/common/widgets/display/badge.dart",
+      "definition": "lib/common/widgets/display/badge.dart"
+    },
+    "bottom-sheet": {
+      "symbol": "AppPop.sheet",
+      "import": "lib/common/overlay/app_pop.dart",
+      "definition": "lib/common/overlay/app_pop.dart"
+    },
+    "brand-mark": {
+      "symbol": "CommonBrandMark",
+      "import": "lib/common/widgets/display/brand_mark.dart",
+      "definition": "lib/common/widgets/display/brand_mark.dart"
+    },
+    "button": {
+      "symbol": "CommonButton",
+      "import": "lib/common/widgets/action/button.dart",
+      "definition": "lib/common/widgets/action/button.dart"
+    },
+    "card": {
+      "symbol": "CommonCard",
+      "import": "lib/common/widgets/display/card.dart",
+      "definition": "lib/common/widgets/display/card.dart"
+    },
+    "checkbox": {
+      "symbol": "CommonCheckbox",
+      "import": "lib/common/widgets/input/checkbox.dart",
+      "definition": "lib/common/widgets/input/checkbox.dart"
+    },
+    "chip": {
+      "symbol": "CommonChip",
+      "import": "lib/common/widgets/display/chip.dart",
+      "definition": "lib/common/widgets/display/chip.dart"
+    },
+    "confirm": {
+      "symbol": "AppPop.confirm",
+      "import": "lib/common/overlay/app_pop.dart",
+      "definition": "lib/common/overlay/app_pop.dart"
+    },
+    "data-list": {
+      "symbol": "CommonDataList",
+      "import": "lib/common/widgets/data/data_list.dart",
+      "definition": "lib/common/widgets/data/data_list.dart"
+    },
+    "divider": {
+      "symbol": "CommonDivider",
+      "import": "lib/common/widgets/display/divider.dart",
+      "definition": "lib/common/widgets/display/divider.dart"
+    },
+    "duration-picker": {
+      "symbol": "CommonWheelPicker",
+      "import": "lib/common/widgets/input/wheel_picker.dart",
+      "definition": "lib/common/widgets/input/wheel_picker.dart"
+    },
+    "empty-state": {
+      "symbol": "CommonEmptyState",
+      "import": "lib/common/widgets/display/empty_state.dart",
+      "definition": "lib/common/widgets/display/empty_state.dart"
+    },
+    "filter-bar": {
+      "symbol": "CommonFilterBar",
+      "import": "lib/common/widgets/navigation/filter_bar.dart",
+      "definition": "lib/common/widgets/navigation/filter_bar.dart"
+    },
+    "flow-sheet": {
+      "symbol": "AppPop.flowSheet",
+      "import": "lib/common/overlay/app_pop.dart",
+      "definition": "lib/common/overlay/app_pop.dart"
+    },
+    "glass-surface": {
+      "symbol": "CommonGlassSurface",
+      "import": "lib/common/widgets/display/glass_surface.dart",
+      "definition": "lib/common/widgets/display/glass_surface.dart"
+    },
+    "grouped-list": {
+      "symbol": "CommonGroupedList",
+      "import": "lib/common/widgets/data/grouped_list.dart",
+      "definition": "lib/common/widgets/data/grouped_list.dart"
+    },
+    "heatmap": {
+      "symbol": "CommonHeatmap",
+      "import": "lib/common/widgets/charts/heatmap.dart",
+      "definition": "lib/common/widgets/charts/heatmap.dart"
+    },
+    "icon": {
+      "symbol": "CommonIcon",
+      "import": "lib/common/widgets/action/icon.dart",
+      "definition": "lib/common/widgets/action/icon.dart"
+    },
+    "icon-button": {
+      "symbol": "CommonIconButton",
+      "import": "lib/common/widgets/action/icon_button.dart",
+      "definition": "lib/common/widgets/action/icon_button.dart"
+    },
+    "launch-screen": {
+      "symbol": "CommonLaunchScreen",
+      "import": "lib/common/widgets/navigation/launch_screen.dart",
+      "definition": "lib/common/widgets/navigation/launch_screen.dart"
+    },
+    "list-cell": {
+      "symbol": "CommonListCell",
+      "import": "lib/common/widgets/data/list_cell.dart",
+      "definition": "lib/common/widgets/data/list_cell.dart"
+    },
+    "loading": {
+      "symbol": "AppPop.loading",
+      "import": "lib/common/overlay/app_pop.dart",
+      "definition": "lib/common/overlay/app_pop.dart"
+    },
+    "menu": {
+      "symbol": "AppPop.dropMenu",
+      "import": "lib/common/overlay/app_pop.dart",
+      "definition": "lib/common/overlay/app_pop.dart"
+    },
+    "metric": {
+      "symbol": "CommonMetric",
+      "import": "lib/common/widgets/display/metric.dart",
+      "definition": "lib/common/widgets/display/metric.dart"
+    },
+    "mini-bars": {
+      "symbol": "CommonMiniBars",
+      "import": "lib/common/widgets/charts/mini_bars.dart",
+      "definition": "lib/common/widgets/charts/mini_bars.dart"
+    },
+    "month-calendar": {
+      "symbol": "CommonMonthCalendar",
+      "import": "lib/common/widgets/charts/month_calendar.dart",
+      "definition": "lib/common/widgets/charts/month_calendar.dart"
+    },
+    "primary-tabs": {
+      "symbol": "CommonPrimaryTabs",
+      "import": "lib/common/widgets/navigation/primary_tabs.dart",
+      "definition": "lib/common/widgets/navigation/primary_tabs.dart"
+    },
+    "progress": {
+      "symbol": "CommonProgress",
+      "import": "lib/common/widgets/display/progress.dart",
+      "definition": "lib/common/widgets/display/progress.dart"
+    },
+    "radio-group": {
+      "symbol": "CommonRadioGroup",
+      "import": "lib/common/widgets/input/radio_group.dart",
+      "definition": "lib/common/widgets/input/radio_group.dart"
+    },
+    "ring-progress": {
+      "symbol": "CommonRingProgress",
+      "import": "lib/common/widgets/display/ring_progress.dart",
+      "definition": "lib/common/widgets/display/ring_progress.dart"
+    },
+    "screen-transition": {
+      "symbol": "PbPageTransitions.theme",
+      "import": "lib/common/widgets/navigation/screen_transition.dart",
+      "definition": "lib/common/widgets/navigation/screen_transition.dart"
+    },
+    "scrollable-data-list": {
+      "symbol": "CommonScrollableDataList",
+      "import": "lib/common/widgets/data/scrollable_data_list.dart",
+      "definition": "lib/common/widgets/data/scrollable_data_list.dart"
+    },
+    "search-bar": {
+      "symbol": "CommonSearchBar",
+      "import": "lib/common/widgets/input/search_bar.dart",
+      "definition": "lib/common/widgets/input/search_bar.dart"
+    },
+    "secondary-tabs": {
+      "symbol": "CommonSecondaryTabs",
+      "import": "lib/common/widgets/navigation/secondary_tabs.dart",
+      "definition": "lib/common/widgets/navigation/secondary_tabs.dart"
+    },
+    "spinner": {
+      "symbol": "CommonSpinner",
+      "import": "lib/common/widgets/display/spinner.dart",
+      "definition": "lib/common/widgets/display/spinner.dart"
+    },
+    "stepper": {
+      "symbol": "CommonStepper",
+      "import": "lib/common/widgets/input/stepper.dart",
+      "definition": "lib/common/widgets/input/stepper.dart"
+    },
+    "switch": {
+      "symbol": "CommonSwitch",
+      "import": "lib/common/widgets/input/switch_control.dart",
+      "definition": "lib/common/widgets/input/switch_control.dart"
+    },
+    "tab-viewport": {
+      "symbol": "CommonTabView",
+      "import": "lib/common/widgets/navigation/tab_view.dart",
+      "definition": "lib/common/widgets/navigation/tab_view.dart"
+    },
+    "tabbar": {
+      "symbol": "CommonBottomNav",
+      "import": "lib/common/widgets/navigation/bottom_nav.dart",
+      "definition": "lib/common/widgets/navigation/bottom_nav.dart"
+    },
+    "tag": {
+      "symbol": "CommonTag",
+      "import": "lib/common/widgets/display/tag.dart",
+      "definition": "lib/common/widgets/display/tag.dart"
+    },
+    "text-field": {
+      "symbol": "CommonTextField",
+      "import": "lib/common/widgets/input/text_field.dart",
+      "definition": "lib/common/widgets/input/text_field.dart"
+    },
+    "textarea": {
+      "symbol": "CommonTextArea",
+      "import": "lib/common/widgets/input/text_area.dart",
+      "definition": "lib/common/widgets/input/text_area.dart"
+    },
+    "toast": {
+      "symbol": "AppPop.toast",
+      "import": "lib/common/overlay/app_pop.dart",
+      "definition": "lib/common/overlay/app_pop.dart"
+    }
+  },
+  "tokens": {
+    "color.background": {
+      "accessor": "ts.colors.background",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-background": {
+      "accessor": "ts.colors.onBackground",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.surface": {
+      "accessor": "ts.colors.surface",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-surface": {
+      "accessor": "ts.colors.onSurface",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-surface-muted": {
+      "accessor": "ts.colors.onSurfaceMuted",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.surface-variant": {
+      "accessor": "ts.colors.surfaceVariant",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.surface-recessed": {
+      "accessor": "ts.colors.surfaceRecessed",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.surface-selected": {
+      "accessor": "ts.colors.surfaceSelected",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.surface-raised": {
+      "accessor": "ts.colors.surfaceRaised",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.inverse-surface": {
+      "accessor": "ts.colors.toast",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-inverse-surface": {
+      "accessor": "ts.colors.onToast",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.primary": {
+      "accessor": "ts.colors.primary",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.primary-soft": {
+      "accessor": "ts.colors.primarySoft",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-primary": {
+      "accessor": "ts.colors.onPrimary",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.action": {
+      "accessor": "ts.colors.action",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.action-soft": {
+      "accessor": "ts.colors.actionSoft",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-action": {
+      "accessor": "ts.colors.onAction",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.secondary": {
+      "accessor": "ts.colors.secondary",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.secondary-soft": {
+      "accessor": "ts.colors.secondarySoft",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-secondary": {
+      "accessor": "ts.colors.onSecondary",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.error": {
+      "accessor": "ts.colors.error",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.error-soft": {
+      "accessor": "ts.colors.errorSoft",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-error": {
+      "accessor": "ts.colors.onError",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.success": {
+      "accessor": "ts.colors.success",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.success-soft": {
+      "accessor": "ts.colors.successSoft",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-success": {
+      "accessor": "ts.colors.onSuccess",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.warning": {
+      "accessor": "ts.colors.warning",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.warning-soft": {
+      "accessor": "ts.colors.warningSoft",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-warning": {
+      "accessor": "ts.colors.onWarning",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.info": {
+      "accessor": "ts.colors.info",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.on-info": {
+      "accessor": "ts.colors.onInfo",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.border": {
+      "accessor": "ts.colors.border",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.outline": {
+      "accessor": "ts.colors.outline",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.divider": {
+      "accessor": "ts.colors.divider",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.disabled": {
+      "accessor": "ts.colors.disabled",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.scrim": {
+      "accessor": "ts.colors.scrim",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.display": {
+      "accessor": "ts.textStyle.display",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.headline": {
+      "accessor": "ts.textStyle.headline",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.title-lg": {
+      "accessor": "ts.textStyle.titleLg",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.title": {
+      "accessor": "ts.textStyle.title",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.title-sm": {
+      "accessor": "ts.textStyle.titleSm",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.subtitle": {
+      "accessor": "ts.textStyle.subtitle",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.body-lg": {
+      "accessor": "ts.textStyle.bodyLg",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.content": {
+      "accessor": "ts.textStyle.content",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.body-sm": {
+      "accessor": "ts.textStyle.bodySm",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.label": {
+      "accessor": "ts.textStyle.label",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.caption": {
+      "accessor": "ts.textStyle.caption",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.caption-strong": {
+      "accessor": "ts.textStyle.captionStrong",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.micro": {
+      "accessor": "ts.textStyle.micro",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.numeric-display": {
+      "accessor": "ts.textStyle.numericDisplay",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.numeric-title": {
+      "accessor": "ts.textStyle.numericTitle",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "typography.numeric-content": {
+      "accessor": "ts.textStyle.numericContent",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "radius.mark": {
+      "accessor": "ts.radius.xs",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "radius.control-compact": {
+      "accessor": "ts.radius.sm",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "radius.control": {
+      "accessor": "ts.radius.md",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "radius.surface": {
+      "accessor": "ts.radius.lg",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "radius.overlay": {
+      "accessor": "ts.radius.xl",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "radius.pill": {
+      "accessor": "ts.radius.full",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.control-compact": {
+      "accessor": "ts.sizing.controlSm",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.control": {
+      "accessor": "ts.sizing.controlMd",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.control-large": {
+      "accessor": "ts.sizing.controlLg",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.touch": {
+      "accessor": "ts.sizing.touch",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.icon-inline": {
+      "accessor": "ts.sizing.iconSm",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.icon-compact": {
+      "accessor": "ts.sizing.iconCompact",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.icon": {
+      "accessor": "ts.sizing.iconMd",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.icon-prominent": {
+      "accessor": "ts.sizing.iconLg",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.avatar-compact": {
+      "accessor": "ts.sizing.avatarSm",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.avatar": {
+      "accessor": "ts.sizing.avatarMd",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.avatar-large": {
+      "accessor": "ts.sizing.avatarLg",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.navigation-bar": {
+      "accessor": "ts.sizing.bottomNavigation",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.stroke": {
+      "accessor": "ts.sizing.progressStroke",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.indicator": {
+      "accessor": "ts.sizing.indicatorThickness",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.caret": {
+      "accessor": "ts.sizing.caret",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.marker": {
+      "accessor": "ts.sizing.stepDot",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "border.width": {
+      "accessor": "ts.border.widthHairline",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "border.width-strong": {
+      "accessor": "ts.border.widthStrong",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "border.width-accent": {
+      "accessor": "ts.border.accentWidth",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "border.hairline": {
+      "accessor": "ts.border.hairline",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "border.default": {
+      "accessor": "ts.border.defaultBorder",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "border.focus": {
+      "accessor": "ts.border.focus",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "elevation.surface": {
+      "accessor": "ts.elevation.surface",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "elevation.raised": {
+      "accessor": "ts.elevation.raised",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "elevation.floating": {
+      "accessor": "ts.elevation.floating",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "elevation.menu": {
+      "accessor": "ts.elevation.menu",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "elevation.overlay": {
+      "accessor": "ts.elevation.overlay",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "opacity.disabled": {
+      "accessor": "ts.opacity.disabled",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "opacity.translucent": {
+      "accessor": "ts.opacity.translucent",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "opacity.hover": {
+      "accessor": "ts.opacity.hover",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "opacity.pressed": {
+      "accessor": "ts.opacity.pressed",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.duration-short": {
+      "accessor": "ts.motion.durationFast",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.duration-medium": {
+      "accessor": "ts.motion.durationNormal",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.duration-long": {
+      "accessor": "ts.motion.durationSlow",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.easing-standard": {
+      "accessor": "ts.motion.easingStandard",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.easing-emphasized": {
+      "accessor": "ts.motion.easingEmphasized",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.easing-gentle": {
+      "accessor": "ts.motion.easingGentle",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.press-scale": {
+      "accessor": "ts.motion.scalePressed",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "motion.press-scale-strong": {
+      "accessor": "ts.motion.scalePressedStrong",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "surface.glass-backdrop": {
+      "accessor": "ts.effect.glassBackdropBlur",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "asset.brand-mark": {
+      "accessor": "ts.assets.brandMark",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "asset.brand-wordmark": {
+      "accessor": "ts.assets.brandWordmark",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "asset.launch-image": {
+      "accessor": "ts.assets.launchImage",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "asset.empty-illustration": {
+      "accessor": "ts.assets.emptyIllustration",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.xs": {
+      "accessor": "ts.spacing.xs",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.sm": {
+      "accessor": "ts.spacing.sm",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.md": {
+      "accessor": "ts.spacing.md",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.lg": {
+      "accessor": "ts.spacing.lg",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.xxs": {
+      "accessor": "ts.spacing.xxs",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.sm-plus": {
+      "accessor": "ts.spacing.smPlus",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.lg-plus": {
+      "accessor": "ts.spacing.lgPlus",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "spacing.2xl": {
+      "accessor": "ts.spacing.xxl",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "bottom-sheet.duration": {
+      "accessor": "ts.motion.durationSheet",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "flow-sheet.gap": {
+      "accessor": "ts.spacing.xsPlus",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "flow-sheet.duration": {
+      "accessor": "ts.motion.durationSheet",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "menu.menu-item-height": {
+      "accessor": "ts.sizing.menuItem",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "menu.offset": {
+      "accessor": "ts.spacing.xsPlus",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "primary-tabs.active-color": {
+      "accessor": "ts.colors.sectionTabActive",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "progress.gap": {
+      "accessor": "ts.spacing.xsPlus",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "progress.track-height": {
+      "accessor": "ts.sizing.progressTrack",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "scrollable-data-list.action-min-width": {
+      "accessor": "ts.sizing.refreshActionMinWidth",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "scrollable-data-list.action-height": {
+      "accessor": "ts.sizing.refreshActionHeight",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "secondary-tabs.active-color": {
+      "accessor": "ts.colors.secondaryTabActive",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "secondary-tabs.indicator": {
+      "accessor": "ts.colors.secondaryIndicator",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "tab-viewport.duration": {
+      "accessor": "ts.motion.durationTabViewport",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "tabbar.active": {
+      "accessor": "ts.colors.navigationActive",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "textarea.rows": {
+      "accessor": "ts.sizing.textareaRows",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "toast.gap": {
+      "accessor": "ts.spacing.toastGap",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "toast.duration": {
+      "accessor": "ts.motion.durationToast",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.panel-medium": {
+      "accessor": "ts.sizing.panelMedium",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.panel-large": {
+      "accessor": "ts.sizing.panelLarge",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "badge.label-size": {
+      "accessor": "ts.sizing.badgeLabelSize",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.glass-tint": {
+      "accessor": "ts.colors.glassTint",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.glass-clear": {
+      "accessor": "ts.colors.glassClear",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "color.glass-edge": {
+      "accessor": "ts.colors.glassEdge",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "border.glass": {
+      "accessor": "ts.border.glass",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "elevation.glass": {
+      "accessor": "ts.elevation.glass",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.brand": {
+      "accessor": "ts.sizing.brand",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.plot": {
+      "accessor": "ts.sizing.plot",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.ring": {
+      "accessor": "ts.sizing.ring",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "tabbar.selection-tint": {
+      "accessor": "ts.colors.tabbarSelectionTint",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "primary-tabs.selection-tint": {
+      "accessor": "ts.colors.primaryTabsSelectionTint",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "button.glass-primary-tint": {
+      "accessor": "ts.colors.buttonGlassPrimaryTint",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "icon-button.glass-primary-tint": {
+      "accessor": "ts.colors.iconButtonGlassPrimaryTint",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "tracking.display": {
+      "accessor": "ts.textStyle.trackingDisplay",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "tracking.heading": {
+      "accessor": "ts.textStyle.trackingHeading",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "tracking.label": {
+      "accessor": "ts.textStyle.trackingLabel",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "tracking.caption": {
+      "accessor": "ts.textStyle.trackingCaption",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "size.action-min-inline": {
+      "accessor": "ts.sizing.actionMinInline",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "effect.artwork-shadow": {
+      "accessor": "ts.effect.artworkShadow",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "opacity.data-low": {
+      "accessor": "ts.opacity.dataLow",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "opacity.data-medium": {
+      "accessor": "ts.opacity.dataMedium",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    },
+    "opacity.data-high": {
+      "accessor": "ts.opacity.dataHigh",
+      "import": "lib/theme/proto_bridge_tokens.dart",
+      "definition": "lib/theme/proto_bridge_tokens.dart"
+    }
+  },
+  "queryExclusions": []
+}
