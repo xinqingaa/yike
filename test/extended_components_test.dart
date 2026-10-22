@@ -242,7 +242,11 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.byTooltip('打开明细'));
+    await tester.tap(find.text('明细'));
+    expect(event, ('settings', 'details'));
+    event = null;
+    final row = tester.getRect(find.byKey(const ValueKey('settings/details')));
+    await tester.tapAt(Offset(row.right - 70, row.center.dy));
     expect(event, ('settings', 'details'));
     await tester.tap(find.byType(Switch));
     expect(event, ('settings', 'reminder', true));

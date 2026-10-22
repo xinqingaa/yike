@@ -21,6 +21,7 @@ class CommonLaunchScreen extends StatelessWidget {
     this.illustration,
     this.content,
     this.actions,
+    this.footer,
   });
   final String brandName;
   final String title;
@@ -33,11 +34,56 @@ class CommonLaunchScreen extends StatelessWidget {
   final Widget? illustration;
   final Widget? content;
   final Widget? actions;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
     final asset = ts.assets.launchImage;
+    if (mode == CommonLaunchMode.launch) {
+      return ColoredBox(
+        color: ts.colors.surface,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(ts.spacing.lg),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              brand ??
+                                  CommonBrandMark(
+                                    name: brandName,
+                                    layout: CommonBrandLayout.stacked,
+                                  ),
+                              ?illustration,
+                              if (content != null) ...[
+                                SizedBox(height: ts.spacing.lg),
+                                content!,
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (footer != null)
+                Padding(padding: EdgeInsets.all(ts.spacing.lg), child: footer!),
+            ],
+          ),
+        ),
+      );
+    }
     return ColoredBox(
       color: ts.colors.surface,
       child: SafeArea(

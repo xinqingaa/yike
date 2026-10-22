@@ -68,13 +68,15 @@ class CommonGroupedList extends StatelessWidget {
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: ts.spacing.md,
+                    horizontal: ts.spacing.none,
                     vertical: ts.spacing.sm,
                   ),
                   child: Text(group.title, style: ts.textStyle.captionStrong),
                 ),
                 CommonCard(
                   padding: EdgeInsets.zero,
+                  margin: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

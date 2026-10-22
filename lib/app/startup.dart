@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../common/widgets/navigation/launch_screen.dart';
+import '../features/launch/pages/launch_page.dart';
 import '../storage/app_prefs.dart';
 import '../storage/providers.dart';
 import '../theme/ts.dart';
@@ -44,6 +44,9 @@ class _StartupBodyState extends ConsumerState<_StartupBody> {
         final ts = TS(
           brightness: MediaQuery.platformBrightnessOf(context),
           metrics: metrics,
+          pack: generatedThemePacks.firstWhere(
+            (pack) => pack.id == 'yike/mechanical',
+          ),
         );
         return MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -65,10 +68,7 @@ class _StartupBodyState extends ConsumerState<_StartupBody> {
                         ],
                       ),
                     )
-                  : const CommonLaunchScreen(
-                      brandName: 'PBWork',
-                      mode: CommonLaunchMode.launch,
-                    ),
+                  : const YikeLaunchPage(),
             ),
           ),
         );

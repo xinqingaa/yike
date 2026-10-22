@@ -20,6 +20,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showAction = false,
     this.actionIcon = CommonIconName.more,
     this.actionLabel = '更多操作',
+    this.actionText,
     this.onAction,
     this.background = CommonAppBarSurface.theme,
   });
@@ -33,6 +34,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showAction;
   final CommonIconName actionIcon;
   final String actionLabel;
+  final String? actionText;
   final VoidCallback? onAction;
   final CommonAppBarSurface background;
 
@@ -78,7 +80,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: ts.elevation.none,
-      shape: glass ? null : Border(bottom: ts.border.hairline),
+      shape: transparent ? null : Border(bottom: ts.border.hairline),
       leading: showBack
           ? CommonIconButton(
               name: CommonIconName.chevronRight,
@@ -90,13 +92,20 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
           : null,
       actions: showAction
           ? [
-              CommonIconButton(
-                name: actionIcon,
-                label: actionLabel,
-                onPressed: onAction,
-                size: CommonControlSize.sm,
-                variant: CommonIconButtonVariant.text,
-              ),
+              if (actionText != null)
+                CommonButton(
+                  label: actionText!,
+                  kind: CommonButtonKind.quiet,
+                  onPressed: onAction,
+                )
+              else
+                CommonIconButton(
+                  name: actionIcon,
+                  label: actionLabel,
+                  onPressed: onAction,
+                  size: CommonControlSize.sm,
+                  variant: CommonIconButtonVariant.text,
+                ),
             ]
           : null,
     );

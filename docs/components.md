@@ -97,3 +97,11 @@
 - 精确 DS component id 落点以 [proto-bridge.md](proto-bridge.md) 与工程根目录 `../proto-bridge.target.json` 为准；映射不是靠本表的外观描述推断。
 
 PrimaryTabs 本身只提供选择条，TabView 是可选的独立视口。局部范围或模式选择使用选择条和受控回调，不创建空 TabView。
+
+## 一刻修复后的共享组件行为
+
+`CommonPrimaryTabs.size` 支持 `md`（controlMd 轨道）和 `sm`（controlSm 轨道），选中面使用上下 xs 内缩。`CommonTabView` 持有真实的可滑动面板；受控业务确认由页面 Provider 协调。
+
+`CommonListCell` 导航行的标题、数值和留白共用整行 InkWell，箭头仅用于提示。普通文字行以 content 行高加上下 md 内边距布局，避免嵌套箭头按钮把行撑到 76px。开关行保留独立开关触摸范围，行背景点击也能切换；disabled 禁止两种入口。`CommonGroupedList` 标题与容器左边对齐，无额外卡片外边距，并裁剪整行反馈到容器圆角。
+
+`AppPop.sheet` 与 `flowSheet` 显式传递 slideOffset=1，业务等待会在 dismissed 完成后返回，以便串联确认层时保留完整退场。

@@ -4,4 +4,7 @@
 /// entry from the screen's feature flow when needed.
 abstract final class AppRoutes {
   static const bootstrap = '/';
+  static const home = '/home';
+  static const settings = '/settings';
+  static const habitDetail = '/habit';
 }

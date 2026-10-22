@@ -22,6 +22,7 @@ class CommonButton extends ConsumerStatefulWidget {
     this.block = false,
     this.disabled = false,
     this.shape = CommonButtonShape.rounded,
+    this.destructive = false,
     this.material = CommonSurfaceMaterial.solid,
   });
 
@@ -32,6 +33,7 @@ class CommonButton extends ConsumerStatefulWidget {
   final bool loading;
   final bool block;
   final bool disabled;
+  final bool destructive;
   final CommonButtonShape shape;
   final CommonSurfaceMaterial material;
 
@@ -65,8 +67,8 @@ class _CommonButtonState extends ConsumerState<CommonButton> {
       CommonButtonKind.secondary => ts.colors.action,
       CommonButtonKind.accent => ts.colors.onPrimary,
       CommonButtonKind.danger => ts.colors.onError,
-      CommonButtonKind.outlined ||
-      CommonButtonKind.quiet => ts.colors.onSurface,
+      CommonButtonKind.outlined || CommonButtonKind.quiet =>
+        widget.destructive ? ts.colors.primary : ts.colors.onSurface,
     };
     final radius = BorderRadius.circular(
       widget.shape == CommonButtonShape.pill ? ts.radius.full : ts.radius.md,
@@ -93,7 +95,9 @@ class _CommonButtonState extends ConsumerState<CommonButton> {
                   ? null
                   : Border.all(
                       color: widget.kind == CommonButtonKind.outlined
-                          ? ts.colors.outline
+                          ? (widget.destructive
+                                ? ts.colors.primary
+                                : ts.colors.outline)
                           : background,
                       width: ts.border.widthHairline,
                     ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/ts.dart';
 import '../action/icon.dart';
-import '../action/icon_button.dart';
 import '../composition/density.dart';
 import '../input/switch_control.dart';
 
@@ -34,8 +33,19 @@ class CommonListCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
-    return Semantics(
+    final action = disabled
+        ? null
+        : switchValue != null
+        ? (onSwitchChanged == null
+              ? null
+              : () => onSwitchChanged!(!switchValue!))
+        : navigation
+        ? onNavigate
+        : null;
+    final content = Semantics(
       container: true,
+      button: navigation,
+      enabled: !disabled,
       child: Opacity(
         opacity: disabled ? ts.opacity.disabled : ts.opacity.visible,
         child: ConstrainedBox(
@@ -43,7 +53,9 @@ class CommonListCell extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: ts.spacing.md,
-              vertical: density == CommonDensity.compact
+              vertical: switchValue != null
+                  ? ts.spacing.xxs
+                  : density == CommonDensity.compact
                   ? ts.spacing.xs
                   : ts.spacing.md,
             ),
@@ -71,21 +83,34 @@ class CommonListCell extends StatelessWidget {
                 if (switchValue != null)
                   CommonSwitch(
                     value: switchValue!,
-                    enabled: !disabled,
+                    enabled: !disabled && onSwitchChanged != null,
                     onChanged: onSwitchChanged,
                   )
                 else if (navigation)
-                  CommonIconButton(
-                    name: CommonIconName.chevronRight,
-                    label: '打开$title',
-                    disabled: disabled,
-                    variant: CommonIconButtonVariant.text,
-                    onPressed: onNavigate,
+                  Padding(
+                    padding: EdgeInsets.only(left: ts.spacing.sm),
+                    child: CommonIcon(
+                      name: CommonIconName.chevronRight,
+                      dimension: ts.sizing.iconSm,
+                      color: ts.colors.onSurfaceMuted,
+                    ),
                   ),
               ],
             ),
           ),
         ),
+      ),
+    );
+    return Tooltip(
+      message: navigation ? '打开$title' : title,
+      child: InkWell(
+        onTap: action,
+        overlayColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.pressed)
+              ? ts.colors.primary.withValues(alpha: ts.opacity.pressed)
+              : null,
+        ),
+        child: content,
       ),
     );
   }

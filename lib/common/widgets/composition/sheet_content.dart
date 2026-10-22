@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/ts.dart';
 import '../action/button.dart';
+import '../display/divider.dart';
 
 /// Shared decision row. Layout policy lives here, callbacks belong to the caller.
 class CommonDecisionActions extends StatelessWidget {
@@ -15,6 +16,7 @@ class CommonDecisionActions extends StatelessWidget {
       CommonButtonKind.primary,
       CommonButtonKind.accent,
       CommonButtonKind.danger,
+      CommonButtonKind.outlined,
     };
     if (actions.length > 2 ||
         !primary.contains(actions.last.kind) ||
@@ -64,7 +66,7 @@ class CommonFlowSheetContent extends StatelessWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(ts.spacing.md),
+            padding: EdgeInsets.symmetric(horizontal: ts.spacing.md),
             child: body,
           ),
         ),
@@ -83,12 +85,15 @@ class CommonFlowSheetContent extends StatelessWidget {
                       ),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(ts.radius.full),
                           color: i == step
                               ? ts.colors.primary
                               : ts.colors.surfaceVariant,
                         ),
-                        child: SizedBox.square(dimension: ts.sizing.stepDot),
+                        child: SizedBox(
+                          height: ts.sizing.stepDot,
+                          width: ts.sizing.stepDot * (i == step ? 2.5 : 1),
+                        ),
                       ),
                     ),
                 ],
@@ -96,9 +101,16 @@ class CommonFlowSheetContent extends StatelessWidget {
             ),
           ),
         ),
+        SizedBox(height: ts.spacing.sm),
+        if (actions.isNotEmpty) const CommonDivider(),
         if (actions.isNotEmpty)
           Padding(
-            padding: EdgeInsets.all(ts.spacing.md),
+            padding: EdgeInsets.fromLTRB(
+              ts.spacing.md,
+              ts.spacing.smPlus,
+              ts.spacing.md,
+              0,
+            ),
             child: CommonDecisionActions(actions: actions),
           ),
       ],

@@ -43,7 +43,7 @@ theme    -> storage（仅主题偏好）
 
 只通过 `AppPrefs` 访问 MMKV。生产实现为 `MmkvAppPrefs`，由 `AppStartup` 等待初始化成功后 override `appPrefsProvider`。测试使用 `test/support/fake_app_prefs.dart`，不加载原生存储。当前偏好 key：
 
-- `theme_mode`：`light` | `dark`
+- `theme_mode`：`light` | `dark` | `system`（一刻默认跟随系统）
 - `theme_pack`：已注册的类型化主题包 ID
 
 不要为列表、表单、Evidence 固定文案或截图 Case 创建存储。需要新 key 时先改本文白名单，再改 `AppPrefs`。
@@ -72,3 +72,7 @@ theme    -> storage（仅主题偏好）
 - 不把临时展示数据误写成网络请求或持久化逻辑。
 - 不在 feature 中直接使用 `MMKV`。
 - 不为未被 Evidence 或产品需求证明的状态创建额外入口。
+
+## 一刻模块划分
+
+`focus` 拥有计时展示、计时偏好与专注记录模型；`habits` 拥有习惯模型与打卡状态；`review` 通过前两者的公开模块 API 消费记录，持有自己的周期选择；`settings` 通过公开模块 API 修改配置。`home` 组合三个入口，`launch` 负责启动展示。根 Tab 协调由 `app/navigation.dart` 提供，共用日期函数与 todayProvider 在 `common/time.dart`。

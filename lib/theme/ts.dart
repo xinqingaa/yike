@@ -11,6 +11,8 @@ import 'app_text_styles.dart';
 import 'app_tokens.dart';
 import 'app_metrics.dart';
 import 'theme_pack.dart';
+import 'theme_interpolation.dart';
+import 'dart:ui' show lerpDouble;
 
 export 'theme_pack.dart';
 
@@ -18,13 +20,15 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     final stored = ref.watch(appPrefsProvider).readThemeMode();
-    return stored == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    return switch (stored) {
+      'dark' => ThemeMode.dark,
+      'light' => ThemeMode.light,
+      _ => ThemeMode.system,
+    };
   }
 
   void setMode(ThemeMode mode) {
-    ref
-        .read(appPrefsProvider)
-        .writeThemeMode(mode == ThemeMode.dark ? 'dark' : 'light');
+    ref.read(appPrefsProvider).writeThemeMode(mode.name);
     state = mode;
   }
 
@@ -58,7 +62,10 @@ class ThemePackNotifier extends Notifier<AppThemePack> {
         .readString(AppPrefs.themePackKey);
     return packs.firstWhere(
       (pack) => pack.id == stored,
-      orElse: () => packs.first,
+      orElse: () => packs.firstWhere(
+        (pack) => pack.id == 'yike/mechanical',
+        orElse: () => packs.first,
+      ),
     );
   }
 
@@ -83,7 +90,41 @@ class TS extends ThemeExtension<TS> {
     this.pack = AppThemePack.base,
     this.metrics = const AppMetrics.identity(),
     AppColors? colors,
+    this.transitionFrom,
+    this.transitionTo,
+    this.transitionProgress = 1,
   }) : colors = colors ?? pack.colorsFor(brightness);
+
+  final TS? transitionFrom, transitionTo;
+  final double transitionProgress;
+  bool get _blending => transitionFrom != null && transitionTo != null;
+
+  /// Stable artwork endpoints, composited with the same progress as token colors.
+  Map<TS, double> get artworkThemes => _blending
+      ? {
+          for (final e in transitionFrom!.artworkThemes.entries)
+            e.key: e.value * (1 - transitionProgress),
+          for (final e in transitionTo!.artworkThemes.entries)
+            e.key: e.value * transitionProgress,
+        }
+      : {this: 1};
+  double get artworkAspectRatio => _blending
+      ? lerpDouble(
+          transitionFrom!.artworkAspectRatio,
+          transitionTo!.artworkAspectRatio,
+          transitionProgress,
+        )!
+      : pack.id.endsWith('water')
+      ? 368 / 236
+      : pack.id.endsWith('sundial')
+      ? 404 / 316
+      : 1;
+
+  TS forPack(AppThemePack value) => _blending
+      ? transitionFrom!
+            .forPack(value)
+            .lerp(transitionTo!.forPack(value), transitionProgress)
+      : TS(brightness: brightness, pack: value, metrics: metrics);
 
   final Brightness brightness;
   final AppThemePack pack;
@@ -92,25 +133,72 @@ class TS extends ThemeExtension<TS> {
   bool get isDark => brightness == Brightness.dark;
   late final AppTextStyles textStyle = AppTextStyles(
     colors: colors,
-    typography: metrics.typography(pack.typography),
+    typography: _typography,
   );
-  late final AppSpacing spacing = metrics.spacing(pack.spacing);
-  late final AppSizing sizing = metrics.sizing(pack.sizing);
-  late final AppRadius radius = metrics.radii(pack.radius);
-  AppOpacity get opacity => isDark ? pack.darkOpacity : pack.lightOpacity;
+  late final AppTypography _typography = _blending
+      ? ThemeInterpolation.typography(
+          transitionFrom!._typography,
+          transitionTo!._typography,
+          transitionProgress,
+        )
+      : metrics.typography(pack.typography);
+  late final AppSpacing spacing = _blending
+      ? ThemeInterpolation.spacing(
+          transitionFrom!.spacing,
+          transitionTo!.spacing,
+          transitionProgress,
+        )
+      : metrics.spacing(pack.spacing);
+  late final AppSizing sizing = _blending
+      ? ThemeInterpolation.sizing(
+          transitionFrom!.sizing,
+          transitionTo!.sizing,
+          transitionProgress,
+        )
+      : metrics.sizing(pack.sizing);
+  late final AppRadius radius = _blending
+      ? ThemeInterpolation.radius(
+          transitionFrom!.radius,
+          transitionTo!.radius,
+          transitionProgress,
+        )
+      : metrics.radii(pack.radius);
+  late final AppOpacity opacity = _blending
+      ? ThemeInterpolation.opacity(
+          transitionFrom!.opacity,
+          transitionTo!.opacity,
+          transitionProgress,
+        )
+      : isDark
+      ? pack.darkOpacity
+      : pack.lightOpacity;
   AppMotion get motion => pack.motion;
-  late final AppElevation elevation = metrics.elevation(
-    isDark ? pack.darkElevation : pack.lightElevation,
-  );
+  late final AppElevation elevation = _blending
+      ? ThemeInterpolation.elevation(
+          transitionFrom!.elevation,
+          transitionTo!.elevation,
+          transitionProgress,
+        )
+      : metrics.elevation(isDark ? pack.darkElevation : pack.lightElevation);
   late final AppBorderTokens border = AppBorderTokens(
     colors: colors,
     scale: metrics.radius,
   );
-  late final AppLayoutTokens layout = metrics.layout(pack.layout);
+  late final AppLayoutTokens layout = _blending
+      ? ThemeInterpolation.layouttokens(
+          transitionFrom!.layout,
+          transitionTo!.layout,
+          transitionProgress,
+        )
+      : metrics.layout(pack.layout);
   AppLayerTokens get layer => pack.layer;
-  late final AppEffectTokens effect = metrics.effect(
-    isDark ? pack.darkEffect ?? pack.effect : pack.effect,
-  );
+  late final AppEffectTokens effect = _blending
+      ? ThemeInterpolation.effect(
+          transitionFrom!.effect,
+          transitionTo!.effect,
+          transitionProgress,
+        )
+      : metrics.effect(isDark ? pack.darkEffect ?? pack.effect : pack.effect);
   AppAssets get assets => isDark ? pack.darkAssets ?? pack.assets : pack.assets;
 
   static TS of(BuildContext context) {
@@ -133,13 +221,17 @@ class TS extends ThemeExtension<TS> {
 
   @override
   TS lerp(covariant TS? other, double t) {
-    if (other == null) return this;
+    if (other == null || t <= 0) return this;
+    if (t >= 1) return other;
     final target = t < 0.5 ? this : other;
     return TS(
       brightness: target.brightness,
       metrics: target.metrics,
       pack: target.pack,
       colors: colors.lerp(other.colors, t),
+      transitionFrom: this,
+      transitionTo: other,
+      transitionProgress: t,
     );
   }
 

@@ -5,6 +5,8 @@ import 'liquid_glass_decoration.dart';
 import 'tab_item.dart';
 import '../display/glass_surface.dart';
 
+enum CommonPrimaryTabsSize { md, sm }
+
 /// 一级页内分区：官方 [TabBar] 承担布局、交互和选中面动画。
 class CommonPrimaryTabs extends StatelessWidget {
   const CommonPrimaryTabs({
@@ -16,6 +18,7 @@ class CommonPrimaryTabs extends StatelessWidget {
     this.showDivider = false,
     this.onSelected,
     this.disabled = false,
+    this.size = CommonPrimaryTabsSize.md,
   });
 
   final List<CommonTabItem> items;
@@ -24,13 +27,17 @@ class CommonPrimaryTabs extends StatelessWidget {
   final bool centered;
   final bool showDivider;
   final bool disabled;
+  final CommonPrimaryTabsSize size;
   final ValueChanged<String>? onSelected;
 
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
-    final trackHeight = ts.sizing.controlMd + ts.spacing.xs * 2;
-    final trackRadius = BorderRadius.circular(ts.radius.md);
+    final compact = size == CommonPrimaryTabsSize.sm;
+    final trackHeight = compact ? ts.sizing.controlSm : ts.sizing.controlMd;
+    final trackRadius = BorderRadius.circular(
+      compact ? ts.radius.sm : ts.radius.md,
+    );
 
     final track = CommonGlassSurface(
       key: const ValueKey('primary-tabs-track'),
@@ -57,8 +64,12 @@ class CommonPrimaryTabs extends StatelessWidget {
                       : TabAlignment.start,
                   labelColor: ts.colors.sectionTabActive,
                   unselectedLabelColor: ts.colors.onSurfaceMuted,
-                  labelStyle: ts.textStyle.label,
-                  unselectedLabelStyle: ts.textStyle.label,
+                  labelStyle: compact
+                      ? ts.textStyle.captionStrong
+                      : ts.textStyle.label,
+                  unselectedLabelStyle: compact
+                      ? ts.textStyle.captionStrong
+                      : ts.textStyle.label,
                   labelPadding: EdgeInsets.zero,
                   dividerColor: Colors.transparent,
                   dividerHeight: 0,
@@ -71,7 +82,9 @@ class CommonPrimaryTabs extends StatelessWidget {
                   indicator: LiquidGlassDecoration(
                     surfaceColor: ts.colors.primaryTabsSelectionTint,
                     opacity: ts.opacity.translucent,
-                    borderRadius: BorderRadius.circular(ts.radius.sm),
+                    borderRadius: BorderRadius.circular(
+                      compact ? ts.radius.xs : ts.radius.sm,
+                    ),
                     shadow: ts.elevation.floating,
                   ),
                   splashFactory: NoSplash.splashFactory,

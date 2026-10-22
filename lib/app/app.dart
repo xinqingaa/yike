@@ -14,13 +14,10 @@ class PbApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final pack = ref.watch(themePackProvider);
-    final brightness = mode == ThemeMode.dark
-        ? Brightness.dark
-        : Brightness.light;
     return AppViewport(
       builder: (context, metrics) {
         final theme = TS(
-          brightness: brightness,
+          brightness: Brightness.light,
           pack: pack,
           metrics: metrics,
         ).toThemeData();
@@ -35,6 +32,10 @@ class PbApp extends ConsumerWidget {
             metrics: metrics,
           ).toThemeData(),
           themeMode: mode,
+          themeAnimationDuration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : pack.motion.durationSlow,
+          themeAnimationCurve: pack.motion.easingStandard,
           navigatorKey: appNavigatorKey,
           navigatorObservers: [Pop.routeObserver],
           builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(

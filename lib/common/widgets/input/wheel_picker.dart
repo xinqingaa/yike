@@ -32,12 +32,14 @@ class CommonWheelPicker extends StatefulWidget {
     required this.values,
     required this.onChanged,
     this.label,
+    this.visibleRows = 5,
     this.disabled = false,
   });
   final List<CommonWheelColumn> columns;
   final List<Object> values;
   final ValueChanged<List<Object>>? onChanged;
   final String? label;
+  final int visibleRows;
   final bool disabled;
 
   @override
@@ -129,11 +131,13 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
         opacity: widget.disabled ? ts.opacity.disabled : ts.opacity.visible,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: ts.colors.surface,
+            color: widget.visibleRows == 3
+                ? Colors.transparent
+                : ts.colors.surface,
             borderRadius: BorderRadius.circular(ts.radius.lg),
           ),
           child: SizedBox(
-            height: rowHeight * 5,
+            height: rowHeight * widget.visibleRows,
             child: Row(
               children: [
                 for (var column = 0; column < widget.columns.length; column++)
@@ -178,7 +182,9 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
                   child: Container(
                     height: rowHeight,
                     decoration: BoxDecoration(
-                      color: ts.colors.surfaceRecessed,
+                      color: widget.visibleRows == 3
+                          ? ts.colors.surface
+                          : ts.colors.surfaceRecessed,
                       borderRadius: BorderRadius.circular(ts.radius.sm),
                     ),
                   ),

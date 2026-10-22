@@ -9,12 +9,12 @@ abstract class AppPrefs {
 
   String? readThemeMode() {
     final mode = readString(themeModeKey);
-    return mode == 'light' || mode == 'dark' ? mode : null;
+    return mode == 'light' || mode == 'dark' || mode == 'system' ? mode : null;
   }
 
   void writeThemeMode(String mode) {
-    if (mode != 'light' && mode != 'dark') {
-      throw ArgumentError.value(mode, 'mode', 'Must be light or dark.');
+    if (mode != 'light' && mode != 'dark' && mode != 'system') {
+      throw ArgumentError.value(mode, 'mode', 'Must be light, dark or system.');
     }
     writeString(themeModeKey, mode);
   }

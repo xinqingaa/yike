@@ -29,12 +29,7 @@ abstract final class AppPop {
     return SheetStyle(
       backgroundColor: ts.colors.surface,
       borderRadius: BorderRadius.vertical(top: Radius.circular(ts.radius.xl)),
-      padding: EdgeInsets.fromLTRB(
-        ts.spacing.md,
-        ts.spacing.sm,
-        ts.spacing.md,
-        ts.spacing.md,
-      ),
+      padding: EdgeInsets.fromLTRB(0, ts.spacing.sm, 0, ts.spacing.md),
       boxShadow: [ts.elevation.overlay],
       surface: _surface(context, material),
     );
@@ -45,6 +40,7 @@ abstract final class AppPop {
     String message, {
     String? actionLabel,
     VoidCallback? onAction,
+    double bottomInset = 0,
   }) {
     assert((actionLabel == null) == (onAction == null));
     final ts = TS.of(context);
@@ -53,7 +49,12 @@ abstract final class AppPop {
         horizontal: ts.spacing.md,
         vertical: ts.spacing.toastGap,
       ),
-      margin: EdgeInsets.all(ts.spacing.md),
+      margin: EdgeInsets.fromLTRB(
+        ts.spacing.md,
+        ts.spacing.md,
+        ts.spacing.md,
+        ts.spacing.md + bottomInset,
+      ),
       decoration: BoxDecoration(
         color: ts.colors.toast,
         borderRadius: BorderRadius.circular(ts.radius.md),
@@ -182,96 +183,106 @@ abstract final class AppPop {
     final ts = TS.of(context);
     final themes = InheritedTheme.capture(from: context, to: null);
     final radius = BorderRadius.circular(ts.radius.xl);
-    return await Pop.confirm(
-          ConfirmConfig(
-            title: title,
-            content: content,
-            barrier: PopupBarrierConfig(
-              color: ts.colors.scrim,
-              dismissible: false,
-            ),
-            style: ConfirmStyle(
-              borderRadius: radius,
-              surface: _surface(context, material),
-              decoration: BoxDecoration(
-                color: ts.colors.surface,
-                borderRadius: radius,
-              ),
-              titleStyle: ts.textStyle.title,
-              contentStyle: ts.textStyle.content,
-              contentPadding: EdgeInsets.fromLTRB(
-                ts.spacing.md,
-                ts.spacing.md,
-                ts.spacing.md,
-                ts.spacing.none,
-              ),
-              buttonPadding: EdgeInsets.fromLTRB(
-                ts.spacing.md,
-                ts.spacing.none,
-                ts.spacing.md,
-                ts.spacing.md,
-              ),
-              margin: EdgeInsets.all(ts.spacing.lg),
-              titleGap: ts.spacing.smPlus,
-              contentButtonGap: ts.spacing.lg,
-              buttonSpacing: ts.spacing.smPlus,
-            ),
-            confirmButton: (onTap) => themes.wrap(
-              CommonButton(
-                label: confirmText,
-                kind: danger
-                    ? CommonButtonKind.danger
-                    : CommonButtonKind.primary,
-                onPressed: onTap,
-                block: true,
-              ),
-            ),
-            cancelButton: (onTap) => themes.wrap(
-              CommonButton(
-                label: cancelText,
-                kind: CommonButtonKind.secondary,
-                onPressed: onTap,
-                block: true,
-              ),
-            ),
+    final popup = Pop.confirm(
+      ConfirmConfig(
+        title: title,
+        content: content,
+        barrier: PopupBarrierConfig(color: ts.colors.scrim, dismissible: false),
+        style: ConfirmStyle(
+          borderRadius: radius,
+          surface: _surface(context, material),
+          decoration: BoxDecoration(
+            color: ts.colors.surface,
+            borderRadius: radius,
           ),
-        ).result ??
-        false;
+          titleStyle: ts.textStyle.title,
+          textAlign: TextAlign.start,
+          contentStyle: ts.textStyle.content,
+          contentPadding: EdgeInsets.fromLTRB(
+            ts.spacing.md,
+            ts.spacing.md,
+            ts.spacing.md,
+            ts.spacing.none,
+          ),
+          buttonPadding: EdgeInsets.fromLTRB(
+            ts.spacing.md,
+            ts.spacing.none,
+            ts.spacing.md,
+            ts.spacing.md,
+          ),
+          margin: EdgeInsets.all(ts.spacing.lg),
+          titleGap: ts.spacing.smPlus,
+          contentButtonGap: ts.spacing.lg,
+          buttonSpacing: ts.spacing.smPlus,
+        ),
+        confirmButton: (onTap) => themes.wrap(
+          CommonButton(
+            label: confirmText,
+            kind: danger ? CommonButtonKind.danger : CommonButtonKind.primary,
+            onPressed: onTap,
+            block: true,
+          ),
+        ),
+        cancelButton: (onTap) => themes.wrap(
+          CommonButton(
+            label: cancelText,
+            kind: CommonButtonKind.secondary,
+            onPressed: onTap,
+            block: true,
+          ),
+        ),
+      ),
+    );
+    final result = await popup.result;
+    await popup.handleOrNull?.dismissed;
+    return result ?? false;
   }
 
   static Future<T?> sheet<T>(
     BuildContext context, {
     String? title,
-    required Widget Function(BuildContext context, PopupHandle<T> handle)
+    required Widget Function(BuildContext context, AppSheetActions<T> actions)
     builder,
     bool showCloseButton = true,
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) {
+  }) async {
     final ts = TS.of(context);
     final themes = InheritedTheme.capture(from: context, to: null);
-    return Pop.sheet<T>(
+    late PopupOpenResult<T> popup;
+    popup = Pop.sheet<T>(
       SheetConfig<T>(
         size: size,
         drag: drag,
         header: SheetHeaderConfig(
-          title: title,
-          showCloseButton: showCloseButton,
-          titleStyle: ts.textStyle.title,
-          padding: EdgeInsets.symmetric(vertical: ts.spacing.smPlus),
+          titleWidget: _header(
+            context,
+            title ?? '',
+            close: showCloseButton ? () => popup.handleOrNull?.dismiss() : null,
+          ),
+          showCloseButton: false,
         ),
         style: _sheetStyle(context, material),
         barrier: PopupBarrierConfig(color: ts.colors.scrim),
         animation: PopupAnimationConfig(
           type: PopupAnimationType.slideUp,
           duration: ts.motion.durationSheet,
+          slideOffset: 1,
         ),
         builder: (_, handle) => themes.wrap(
-          Builder(builder: (context) => builder(context, handle)),
+          Material(
+            type: MaterialType.transparency,
+            child: Builder(
+              builder: (context) => builder(context, AppSheetActions(handle)),
+            ),
+          ),
         ),
       ),
-    ).result;
+    );
+    final result = await popup.result;
+    await popup.handleOrNull?.dismissed;
+    return result;
   }
 
   static Future<R?> flowSheet<R>(
@@ -281,58 +292,115 @@ abstract final class AppPop {
     String? title,
     bool showCloseButton = true,
     Widget? headerStart,
+    Map<String, String> pageTitles = const {},
     SheetSizeConfig? size,
     SheetDragConfig drag = const SheetDragConfig(
       mode: SheetDragDismissMode.handleOnly,
     ),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) {
+  }) async {
     final ts = TS.of(context);
-    return Pop.flowSheet<R>(
+    final themes = InheritedTheme.capture(from: context, to: null);
+    late PopupOpenResult<R> popup;
+    popup = Pop.flowSheet<R>(
       FlowSheetConfig<R>(
         controller: controller,
         initialPage: initialPage,
         header: SheetHeaderConfig(
-          titleWidget: ListenableBuilder(
-            listenable: controller,
-            builder: (context, _) => Row(
-              children: [
-                if (controller.canPop)
-                  CommonIconButton(
-                    name: CommonIconName.chevronLeft,
-                    label: '返回上一步',
-                    variant: CommonIconButtonVariant.text,
-                    onPressed: controller.handleBack,
-                  )
-                else
-                  headerStart ?? SizedBox(width: ts.sizing.touch),
-                Expanded(
-                  child: Text(
-                    title ?? '',
-                    textAlign: TextAlign.center,
-                    style: ts.textStyle.title,
-                  ),
+          titleWidget: themes.wrap(
+            Material(
+              type: MaterialType.transparency,
+              child: ListenableBuilder(
+                listenable: controller,
+                builder: (context, _) => _header(
+                  context,
+                  controller.canPop
+                      ? (pageTitles[controller.entries.last.page.id] ??
+                            title ??
+                            '')
+                      : title ?? '',
+                  start: controller.canPop
+                      ? CommonIconButton(
+                          name: CommonIconName.chevronLeft,
+                          label: '返回上一步',
+                          variant: CommonIconButtonVariant.tonal,
+                          onPressed: controller.handleBack,
+                        )
+                      : headerStart,
+                  close: showCloseButton
+                      ? () => popup.handleOrNull?.dismiss()
+                      : null,
                 ),
-              ],
+              ),
             ),
           ),
-          showCloseButton: showCloseButton,
-          titleStyle: ts.textStyle.title,
+          showCloseButton: false,
         ),
         style: _sheetStyle(context, material),
         size:
             size ??
             SheetSizeConfig(
-              maxHeight: SheetDimension.fraction(ts.sizing.panelLarge),
+              height: SheetDimension.pixel(
+                ts.sizing.controlLg * 6 + ts.spacing.lg * 2,
+              ),
             ),
         drag: drag,
         animation: PopupAnimationConfig(
           type: PopupAnimationType.slideUp,
           duration: ts.motion.durationSheet,
+          slideOffset: 1,
         ),
         barrier: PopupBarrierConfig(color: ts.colors.scrim),
       ),
-    ).result;
+    );
+    final result = await popup.result;
+    await popup.handleOrNull?.dismissed;
+    return result;
+  }
+
+  static Widget _header(
+    BuildContext context,
+    String title, {
+    Widget? start,
+    VoidCallback? close,
+  }) {
+    final ts = TS.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        ts.spacing.md,
+        0,
+        ts.spacing.md,
+        ts.spacing.lg,
+      ),
+      child: SizedBox(
+        height: ts.sizing.touch,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: ts.sizing.touch),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: ts.textStyle.subtitle,
+              ),
+            ),
+            if (start != null)
+              Align(alignment: Alignment.centerLeft, child: start),
+            if (close != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: CommonIconButton(
+                  name: CommonIconName.x,
+                  label: '关闭',
+                  variant: CommonIconButtonVariant.tonal,
+                  onPressed: close,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   static Future<T?> dropMenu<T>(
@@ -419,4 +487,12 @@ class AppSheetAction<T> {
   final String label;
   final bool danger;
   final bool disabled;
+}
+
+/// Business result callbacks; SDK handles stay inside the popup facade.
+class AppSheetActions<T> {
+  AppSheetActions(this._handle);
+  final PopupHandle<T> _handle;
+  Future<void> complete([T? value]) => _handle.complete(value);
+  Future<void> dismiss() => _handle.dismiss();
 }

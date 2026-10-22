@@ -11,12 +11,15 @@ class CommonCard extends StatelessWidget {
     required this.child,
     this.elevated = false,
     this.padding,
+    this.margin,
+    this.clipBehavior = Clip.none,
     this.semanticRole = CommonCardSemanticRole.section,
   });
 
   final Widget child;
   final bool elevated;
-  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? padding, margin;
+  final Clip clipBehavior;
   final CommonCardSemanticRole semanticRole;
 
   @override
@@ -25,6 +28,8 @@ class CommonCard extends StatelessWidget {
     return Semantics(
       container: true,
       child: Card(
+        margin: margin,
+        clipBehavior: clipBehavior,
         color: ts.colors.surface,
         elevation: elevated ? ts.elevation.card : ts.elevation.none,
         shadowColor: ts.colors.scrim,

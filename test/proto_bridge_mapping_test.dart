@@ -172,12 +172,12 @@ void main() {
       expect(selection.shadow, ts.elevation.floating);
       expect(
         tester.getSize(find.byKey(const ValueKey('primary-tabs-track'))).height,
-        ts.sizing.controlMd + ts.spacing.xs * 2,
+        ts.sizing.controlMd,
       );
       expect(
         tester.getSize(find.byType(TabBar)).height -
             tabBar.indicatorPadding.vertical,
-        ts.sizing.controlMd,
+        ts.sizing.controlMd - ts.spacing.xs * 2,
       );
     },
   );
