@@ -2,7 +2,8 @@
   "version": 1,
   "technology": "flutter",
   "policyEntrypoints": [
-    "AGENts.md",
+    "AGENTS.md",
+    "docs/workflow.md",
     "docs/proto-bridge.md",
     "docs/components.md",
     "docs/theme.md"

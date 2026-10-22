@@ -381,7 +381,7 @@ abstract final class AppPop {
         ts.spacing.md,
         0,
         ts.spacing.md,
-        ts.spacing.lg,
+        0,
       ),
       child: SizedBox(
         height: ts.sizing.touch,

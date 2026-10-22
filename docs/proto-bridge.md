@@ -67,7 +67,7 @@ Producer Contract 决定职责、状态、布局、Token 槽和可观察行为�
 
 - AppBar、底部导航和各级 Tabs 使用官方组件。一级轨道使用 CommonGlassSurface，选中底由官方 TabBar.indicator 连续定位；底部导航在官方等宽目的地后绘制一份滑动选中面。次级 Tab 保留文字中心上三角。
 - CommonTabView 使用 TabBarView 与可配置保活；页面按区域关闭不需要的 swipe，Flutter Gesture Arena 负责仲裁。
-- CommonIcon 用 Image.asset 消费 DS 注册源的高分辨率图片，图标名称由导出器生成。仓库根 `node scripts/export-flutter-icons.mjs` 从同一 glyph-artwork 源导出，不使用同名字体图标替换。
+- CommonIcon 用 Image.asset 消费 DS 注册源的高分辨率图片，图标名称由导出器生成，不使用同名字体图标替换。来源、图层与颜色规则见 [资源规范](assets.md)。
 - Button 公开六种动作、rounded/pill 和 solid/glass；loading 保留文字并阻止重复触发，disabled 才降低整体透明度。
 - 字段标签独立放在官方输入表面上方。Checkbox、RadioGroup、Switch 的实例色槽必须由上下文 Theme Token 解析，不能传硬编码颜色；Switch 支持标签前后位置。
 - DataList 使用 ListView；ScrollableDataList 统一管理刷新、加载、异常和控制器释放。GroupedList 是外层滚动中的 Row 单元组合，不创建嵌套滚动。
@@ -91,14 +91,10 @@ Producer Contract 决定职责、状态、布局、Token 槽和可观察行为�
 
 条目 pending 表示该键待实现；`proto-bridge.sync.json` 的批次 pending 表示整个 surface 尚未确认同步，两者不同。同步基线固定 Schema、Contract、role、图标、Token、主题与绑定池的完整 fingerprint。稳定后用 verifier 输出整体更新，不能只改一个 digest。
 
-## 实现与验证
+## 平台外观与适配上下文
 
-固定 Handoff 的业务实现先按 Consumer Skill 读取 Screenshot、Screen packet、Case delta 和 Target readiness。按当前任务使用既有公开 API，不遍历 Store 或使用 active/latest 替代固定引用。
-
-运行 [原生与视觉检查](testing.md)、`node tool/ds-theme.mjs` 与 `node tool/ds-sync.mjs`。随后按固定范围报告状态、交互、结构、组件、Token、偏差和未验证项。没有对应设备或截图时不能宣称视觉验收通过。
+Flutter AppBar 保留玻璃背景及底边，去掉顶部/两侧边缘和环绕阴影；其状态栏样式根据实际合成背景显式指定，无 AppBar 页面由应用根提供默认样式。
 
 Core 的 [Target 适配器](../../proto-bridge/docs/architecture/proto-bridge.md) 只提供目标上下文，不把 Target 事实写入 Evidence。官方 Flutter MCP Runtime Review 属于保留实验，不要求目标携带专用 Driver、Case 副本或 build identity。
 
-图标源、所属原型与制作规则见 PBWork 的 Icon 规范；导出命令支持 `--prototype` 和 `--target`，只保留 3 倍 PNG，并按原稿保留透明度和颜色。`proto-bridge.icons.json` 固定当前选择范围、源摘要与逻辑尺寸，完整 DS 门禁检查名称和资源覆盖。Flutter AppBar 保留玻璃背景及底边，去掉顶部/两侧边缘和环绕阴影；其状态栏样式根据实际合成背景显式指定，无 AppBar 页面由应用根提供默认样式。
-
-图标颜色策略由原始 SVG 决定：自带颜色的原稿不得传入 Image.color 覆盖，currentColor 单色图形才跟随主题。主题资源清单中的 artwork 记录 PBWork SVG 的来源标识和摘要，以及所有命名图层的 PNG、viewBox 与尺寸；Flutter 不复制 SVG，不能靠文件名后缀推断依赖。
+交付、同步与 Review 入口统一见 [协作与工作流](workflow.md)，检查方式见 [测试与视觉验证](testing.md)。

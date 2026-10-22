@@ -1,5 +1,7 @@
 # 第一层弹层自查
 
+历史记录：以下为本次自查的范围和结果；当前未完成项与验证边界统一见 [已知缺口](../known-gaps.md)。
+
 固定引用：workspace `pbwork-local`；handoff `handoff-2026-10-22t083440493-0b17323b`；bundle `bundle-2026-10-22t082823167-26f4539d`；snapshot `snapshot-2026-10-22t083354783-d240a8ad`。原始 mandatoryRisks：`[]`。
 
 重新通过配置的 MCP stdio 读取 12 类代表截图及非 baseline 差量：专注的 abandon-confirm、switch-confirm、short-record、recovery、custom-duration；设置的 reset-confirm、configuration-open、record-threshold、threshold-custom；habit-editor/default；habit-detail/habit-records；review/day-detail。具体 case/blob/revision 见 layer-1 receipt。固定截图决定弹层类型，不能因名称含 confirm 就改成中心对话框。前三个确认中，只有短记录使用 Confirm，其余保留 Sheet。

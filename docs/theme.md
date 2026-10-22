@@ -11,9 +11,9 @@ Text('标题', style: ts.textStyle.title);
 
 `lib/theme/theme_pack.dart` 定义唯一的类型化主题模型；`generated_theme_packs.dart` 是 Core 解析表到 Flutter 的生成结果，不手工维护。身份使用 `packId/themeId`，明暗模式独立；注册表来自 `generatedThemePacks`，没有样例包或旧主题兼容实现。
 
-展示工程通过「主题」入口或右上角「展示设置」切换主题和浅深色，作用于所有页面、组件及弹层，并由 AppPrefs / MMKV 恢复。`themePackProvider` 与 `themeModeProvider` 是唯一选择状态；组件通过最近的 TS ThemeExtension 读取。
+一刻在设置页选择机械、水位或日影表盘，并独立选择浅色、深色或跟随系统。默认机械、跟随系统；选择作用于页面、组件及弹层，并经 AppPrefs 恢复。`themePackProvider` 与 `themeModeProvider` 是唯一选择状态；组件通过最近的 TS ThemeExtension 读取。
 
-在 Producer 仓库运行 `node scripts/export-flutter-themes.mjs` 默认同步全部包。指定 `--prototype <id>` 只选择真实原型绑定包及继承依赖；可配合 `--target <directory>`。公共基础组件保留为共享能力，不复制原型业务页面。主题的组件键也参与解析；资源按模式选择，仅输出高分辨率图片，组件明确设置逻辑尺寸。
+主题和资源的同步操作见 [DS Target Sync Skill](../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。主题的组件键也参与解析；资源按模式选择，仅输出高分辨率图片，组件明确设置逻辑尺寸。
 
 `proto-bridge.themes.json` 记录选择范围、主题与模式矩阵、源摘要和解析值。同步门禁同时核对生成的 Dart 内容和这个矩阵，不能只凭 accessor 存在或源端 fingerprint 声明主题已落地。固定 Handoff 实现仍以其中固定的主题表为准，不读取 active/latest。
 
@@ -27,11 +27,9 @@ Text('标题', style: ts.textStyle.title);
 
 ## 主题切换
 
-Material Theme 和 TS 使用同一主题包。颜色在主题动画中插值；非颜色 Token 在切换中采用对应端点值，避免枚举和资源出现无意义的中间值。组件不得缓存 BuildContext 对应的主题供其它页面使用。
+Material Theme 和 TS 使用同一主题包。`TS.lerp` 与 `theme_interpolation.dart` 连续插值颜色、文字、间距、尺寸、圆角、透明度、布局、阴影和效果参数。主题包身份、明暗枚举、motion、layer 与资源引用采用对应端点；表盘通过 `artworkThemes` 按同一进度混合原图层，比例连续插值。组件不得缓存 BuildContext 对应的主题供其它页面使用。
 
-## 同步门禁
-
-主题及映射修改运行 `node tool/ds-theme.mjs`，组件和完整 surface 运行 `node tool/ds-sync.mjs`。先验证所选主题矩阵与实际生成实现，再更新同步基线；未完成的部分保持 drift 或 pending 可见。
+主题过渡使用 `motion.durationSlow` 与 `motion.easingStandard`；系统减少动态效果时主题动画时长归零。相关检查见 [测试与视觉验证](testing.md)。
 
 ## 原稿与分层资源
 
@@ -39,7 +37,7 @@ Material Theme 和 TS 使用同一主题包。颜色在主题动画中插值；�
 
 PNG 按原始画布与主题 size.plot 中较大的宽度、3 倍像素密度计算。相同状态图层通过 `layerAsset` 显式共用，元数据指向唯一 PNG。资源按主题包选择范围同步；同步资源不代表已完成业务表盘动画。
 
-PBWork 提供原稿及状态图层的预览和手动下载。主题图形默认 1 倍 PNG，原始 SVG 直接下载；手动下载倍率独立于 Flutter 同步尺寸。同步检查读取 PBWork 源文件及摘要，检查 Flutter 元数据与 PNG 尺寸，不依赖 Target 内的 SVG 副本。
+资源来源、目录和精确复用见 [资源规范](assets.md)。同步检查读取 PBWork 源文件及摘要，检查 Flutter 元数据与 PNG 尺寸，不依赖 Target 内的 SVG 副本。
 
 ## 视口与文字适配
 

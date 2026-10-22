@@ -1,39 +1,33 @@
-# Yike
+# 一刻 · Yike
 
-`yike` 是从 flutter_pb_app 生成的产品 target 骨架。它继承 PBWork 主题/Token、公共组件、路由和测试底座，`lib/features/` 为空，等待固定 PBWork Handoff 落业务页面。
+一刻是本地使用的专注与习惯工具，面向工作、学习和日常习惯场景。打开即可开始专注，一次点击完成今天的习惯，再通过周月回顾查看时间与打卡的积累。
 
-## 快速开始
+应用围绕三个页面组织：
+
+- **专注**：番茄钟、正计时与计圈、倒计时。
+- **打卡**：习惯创建、打卡、详情、归档与管理。
+- **回顾**：周月统计、每日图形和日期明细。
+
+机械、水位、日影三套主题共享业务与导航，外观可选择浅色、深色或跟随系统。产品仅在本机保存，不包含账号、云同步或社交功能。
+
+## 当前实现
+
+Flutter 工程已有上述页面、设置和启动页，以及三主题、导航、表单和内存展示状态。当前仅主题与外观偏好接入持久化；真实计时、历史结算、业务保存与恢复尚未实现，业务动效和完整移动视觉验收也未完成。具体状态与待决事项见 [已知缺口](docs/known-gaps.md)。
+
+## 运行
 
 ```bash
 flutter pub get
-flutter analyze
-flutter test
-node tool/verify.mjs
-flutter run -d <device>
+flutter devices
+flutter run -d <device-id>
 ```
 
-## MCP
-
-MCP 已配置在 `.cursor/mcp.json`、`.codex/config.toml`、`.mcp.json`，统一指向 `tool/mcp.mjs`。Codex 需要 trust 本目录后才会加载项目级配置。
-
-PBWork 提示词里的目标路径必须与本目录一致；不一致时先运行：
-
-```bash
-node tool/target.mjs --bind
-```
+需要 Flutter SDK，Dart 版本须满足 `pubspec.yaml` 中的 `^3.12.0`。iOS 使用 Xcode 与 CocoaPods。完整检查和设备验证见 [测试与视觉验证](docs/testing.md)。
 
 ## 文档
 
-先读 [文档索引](docs/README.md)、[产品说明](docs/product.md)、[逻辑与交互](docs/logic-and-interactions.md)、[UI 与动效](docs/ui-design.md) 和 [已知缺口](docs/known-gaps.md)。产品文档本地读取，不通过 MCP 获取。
-
-- [工程架构](docs/architecture.md)
-- [组件](docs/components.md)
-- [Theme 与 Token](docs/theme.md)
-- [路由](docs/routing.md)
-- [测试](docs/testing.md)
-- [ProtoBridge 目标适配](docs/proto-bridge.md)
-- [Agent 工作流](docs/agent-workflow.md)
-
-## 验证
-
-`node tool/ds-theme.mjs` 验证当前 Token 清单；`node tool/ds-sync.mjs` 同时验证当前组件清单与当前 DS surface。
+- [产品说明](docs/product.md)：定位、范围和页面职责。
+- [逻辑与交互](docs/logic-and-interactions.md)：计时、习惯、保存恢复与统计规则。
+- [UI 与动效](docs/ui-design.md)：页面结构、三主题和体验要求。
+- [文档索引](docs/README.md)：工程规范、当前缺口与历史评审。
+- [协作与工作流](docs/workflow.md)：开发协作、审批、原型交付和验证要求。

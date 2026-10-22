@@ -1,6 +1,6 @@
 # 公共组件
 
-公共组件按 Producer 的职责分类位于 `lib/common/widgets/{action,input,display,navigation,data,charts}/`，Target 自己拥有的组合壳位于 `lib/common/widgets/composition/`，业务与测试统一从 `lib/common/widgets.dart` 导入。组件负责稳定的交互语义、尺寸和 Theme 映射；业务页面只传入数据、状态和回调。弹层统一走 `lib/common/overlay/app_pop.dart` 的 `AppPop`。
+一刻的公共组件按职责分类位于 `lib/common/widgets/{action,input,display,navigation,data,charts}/`，组合壳位于 `lib/common/widgets/composition/`，业务与测试统一从 `lib/common/widgets.dart` 导入。组件负责稳定的交互语义、尺寸和 Theme 映射；业务页面只传入数据、状态和回调。弹层统一走 `lib/common/overlay/app_pop.dart` 的 `AppPop`。
 
 目录分类只组织源码，不改变 `componentId` 或 role。`CommonFormSection` 等 Target 组合壳不得冒充 Producer 组件映射；当前 Producer Contract 均有具体 Dart 映射；`AppPop` 仍保持独立弹层边界，不由 Widget barrel 隐式导出。`PbPageTransitions` 承接 `screen-transition`，由 Theme 应用，不是页面可组合的业务 Widget。
 
@@ -26,7 +26,7 @@
 | `CommonButton`                     | 主要、次要、描边、强调、危险、轻量六种动作；页面不配色槽                     |
 | `CommonIconButton`                 | 单图标动作（含 loading）；必须提供 tooltip                       |
 | `PbPageTransitions`                | 栈级页面转场；默认 iOS 侧滑，可选 Android zoom                   |
-| `CommonPrimaryTabs`                | 玻璃轨道 + 官方 TabBar indicator 驱动的静态选中面 |
+| `CommonPrimaryTabs`                | 玻璃轨道 + 官方 TabBar indicator 连续定位的选中面 |
 | `CommonSecondaryTabs`              | 官方 TabBar + 从文字行盒定位的 10×5 caret 指示器                 |
 | `CommonTabView`                    | 官方 TabBarView 内容切换、页面保活与 swipe 所有权                           |
 | `CommonEmptyState`                 | 空数据或未配置状态                                               |
@@ -93,12 +93,12 @@
 - 先检查组件构造参数和相似页面，再决定视觉变体。
 - 组件内部已有的尺寸、圆角、边框和颜色必须优先通过 `TS` 继承。
 - Evidence 要求组件存在但本地组件参数不足时，先报告缺口，再决定是否扩展组件；不要在 feature 中手写第二份公共实现。
-- 组件示例以公共组件测试和展示目录为准；展示工程根部区分主题与组件，各类示例通过独立页面进入。
+- 组件用法以真实构造函数、公共组件测试和现有 feature 调用为准；一刻没有独立组件展示入口。
 - 精确 DS component id 落点以 [proto-bridge.md](proto-bridge.md) 与工程根目录 `../proto-bridge.target.json` 为准；映射不是靠本表的外观描述推断。
 
 PrimaryTabs 本身只提供选择条，TabView 是可选的独立视口。局部范围或模式选择使用选择条和受控回调，不创建空 TabView。
 
-## 一刻修复后的共享组件行为
+## 尺寸与交互约定
 
 `CommonPrimaryTabs.size` 支持 `md`（controlMd 轨道）和 `sm`（controlSm 轨道），选中面使用上下 xs 内缩。`CommonTabView` 持有真实的可滑动面板；受控业务确认由页面 Provider 协调。
 

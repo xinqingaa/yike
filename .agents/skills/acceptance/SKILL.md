@@ -10,7 +10,7 @@ description: >-
 
 # Acceptance
 
-本 Skill 只负责触发 Target 还原验收，不复制第二套消费流程或验收规则。
+本 Skill 只负责触发 Target 还原验收，不复制第二套消费流程或验收规则。通用协作与交付要求见 [协作与工作流](../../../docs/workflow.md)。
 
 ## 使用方式
 
