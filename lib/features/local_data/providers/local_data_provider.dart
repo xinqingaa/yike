@@ -1,10 +1,10 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/clock.dart';
 import '../../../storage/app_prefs.dart';
 import '../../../storage/providers.dart';
 import '../../focus/focus_models.dart';
 import '../models/local_data.dart';
+import '../models/local_data_prefs.dart';
 
 class LocalDataController extends Notifier<LocalDataState> {
   @override
@@ -12,28 +12,29 @@ class LocalDataController extends Notifier<LocalDataState> {
     final prefs = ref.watch(appPrefsProvider), now = ref.read(clockProvider)();
     ref.listen(clockPulseProvider, (_, value) => advance(value));
     try {
-      prefs.readString(AppPrefs.themePackKey);
-      prefs.readString(AppPrefs.themeModeKey);
-      final raw = prefs.readString(AppPrefs.snapshotKey);
-      var data = raw == null
-          ? YikeData.initial(now)
-          : YikeData.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      prefs.read(AppPrefs.themePack);
+      prefs.read(AppPrefs.themeMode);
+      final stored = prefs.read(localDataPrefs);
+      var data = stored ?? YikeData.initial(now);
       final restored = FocusEngine.recover(data.focus);
       final changed = !identical(restored, data.focus);
       data = data.copyWith(focus: restored);
       String? error;
-      if (raw == null || changed) {
+      if (stored == null || changed) {
         try {
-          prefs.writeString(AppPrefs.snapshotKey, jsonEncode(data.toJson()));
+          prefs.write(localDataPrefs, data);
         } catch (_) {
           error = '尚未保存，关闭后可能丢失，请重试';
         }
       }
       return LocalDataState(data: data, writeError: error);
-    } catch (_) {
+    } catch (error) {
       return LocalDataState(
         data: YikeData.initial(now),
-        readError: '本机数据无法读取或已损坏。原数据已保留，请重试读取或确认重置。',
+        readError:
+            error is PrefsException && error.cause is UnsupportedPrefsVersion
+            ? '本机数据版本暂不支持。原数据已保留，请更新应用或确认重置。'
+            : '本机数据无法读取或已损坏。原数据已保留，请重试读取或确认重置。',
       );
     }
   }
@@ -48,9 +49,7 @@ class LocalDataController extends Notifier<LocalDataState> {
     String? error = state.writeError;
     if (persist) {
       try {
-        ref
-            .read(appPrefsProvider)
-            .writeString(AppPrefs.snapshotKey, jsonEncode(data.toJson()));
+        ref.read(appPrefsProvider).write(localDataPrefs, data);
         error = null;
       } catch (_) {
         error = '尚未保存，关闭后可能丢失，请重试';

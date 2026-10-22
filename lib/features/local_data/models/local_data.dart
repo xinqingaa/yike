@@ -49,13 +49,11 @@ class YikeData {
         habits: habits ?? this.habits,
       );
   Map<String, dynamic> toJson() => {
-    'version': 1,
     'firstUsed': firstUsed,
     'focus': focus.toJson(),
     'habits': habits.map((h) => h.toJson()).toList(),
   };
   factory YikeData.fromJson(Map<String, dynamic> j) {
-    if (j['version'] != 1) throw const FormatException('Unsupported snapshot');
     final first = validDay(j['firstUsed']);
     final habits = (j['habits'] as List)
         .map((h) => HabitViewData.fromJson(h as Map<String, dynamic>))

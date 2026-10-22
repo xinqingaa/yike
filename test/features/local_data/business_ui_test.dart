@@ -5,6 +5,7 @@ import 'package:yike/app/app.dart';
 import 'package:yike/storage/providers.dart';
 import 'package:yike/app/navigation.dart';
 import 'package:yike/common/clock.dart';
+import 'package:yike/common/overlay/duration_sheet.dart';
 import 'package:yike/features/focus/focus.dart';
 import 'package:yike/features/focus/focus_models.dart';
 import 'package:yike/features/habits/habits.dart';
@@ -17,6 +18,42 @@ import '../../yike_ui_test.dart' show pumpYike, navigateTab;
 import 'local_data_test.dart' show FaultPrefs;
 
 void main() {
+  testWidgets(
+    'failed timing save keeps the sheet and retries the same configuration',
+    (tester) async {
+      final disk = FaultPrefs();
+      var app = await pumpYike(tester, preferences: disk);
+      await tester.tap(find.byTooltip('设置'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('专注时长'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ListWheelScrollView).at(1),
+          matching: find.text('26'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      disk.failWrite = true;
+      final old = disk.values[PrefsKey.snapshot.storageKey];
+      await tester.tap(find.text('确认'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DurationSheetBody), findsOneWidget);
+      expect(find.text('尚未保存，请重试；关闭后可能丢失'), findsOneWidget);
+      expect(disk.values[PrefsKey.snapshot.storageKey], old);
+      expect(app.read(timingPreferencesProvider).focusMinutes, 26);
+      disk.failWrite = false;
+      await tester.tap(find.text('确认'));
+      await tester.pumpAndSettle();
+      expect(find.byType(DurationSheetBody), findsNothing);
+      expect(app.read(localDataProvider).writeError, isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      app = await pumpYike(tester, preferences: disk);
+      expect(app.read(focusViewProvider).target, 26 * 60);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'countdown completion updates review and cold restart keeps one result',
     (tester) async {
@@ -137,7 +174,7 @@ void main() {
     'corrupt storage shows a blocking recovery state and preserves bytes',
     (tester) async {
       final disk = FaultPrefs();
-      disk.values[AppPrefs.snapshotKey] = '{corrupt';
+      disk.values[PrefsKey.snapshot.storageKey] = '{corrupt';
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(390, 844);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -149,7 +186,7 @@ void main() {
       expect(find.text('开始专注'), findsNothing);
       await tester.tap(find.text('重试读取'));
       await tester.pumpAndSettle();
-      expect(disk.values[AppPrefs.snapshotKey], '{corrupt');
+      expect(disk.values[PrefsKey.snapshot.storageKey], '{corrupt');
       expect(find.text('重置本机数据'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

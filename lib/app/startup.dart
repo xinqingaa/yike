@@ -28,6 +28,7 @@ class _StartupBody extends ConsumerStatefulWidget {
 class _StartupBodyState extends ConsumerState<_StartupBody> {
   late final _preferencesProvider = FutureProvider.autoDispose<AppPrefs>(
     (ref) => Future.sync(widget.openPreferences),
+    retry: (retryCount, error) => null,
   );
 
   @override
@@ -59,7 +60,14 @@ class _StartupBodyState extends ConsumerState<_StartupBody> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('应用准备失败，请重试'),
+                          Text(
+                            snapshot.error is PrefsOpenException &&
+                                    (snapshot.error as PrefsOpenException)
+                                            .failure ==
+                                        PrefsOpenFailure.damaged
+                                ? '本机存储文件损坏，原文件已保留，请检查后重试'
+                                : '本机存储暂不可用，请重试',
+                          ),
                           TextButton(
                             onPressed: () =>
                                 ref.invalidate(_preferencesProvider),

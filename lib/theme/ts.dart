@@ -22,7 +22,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   ThemeMode build() {
     String? stored;
     try {
-      stored = ref.watch(appPrefsProvider).readThemeMode();
+      stored = ref.watch(appPrefsProvider).read(AppPrefs.themeMode);
     } catch (_) {
       stored = null;
     }
@@ -36,7 +36,7 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   void setMode(ThemeMode mode) {
     ref
         .read(preferenceWriterProvider.notifier)
-        .save(AppPrefs.themeModeKey, mode.name);
+        .save(AppPrefs.themeMode, mode.name);
     state = mode;
   }
 
@@ -67,7 +67,7 @@ class ThemePackNotifier extends Notifier<AppThemePack> {
     }
     String? stored;
     try {
-      stored = ref.watch(appPrefsProvider).readString(AppPrefs.themePackKey);
+      stored = ref.watch(appPrefsProvider).read(AppPrefs.themePack);
     } catch (_) {
       stored = null;
     }
@@ -84,7 +84,7 @@ class ThemePackNotifier extends Notifier<AppThemePack> {
     final pack = ref
         .read(themePacksProvider)
         .firstWhere((pack) => pack.id == id);
-    ref.read(preferenceWriterProvider.notifier).save(AppPrefs.themePackKey, id);
+    ref.read(preferenceWriterProvider.notifier).save(AppPrefs.themePack, id);
     state = pack;
   }
 }

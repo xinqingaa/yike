@@ -36,12 +36,11 @@ class TimingPreferencesController extends Notifier<TimingPreferences> {
   @override
   TimingPreferences build() =>
       ref.watch(focusDataProvider.select((s) => s.preferences));
-  void set(TimingPreferences value) {
-    preferencesFromJson(preferencesJson(value));
-    ref.read(focusActionsProvider).configure(value);
-  }
+  bool set(TimingPreferences value) => ref
+      .read(focusActionsProvider)
+      .configure(preferencesFromJson(preferencesJson(value)));
 
-  void update(TimingPreferences Function(TimingPreferences) change) =>
+  bool update(TimingPreferences Function(TimingPreferences) change) =>
       set(change(state));
 }
 
@@ -114,9 +113,9 @@ class FocusActions {
     _commit(data.copyWith(countdown: seconds));
   }
 
-  void configure(TimingPreferences preferences) {
-    _commit(FocusEngine.advance(data, now).copyWith(preferences: preferences));
-  }
+  bool configure(TimingPreferences preferences) => _commit(
+    FocusEngine.advance(data, now).copyWith(preferences: preferences),
+  );
 }
 
 final focusActionsProvider = Provider<FocusActions>(

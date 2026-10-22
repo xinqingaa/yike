@@ -18,20 +18,26 @@ class FaultPrefs extends AppPrefs {
   bool failWrite = false, failRead = false;
   int writes = 0;
   @override
-  String? readString(String key) {
+  bool containsRaw(PrefsKey key) {
     if (failRead) throw StateError('read failed');
-    return values[key];
+    return values.containsKey(key.storageKey);
   }
 
   @override
-  void writeString(String key, String value) {
+  String? readRaw(PrefsKey key) {
+    if (failRead) throw StateError('read failed');
+    return values[key.storageKey];
+  }
+
+  @override
+  void writeRaw(PrefsKey key, String value) {
     if (failWrite) throw StateError('disk full');
     writes++;
-    values[key] = value;
+    values[key.storageKey] = value;
   }
 
   @override
-  void remove(String key) => values.remove(key);
+  void removeRaw(PrefsKey key) => values.remove(key.storageKey);
 }
 
 void main() {
@@ -240,15 +246,15 @@ void main() {
     () {
       for (final raw in [
         '{broken',
-        jsonEncode({'version': 999}),
+        jsonEncode({'schemaVersion': 999}),
       ]) {
         app.dispose();
-        disk.values[AppPrefs.snapshotKey] = raw;
+        disk.values[PrefsKey.snapshot.storageKey] = raw;
         app = open();
         expect(app.read(localDataProvider).readError, isNotNull);
         app.read(focusActionsProvider).start();
         expect(app.read(localDataProvider.notifier).retry(), isFalse);
-        expect(disk.values[AppPrefs.snapshotKey], raw);
+        expect(disk.values[PrefsKey.snapshot.storageKey], raw);
       }
       expect(app.read(localDataProvider.notifier).reset(), isTrue);
       expect(app.read(habitsProvider), hasLength(4));
@@ -258,19 +264,24 @@ void main() {
   test('invalid snapshot semantics reject rather than repair history', () {
     final wire = YikeData.initial(now).toJson();
     (wire['focus'] as Map<String, dynamic>)['cycles'] = -1;
-    disk.values[AppPrefs.snapshotKey] = jsonEncode(wire);
+    disk.values[PrefsKey.snapshot.storageKey] = jsonEncode({
+      'schemaVersion': 1,
+      'data': wire,
+    });
     expect(app.read(localDataProvider).readError, isNotNull);
     expect(
-      jsonDecode(disk.values[AppPrefs.snapshotKey]!)['focus']['cycles'],
+      jsonDecode(
+        disk.values[PrefsKey.snapshot.storageKey]!,
+      )['data']['focus']['cycles'],
       -1,
     );
   });
   test('read exception never writes defaults over old storage', () {
-    disk.values[AppPrefs.snapshotKey] = 'keep me';
+    disk.values[PrefsKey.snapshot.storageKey] = 'keep me';
     disk.failRead = true;
     expect(app.read(localDataProvider).readError, isNotNull);
     expect(disk.writes, 0);
-    expect(disk.values[AppPrefs.snapshotKey], 'keep me');
+    expect(disk.values[PrefsKey.snapshot.storageKey], 'keep me');
   });
   test('configuration round trips exact seconds, empty slots, and sound', () {
     app
@@ -294,6 +305,57 @@ void main() {
     app.read(focusActionsProvider).switchMode(TimerMode.countdown);
     expect(app.read(focusViewProvider).seconds, 90);
   });
+  test(
+    'configuration save failure retries the same values and preserves disk',
+    () {
+      final old = app.read(timingPreferencesProvider);
+      disk.failWrite = true;
+      final saved = app
+          .read(timingPreferencesProvider.notifier)
+          .update(
+            (p) => p.copyWith(threshold: 15, presets: [90, null, 1, 86399]),
+          );
+      expect(saved, isFalse);
+      expect(app.read(localDataProvider).writeError, isNotNull);
+      expect(app.read(timingPreferencesProvider).threshold, 15);
+      final previousApp = open();
+      expect(
+        previousApp.read(timingPreferencesProvider).threshold,
+        old.threshold,
+      );
+      previousApp.dispose();
+      disk.failWrite = false;
+      expect(app.read(localDataProvider.notifier).retry(), isTrue);
+      app.dispose();
+      app = open();
+      expect(app.read(timingPreferencesProvider).threshold, 15);
+      expect(app.read(timingPreferencesProvider).presets, [90, null, 1, 86399]);
+    },
+  );
+  test(
+    'new focus duration applies to future sessions and survives cold restore',
+    () {
+      final actions = app.read(focusActionsProvider);
+      actions.start();
+      final session = app.read(focusDataProvider).session!;
+      expect(
+        app
+            .read(timingPreferencesProvider.notifier)
+            .update((p) => p.copyWith(focusMinutes: 17, interval: 2)),
+        isTrue,
+      );
+      expect(app.read(focusDataProvider).session!.targetMs, session.targetMs);
+      expect(app.read(focusDataProvider).session!.longRest, session.longRest);
+      app.dispose();
+      app = open();
+      expect(app.read(focusViewProvider).paused, isTrue);
+      expect(app.read(focusViewProvider).target, 1500);
+      expect(app.read(timingPreferencesProvider).focusMinutes, 17);
+      app.read(focusActionsProvider).discard();
+      app.read(focusActionsProvider).start();
+      expect(app.read(focusViewProvider).target, 17 * 60);
+    },
+  );
   test(
     'appearance write failure keeps live choice and retry restores it on reopen',
     () {
@@ -319,12 +381,12 @@ void main() {
       a.selectCountdown(1);
       a.start();
       advance(const Duration(seconds: 1));
-      final old = disk.values[AppPrefs.snapshotKey];
+      final old = disk.values[PrefsKey.snapshot.storageKey];
       disk.failWrite = true;
       expect(app.read(localDataProvider.notifier).reset(), isFalse);
       expect(app.read(focusRecordsProvider), isEmpty);
       expect(app.read(habitsProvider), hasLength(4));
-      expect(disk.values[AppPrefs.snapshotKey], old);
+      expect(disk.values[PrefsKey.snapshot.storageKey], old);
       disk.failWrite = false;
       app.read(localDataProvider.notifier).retry();
       app.dispose();

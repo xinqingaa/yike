@@ -71,14 +71,14 @@ void main() {
     final second = container();
     addTearDown(second.dispose);
     expect(second.read(themePackProvider).id, customPack.id);
-    expect(prefs.readString(AppPrefs.themePackKey), customPack.id);
+    expect(prefs.read(AppPrefs.themePack), customPack.id);
   });
 
   test('removed package preference recovers to the registered default', () {
     final container = ProviderContainer(
       overrides: [
         appPrefsProvider.overrideWithValue(
-          FakeAppPrefs({AppPrefs.themePackKey: 'removed-package'}),
+          FakeAppPrefs({PrefsKey.themePack.storageKey: 'removed-package'}),
         ),
       ],
     );

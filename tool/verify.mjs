@@ -17,7 +17,7 @@ function run(command, args) {
 }
 
 await run('flutter', ['pub', 'get']);
-await run('dart', ['format', '--output=none', '--set-exit-if-changed', 'lib', 'test']);
+await run('dart', ['format', '--output=none', '--set-exit-if-changed', 'lib', 'test', 'integration_test']);
 await run('flutter', ['analyze']);
 await run('flutter', ['test']);
 await run(process.execPath, [path.join(pbRoot, 'scripts/verify-ds-target-sync.mjs'), '--target', projectRoot]);

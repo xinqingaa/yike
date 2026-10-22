@@ -52,15 +52,30 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('应用准备失败，请重试'), findsOneWidget);
+      expect(find.text('本机存储暂不可用，请重试'), findsOneWidget);
       await tester.tap(find.text('重试'));
       await tester.pump();
       expect(find.byType(CommonLaunchScreen), findsOneWidget);
-      expect(find.text('应用准备失败，请重试'), findsNothing);
+      expect(find.text('本机存储暂不可用，请重试'), findsNothing);
       retryReady.complete(FakeAppPrefs());
       await tester.pumpAndSettle();
       expect(find.byType(PbApp), findsOneWidget);
       expect(calls, 2);
+    },
+  );
+  testWidgets(
+    'damaged native storage stops startup without creating defaults',
+    (tester) async {
+      await tester.pumpWidget(
+        AppStartup(
+          openPreferences: () async {
+            throw const PrefsOpenException(PrefsOpenFailure.damaged);
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('本机存储文件损坏，原文件已保留，请检查后重试'), findsOneWidget);
+      expect(find.byType(PbApp), findsNothing);
     },
   );
 }

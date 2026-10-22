@@ -8,11 +8,14 @@ final class FakeAppPrefs extends AppPrefs {
   final Map<String, Object> _values;
 
   @override
-  String? readString(String key) => _values[key] as String?;
+  bool containsRaw(PrefsKey key) => _values.containsKey(key.storageKey);
 
   @override
-  void writeString(String key, String value) => _values[key] = value;
+  String? readRaw(PrefsKey key) => _values[key.storageKey] as String?;
 
   @override
-  void remove(String key) => _values.remove(key);
+  void writeRaw(PrefsKey key, String value) => _values[key.storageKey] = value;
+
+  @override
+  void removeRaw(PrefsKey key) => _values.remove(key.storageKey);
 }

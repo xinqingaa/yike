@@ -186,20 +186,21 @@ class YikeSettingsPage extends ConsumerWidget {
                   return;
                 }
                 if (item == 'interval') {
-                  final value = await AppPop.sheet<int>(
+                  await AppPop.sheet<int>(
                     context,
                     title: '长休间隔',
                     material: CommonSurfaceMaterial.glass,
                     builder: (context, handle) => _IntervalSheet(
                       initial: prefs.interval,
-                      onSave: handle.complete,
+                      onSave: (value) {
+                        final saved = ref
+                            .read(timingPreferencesProvider.notifier)
+                            .update((p) => p.copyWith(interval: value));
+                        if (saved) handle.complete(value);
+                        return saved;
+                      },
                     ),
                   );
-                  if (value != null) {
-                    ref
-                        .read(timingPreferencesProvider.notifier)
-                        .update((p) => p.copyWith(interval: value));
-                  }
                   return;
                 }
                 final initial = item == 'focus'
@@ -207,7 +208,7 @@ class YikeSettingsPage extends ConsumerWidget {
                     : item == 'short'
                     ? prefs.shortMinutes
                     : prefs.longMinutes;
-                final value = await pickYikeDuration(
+                await pickYikeDuration(
                   context,
                   title: item == 'focus'
                       ? '专注时长'
@@ -218,9 +219,7 @@ class YikeSettingsPage extends ConsumerWidget {
                   minimum: 60,
                   maximum: (item == 'focus' ? 180 : 60) * 60,
                   seconds: false,
-                );
-                if (value != null) {
-                  ref
+                  onConfirm: (value) => ref
                       .read(timingPreferencesProvider.notifier)
                       .update(
                         (p) => p.copyWith(
@@ -228,8 +227,8 @@ class YikeSettingsPage extends ConsumerWidget {
                           shortMinutes: item == 'short' ? value ~/ 60 : null,
                           longMinutes: item == 'long' ? value ~/ 60 : null,
                         ),
-                      );
-                }
+                      ),
+                );
               },
               onChanged: (_, item, value) => ref
                   .read(timingPreferencesProvider.notifier)
@@ -308,37 +307,55 @@ class YikeSettingsPage extends ConsumerWidget {
 class _IntervalSheet extends ConsumerStatefulWidget {
   const _IntervalSheet({required this.initial, required this.onSave});
   final int initial;
-  final ValueChanged<int> onSave;
+  final bool Function(int) onSave;
   @override
   ConsumerState<_IntervalSheet> createState() => _IntervalSheetState();
 }
 
 class _IntervalSheetState extends ConsumerState<_IntervalSheet> {
   late final _value = localValueProvider(widget.initial);
+  final _saveFailed = localValueProvider(false);
   @override
   Widget build(BuildContext context) => YikeSheetBody(
-    body: CommonWheelPicker(
-      visibleRows: 3,
-      columns: [
-        CommonWheelColumn(
-          id: 'interval',
-          label: '长休间隔',
-          unit: '轮',
-          numeric: true,
-          options: [
-            for (var i = 2; i <= 8; i++)
-              CommonWheelOption(value: i, label: '$i'),
+    body: Column(
+      children: [
+        CommonWheelPicker(
+          visibleRows: 3,
+          columns: [
+            CommonWheelColumn(
+              id: 'interval',
+              label: '长休间隔',
+              unit: '轮',
+              numeric: true,
+              options: [
+                for (var i = 2; i <= 8; i++)
+                  CommonWheelOption(value: i, label: '$i'),
+              ],
+            ),
           ],
+          values: [ref.watch(_value)],
+          onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
         ),
+        if (ref.watch(_saveFailed))
+          Text(
+            '尚未保存，请重试；关闭后可能丢失',
+            style: TS
+                .of(context)
+                .textStyle
+                .caption
+                .copyWith(color: TS.of(context).colors.error),
+          ),
       ],
-      values: [ref.watch(_value)],
-      onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
     ),
     actions: CommonButton(
       label: '确认',
       kind: CommonButtonKind.accent,
       block: true,
-      onPressed: () => widget.onSave(ref.read(_value)),
+      onPressed: () {
+        if (!widget.onSave(ref.read(_value))) {
+          ref.read(_saveFailed.notifier).set(true);
+        }
+      },
     ),
   );
 }
@@ -455,10 +472,14 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
     }
     final next = [...prefs.presets];
     next[widget.index] = value;
-    ref
+    final saved = ref
         .read(timingPreferencesProvider.notifier)
         .set(prefs.copyWith(presets: next));
-    widget.controller.pop();
+    if (saved) {
+      widget.controller.pop();
+    } else {
+      ref.read(_error.notifier).set('尚未保存，请重试；关闭后可能丢失');
+    }
   }
 
   @override
@@ -541,26 +562,43 @@ class _ThresholdOptions extends ConsumerStatefulWidget {
 
 class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
   late final _value = localValueProvider(widget.initial);
+  final _saveFailed = localValueProvider(false);
   @override
   Widget build(BuildContext context) {
     final options = {5, 10, 60, 180, 300, 600, widget.initial}.toList()..sort();
     return CommonFlowSheetContent(
       step: 0,
       stepCount: 2,
-      body: CommonWheelPicker(
-        visibleRows: 3,
-        columns: [
-          CommonWheelColumn(
-            id: 'threshold',
-            label: '记录确认阈值',
-            options: [
-              for (final value in options)
-                CommonWheelOption(value: value, label: durationLabel(value)),
+      body: Column(
+        children: [
+          CommonWheelPicker(
+            visibleRows: 3,
+            columns: [
+              CommonWheelColumn(
+                id: 'threshold',
+                label: '记录确认阈值',
+                options: [
+                  for (final value in options)
+                    CommonWheelOption(
+                      value: value,
+                      label: durationLabel(value),
+                    ),
+                ],
+              ),
             ],
+            values: [ref.watch(_value)],
+            onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
           ),
+          if (ref.watch(_saveFailed))
+            Text(
+              '尚未保存，请重试；关闭后可能丢失',
+              style: TS
+                  .of(context)
+                  .textStyle
+                  .caption
+                  .copyWith(color: TS.of(context).colors.error),
+            ),
         ],
-        values: [ref.watch(_value)],
-        onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
       ),
       actions: [
         CommonButton(
@@ -570,10 +608,14 @@ class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
           kind: CommonButtonKind.accent,
           block: true,
           onPressed: () {
-            ref
+            final saved = ref
                 .read(timingPreferencesProvider.notifier)
                 .update((p) => p.copyWith(threshold: ref.read(_value)));
-            widget.controller.closeAll();
+            if (saved) {
+              widget.controller.closeAll();
+            } else {
+              ref.read(_saveFailed.notifier).set(true);
+            }
           },
         ),
       ],
@@ -592,6 +634,7 @@ class _ThresholdCustom extends ConsumerStatefulWidget {
 class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
   late final _value = localValueProvider(widget.initial);
   final _invalid = localValueProvider(false);
+  final _saveFailed = localValueProvider(false);
   @override
   Widget build(BuildContext context) => CommonFlowSheetContent(
     step: 1,
@@ -614,6 +657,15 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
                 .caption
                 .copyWith(color: TS.of(context).colors.error),
           ),
+        if (ref.watch(_saveFailed))
+          Text(
+            '尚未保存，请重试；关闭后可能丢失',
+            style: TS
+                .of(context)
+                .textStyle
+                .caption
+                .copyWith(color: TS.of(context).colors.error),
+          ),
       ],
     ),
     actions: [
@@ -629,10 +681,14 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
             ref.read(_invalid.notifier).set(true);
             return;
           }
-          ref
+          final saved = ref
               .read(timingPreferencesProvider.notifier)
               .update((p) => p.copyWith(threshold: value));
-          widget.controller.closeAll();
+          if (saved) {
+            widget.controller.closeAll();
+          } else {
+            ref.read(_saveFailed.notifier).set(true);
+          }
         },
       ),
     ],

@@ -41,19 +41,19 @@ theme    -> storage（仅主题偏好）
 
 ## 本地存储
 
-只通过 `AppPrefs` 访问 MMKV。生产实现为 `MmkvAppPrefs`，由 `AppStartup` 等待初始化成功后 override `appPrefsProvider`。单元与 Widget 测试使用 `test/support/fake_app_prefs.dart`，原生集成测试单独验证真实 MMKV。当前偏好 key：
+只通过 `AppPrefs` 访问 MMKV。生产实现为 `MmkvAppPrefs`，由 `AppStartup` 等待初始化成功后 override `appPrefsProvider`。单元与 Widget 测试使用 `test/support/fake_app_prefs.dart`，原生集成测试单独验证真实 MMKV。生产实例为 `yike`，当前偏好 key：
 
 - `theme_mode`：`light` | `dark` | `system`（一刻默认跟随系统）
 - `theme_pack`：已注册的类型化主题包 ID
-- `yike_snapshot_v1`：版本化业务快照，包含初始化日期、计时偏好、会话、周期、专注记录、习惯与打卡身份。由 `features/local_data` 负责组合序列化和单 key 保存；feature 只通过 AppPrefs，禁止直接 MMKV。
+- `business_snapshot`：版本化业务快照，包含初始化日期、计时偏好、会话、周期、专注记录、习惯与打卡身份。由 `features/local_data` 负责组合序列化和单 key 保存；feature 只通过 AppPrefs，禁止直接 MMKV。
 
 计时与习惯各自保留模型与规则；跨模块快照协调放在 local_data 模块。公开的 focus_models.dart / habit_models.dart 只导出模型和纯逻辑，避免反向导入页面。单一 LocalData Notifier 拥有业务事实，页面 Provider 只派生投影；tick 不写存储，阶段边界和用户操作才保存。
 
 `app/local_data_boundary.dart` 处理读取阻断和保存失败重试；`storage/preference_writer.dart` 保留失败的外观写入。重置由 `app/reset_data.dart` 协调业务快照、外观、根导航、回顾选择和撤销提示，feature 不相互导入私有页面。业务快照为单 key 写入，外观两项独立保存；重置任一写入失败均显示未保存状态，重试当前结果。
 
-存储接口使用 `PrefsEntry<T>` 绑定白名单键与 Codec，`AppPrefs.read/write` 在访问底层前检查键并进行类型转换。String、bool、int、double 和版本化 JSON 均保存为字符串；已发布的主题字符串与 v1 快照格式保持兼容。业务 Codec、模型和校验仍在所属 feature；storage 不导入 feature。
+存储接口使用 `PrefsEntry<T>` 绑定键与 Codec，键由 `PrefsKey` 枚举限定在白名单；`AppPrefs.read/write` 调用 Codec 完成类型转换。String、bool、int、double 和版本化 JSON 均经 Codec 保存为字符串。业务 Codec、模型和校验仍在所属 feature；storage 不导入 feature。
 
-读取不存在的键返回 null；键存在但无法解码、底层异常、保存和删除失败均抛出含键与操作的 `PrefsException`，不把错误当作首次使用。`VersionedJsonPrefsCodec` 按明确登记的逐版迁移在内存中升级，读取不回写；后续成功提交才写当前版本。没有迁移规则的旧版本和未来版本均阻断，不自动清除或覆盖原数据。当前产品仅发布 v1，没有虚构旧版迁移规则。
+初始化错误使用 `PrefsOpenException` 区分存储不可用与文件损坏。读取不存在的键返回 null；键存在但无法解码、底层异常、保存和删除失败均抛出含键与操作的 `PrefsException`，不把错误当作首次使用。`VersionedJsonPrefsCodec` 使用 `{schemaVersion, data}` 对象封装。当前仅接受 schemaVersion 1，未知版本阻断，不自动清除或覆盖原数据。无需兼容旧实例与快照；未来有实际升级需求再添加迁移。打开已有 MMKV 文件前检查完整性，异常时拒绝打开，避免默认恢复策略丢弃数据。
 
 不要为未提交表单、Evidence 固定文案或截图 Case 创建存储。需要新 key 时先改本文白名单，再改 `AppPrefs`。
 

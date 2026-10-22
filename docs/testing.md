@@ -33,6 +33,26 @@ Widget test 应从 `ProviderScope` 启动应用，并用 `FakeAppPrefs` override
 
 `test/yike_ui_test.dart` 覆盖三主题、主要导航和页面交互；其余公共组件、主题、启动与偏好测试按各自职责拆分。仅验证内存展示状态的测试不能证明真实计时、结算或重开恢复已实现。
 
+## 原生存储验证
+
+`test/app_prefs_test.dart` 检查类型、缺失与损坏区分、写前校验及故障；`test/features/local_data/` 检查业务重试、配置恢复、已开始的会话不被新时长改写，以及保存失败时面板保留。以上使用测试替身，不能替代真实 MMKV。
+
+移动设备上运行真实 MMKV 的实例重开、删除、损坏 JSON 保留及容器完整性保护：
+
+```bash
+flutter test integration_test/mmkv_storage_test.dart -d <device-id>
+```
+
+计时设置的进程重启测试分两次执行，保持同一设备与应用数据目录：
+
+```bash
+flutter test integration_test/timing_persistence_test.dart -d <device-id> --no-uninstall --dart-define=YIKE_STORAGE_PHASE=write
+# 确认写入测试结束、旧进程退出，再启动读取测试
+flutter test integration_test/timing_persistence_test.dart -d <device-id> --no-uninstall --dart-define=YIKE_STORAGE_PHASE=read
+```
+
+两次测试必须使用 `--no-uninstall`，默认卸载会删除应用数据目录。测试记录进程 PID；读取阶段先确认已有磁盘值，再启动应用。通过设置页面写入 26 分钟、每 3 轮长休、5 秒阈值、关闭提示音和 `[181, null, 600, 1200]` 预设，重启后检查配置和专注页 `26:00`。测试使用独立的 `yike_timing_integration` 实例，写入阶段只清理该实例的测试快照；生产 `yike` 实例不受影响。写入阶段不额外调用 flush 或 close，以验证普通写入路径。实际磁盘写满使用故障注入验证，不以模拟故障冒充原生文件系统写满。
+
 ## 移动视觉验证
 
 Evidence 指定设备时，优先使用相同设备的 Simulator/Emulator。当前 iPhone 14 Evidence 对应 `390x844` logical viewport。macOS 上可以：

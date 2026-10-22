@@ -1,5 +1,7 @@
 PODS:
   - Flutter (1.0.0)
+  - integration_test (0.0.1):
+    - Flutter
   - MMKV (2.4.3):
     - MMKVCore (~> 2.4.3)
   - mmkv_ios (2.4.3):
@@ -10,6 +12,7 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
   - mmkv_ios (from `.symlinks/plugins/mmkv_ios/darwin`)
 
 SPEC REPOS:
@@ -20,11 +23,14 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
   mmkv_ios:
     :path: ".symlinks/plugins/mmkv_ios/darwin"
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   MMKV: 2d6d4dd9205ea86bf9d5f3cf5fe6796d880d4710
   mmkv_ios: e4ae22537eedc60d1d4b541a01df7cd923835067
   MMKVCore: 065b61d4f942d3b6e1c913c378c120934f315ee4

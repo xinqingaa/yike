@@ -14,6 +14,7 @@ Future<int?> pickYikeDuration(
   int maximum = 86399,
   bool seconds = true,
   String confirm = '确认',
+  bool Function(int)? onConfirm,
 }) => AppPop.sheet<int>(
   context,
   title: title,
@@ -24,7 +25,11 @@ Future<int?> pickYikeDuration(
     maximum: maximum,
     seconds: seconds,
     confirm: confirm,
-    onSave: handle.complete,
+    onSave: (value) {
+      if (!(onConfirm?.call(value) ?? true)) return false;
+      handle.complete(value);
+      return true;
+    },
   ),
 );
 
@@ -41,7 +46,7 @@ class DurationSheetBody extends ConsumerStatefulWidget {
   final int initial, minimum, maximum;
   final bool seconds;
   final String confirm;
-  final ValueChanged<int> onSave;
+  final bool Function(int) onSave;
   @override
   ConsumerState<DurationSheetBody> createState() => _DurationSheetBodyState();
 }
@@ -49,6 +54,7 @@ class DurationSheetBody extends ConsumerStatefulWidget {
 class _DurationSheetBodyState extends ConsumerState<DurationSheetBody> {
   late final _value = localValueProvider(widget.initial);
   final _attempted = localValueProvider(false);
+  final _saveFailed = localValueProvider(false);
   @override
   Widget build(BuildContext context) {
     final value = ref.watch(_value);
@@ -64,11 +70,17 @@ class _DurationSheetBodyState extends ConsumerState<DurationSheetBody> {
             onChanged: (value) {
               ref.read(_value.notifier).set(value);
               ref.read(_attempted.notifier).set(false);
+              ref.read(_saveFailed.notifier).set(false);
             },
           ),
           if (invalid && ref.watch(_attempted))
             Text(
               '请选择 ${widget.minimum == 1 ? '至少 1 秒' : '有效时长'}，不超过 ${widget.maximum ~/ 60} 分钟',
+              style: ts.textStyle.caption.copyWith(color: ts.colors.error),
+            ),
+          if (ref.watch(_saveFailed))
+            Text(
+              '尚未保存，请重试；关闭后可能丢失',
               style: ts.textStyle.caption.copyWith(color: ts.colors.error),
             ),
         ],
@@ -84,7 +96,7 @@ class _DurationSheetBodyState extends ConsumerState<DurationSheetBody> {
             ref.read(_attempted.notifier).set(true);
             return;
           }
-          widget.onSave(value);
+          if (!widget.onSave(value)) ref.read(_saveFailed.notifier).set(true);
         },
       ),
     );
