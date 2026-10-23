@@ -62,7 +62,7 @@ xcrun simctl io <udid> screenshot <path>
 
 ## iOS 依赖
 
-工程通过 CocoaPods 接入原生依赖，`pubspec.yaml` 显式关闭 Swift Package Manager。依赖要求以该文件及锁文件为准，不把历史工具链问题写成固定版本禁令。`Pods/`、`.symlinks/` 与 `build/` 为生成目录，不提交。
+工程通过 CocoaPods 接入原生依赖，`pubspec.yaml` 显式关闭 Swift Package Manager。iOS 部署目标为 15.0，与当前 Xcode 支持的最低部署版本一致。依赖要求以该文件及锁文件为准，不把历史工具链问题写成固定版本禁令。`Pods/`、`.symlinks/` 与 `build/` 为生成目录，不提交。
 
 测试宿主遵守 [状态管理规范](architecture.md#状态管理)。单独挂载 Consumer 组件时由宿主提供 ProviderScope；启动入口自行建立根作用域，偏好与主题作用域覆盖须覆盖实际依赖。
 
