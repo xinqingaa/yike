@@ -1,12 +1,9 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const manifest = JSON.parse(readFileSync(path.join(projectRoot, '.pb-scaffold.json'), 'utf8'));
-const pbRoot = path.resolve(projectRoot, manifest.protoBridgeRoot);
 
 function run(command, args) {
   return new Promise((resolve, reject) => {
@@ -16,8 +13,8 @@ function run(command, args) {
   });
 }
 
+await run(process.execPath, [path.join(projectRoot, 'tool/check-docs.mjs')]);
 await run('flutter', ['pub', 'get']);
 await run('dart', ['format', '--output=none', '--set-exit-if-changed', 'lib', 'test', 'integration_test']);
 await run('flutter', ['analyze']);
 await run('flutter', ['test']);
-await run(process.execPath, [path.join(pbRoot, 'scripts/verify-ds-target-sync.mjs'), '--target', projectRoot]);

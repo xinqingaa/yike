@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/overlay/app_pop.dart';
 import '../../../common/state/local_value.dart';
 import '../../../common/widgets.dart';
-import '../../../common/widgets/yike/dial.dart';
+import '../widgets/focus_dial.dart';
 import '../../../router/routes.dart';
 import '../../../theme/ts.dart';
 import '../../../common/overlay/duration_sheet.dart';
@@ -459,16 +459,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                           : ts.spacing.md,
                     ),
                     Center(
-                      child: YikeDial(
-                        width: dialWidth,
-                        digits: timerDigits(value.seconds),
-                        caption: value.caption,
-                        progress: value.progress,
-                        paused: value.paused,
-                        resting: value.resting,
-                        completed: value.finished,
-                        countdown: value.mode == TimerMode.countdown,
-                      ),
+                      child: FocusDial(width: dialWidth, value: value),
                     ),
                     if (value.seconds > 3600 &&
                         value.mode != TimerMode.countdown)

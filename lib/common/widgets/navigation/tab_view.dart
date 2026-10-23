@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../motion/motion_activity.dart';
 
 /// Official TabBarView owns swipe and controller synchronization.
 class CommonTabView extends StatelessWidget {
@@ -15,20 +16,28 @@ class CommonTabView extends StatelessWidget {
   final bool keepAlive;
 
   @override
-  Widget build(BuildContext context) => TabBarView(
-    controller: controller,
-    physics: swipe
-        ? const PageScrollPhysics()
-        : const NeverScrollableScrollPhysics(),
-    children: [
-      for (var i = 0; i < children.length; i++)
-        _TabPanel(
-          key: children[i].key ?? ValueKey(i),
-          keepAlive: keepAlive,
-          child: children[i],
-        ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final tabs = controller ?? DefaultTabController.of(context);
+    return TabBarView(
+      controller: tabs,
+      physics: swipe
+          ? const PageScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
+      children: [
+        for (var i = 0; i < children.length; i++)
+          _TabPanel(
+            key: children[i].key ?? ValueKey(i),
+            keepAlive: keepAlive,
+            child: AnimatedBuilder(
+              animation: tabs,
+              child: children[i],
+              builder: (context, child) =>
+                  MotionGate(active: tabs.index == i, child: child!),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _TabPanel extends StatefulWidget {

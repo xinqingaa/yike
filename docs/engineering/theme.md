@@ -13,13 +13,13 @@ Text('标题', style: ts.textStyle.title);
 
 一刻在设置页选择机械、水位或日影表盘，并独立选择浅色、深色或跟随系统。默认机械、跟随系统；选择作用于页面、组件及弹层，并经 AppPrefs 恢复。`themePackProvider` 与 `themeModeProvider` 是唯一选择状态；组件通过最近的 TS ThemeExtension 读取。
 
-主题和资源的同步操作见 [DS Target Sync Skill](../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。主题的组件键也参与解析；资源按模式选择，仅输出高分辨率图片，组件明确设置逻辑尺寸。
+当前主题包是首轮迁移留下的生成基线。普通 Flutter 迭代可在类型化本地扩展点增加设计量；不改写生成包、导入清单或既有映射身份。只有明确的外部 DS 同步任务才使用 [DS Target Sync Skill](../../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。主题的组件键也参与解析；资源按模式选择，仅输出高分辨率图片，组件明确设置逻辑尺寸。
 
-`proto-bridge.themes.json` 记录选择范围、主题与模式矩阵、源摘要和解析值。同步门禁同时核对生成的 Dart 内容和这个矩阵，不能只凭 accessor 存在或源端 fingerprint 声明主题已落地。固定 Handoff 实现仍以其中固定的主题表为准，不读取 active/latest。
+`proto-bridge.themes.json` 记录选择范围、主题与模式矩阵、源摘要和解析值。同步门禁同时核对生成的 Dart 内容和这个矩阵，不能只凭 accessor 存在或源端 fingerprint 声明主题已落地。仅显式固定 Handoff 专项需要使用其固定主题表，不读取 active/latest。
 
 ## Token 职责
 
-`ts.colors`、`ts.textStyle`、`ts.spacing`、`ts.sizing`、`ts.radius`、`ts.opacity`、`ts.motion`、`ts.elevation`、`ts.border`、`ts.layout`、`ts.layer`、`ts.effect`、`ts.assets` 是组件使用入口。具体设计量只放在主题目录；页面和公共组件不得另建平行常量或复制颜色数值。
+`ts.colors`、`ts.textStyle`、`ts.spacing`、`ts.sizing`、`ts.radius`、`ts.opacity`、`ts.motion`、`ts.elevation`、`ts.border`、`ts.layout`、`ts.layer`、`ts.effect`、`ts.assets` 是组件使用入口。具体设计量只放在主题目录；页面和公共组件不得另建平行常量或复制颜色数值。本地几何与动效节拍分别维护在 `YikeGeometry`、`YikeMotion`；它们不冒充导入 Contract 的 Token。
 
 `protoBridgeTokenSnapshot(ts)` 接收明确的上下文主题，用于调试和映射验证。`proto-bridge.target.json` 维护 当前可绑定主题键的精确 accessor。映射有效仅说明落点可访问；组件的视觉、状态和实际消费仍需单独验证。
 
@@ -37,14 +37,18 @@ Material Theme 和 TS 使用同一主题包。`TS.lerp` 与 `theme_interpolation
 
 PNG 按原始画布与主题 size.plot 中较大的宽度、3 倍像素密度计算。相同状态图层通过 `layerAsset` 显式共用，元数据指向唯一 PNG。资源按主题包选择范围同步；同步资源不代表已完成业务表盘动画。
 
-资源来源、目录和精确复用见 [资源规范](assets.md)。同步检查读取 PBWork 源文件及摘要，检查 Flutter 元数据与 PNG 尺寸，不依赖 Target 内的 SVG 副本。
+资源来源、目录和精确复用见 [资源规范](assets.md)。显式 DS 专项的同步检查读取源文件及摘要，检查 Flutter 元数据与 PNG 尺寸；普通客户端检查只验证本地基线，不访问外部源码。
 
 ## 视口与文字适配
 
-应用的准备、失败重试与正式页面共用 `AppViewport`，以 PBWork 手机基准 390×844 初始化 flutter_screenutil。`AppMetrics` 在初始化后捕获不可变的转换因子，窗口尺寸变化时重建 Theme。类型化主题包保留 Producer 原始数值；TS 在消费层转换一次，组件直接使用 TS，不再追加 `.w`、`.h`、`.r` 或 `.sp`。
+应用的准备、失败重试与正式页面共用 `AppViewport`，以既有手机设计基准 390×844 初始化 flutter_screenutil。`AppMetrics` 在初始化后捕获不可变的转换因子，窗口尺寸变化时重建 Theme。类型化主题包保留 Producer 原始数值；TS 在消费层转换一次，组件直接使用 TS，不再追加 `.w`、`.h`、`.r` 或 `.sp`。
 
 横向边界与宽度使用 `.w`，纵向控件和面板高度使用 `.h`；圆角、等比图形、通用间距、边框与阴影使用 `.r`；字号使用 `.sp`。长宽和等比缩放因子有上下限，字号的视口因子不超过 1，避免大窗口持续放大文字。具体边界与文字角色上限唯一维护在 `lib/theme/app_metrics.dart`。字体行高倍数、字重、比例、行数、动画时间及真实屏幕/锚点坐标不缩放；相对字距按转换后的字号解析。
 
 Flutter 的正文、标签与标题使用 Target 的紧凑文字档位上限，原型数字展示保留独立角色。系统 TextScaler 仍由 Flutter 生效，不通过屏蔽系统字号解决偏大。ThemeData 的默认文本样式与显式组件样式使用同一套 TS。无视口转换的 TS 用于校验原始设计值，不作为应用入口主题。
 
 菜单定位、边缘翻转、锚点跟随和滚动由 unified_popups 处理；AppPop 按库示例传入菜单与主题样式，保留其默认有限宽度，仅设置主题最大高度，不另建屏幕几何算法；点击区域与图片大小独立，输入框前后缀中的 CommonIcon 在槽位内按主题尺寸居中。平台原生工具栏等框架规格保留原生尺寸，菜单边界和点击目标不因比例适配丢失约束。静态资源目录遵循 [资源规范](assets.md)。
+
+## Flutter 自有扩展
+
+新增本地能力先复用现有 TS 设计量；新的跨组件颜色/尺寸按语义增加类型化本地主题属性，并在浅深模式和插值中验证。几何比例、幅度和节拍可进入本地 YikeGeometry/YikeMotion。生成文件与 proto-bridge 清单只在显式同步中更新，普通组件调整不要求先修改外部平台。

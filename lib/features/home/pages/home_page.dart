@@ -1,4 +1,5 @@
 import '../../../app/navigation.dart';
+import '../../../common/motion/motion_activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/widgets.dart';
@@ -31,13 +32,15 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
     final tab = ref.watch(rootTabProvider);
     ref.listen(rootTabProvider, (_, next) => _controller.index = next);
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: YikePageWidth(
-          child: CommonTabView(
-            controller: _controller,
-            swipe: false,
-            children: const [FocusPage(), CheckinPage(), ReviewPage()],
+      body: MotionVisibility(
+        child: SafeArea(
+          bottom: false,
+          child: YikePageWidth(
+            child: CommonTabView(
+              controller: _controller,
+              swipe: false,
+              children: const [FocusPage(), CheckinPage(), ReviewPage()],
+            ),
           ),
         ),
       ),

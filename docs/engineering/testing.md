@@ -2,24 +2,15 @@
 
 ## 工程检查
 
-在工程根目录运行完整检查入口与独立主题检查：
+在工程根目录运行独立客户端检查：
 
 ```bash
 node tool/verify.mjs
-node tool/ds-theme.mjs
 ```
 
-`verify.mjs` 依次执行 `flutter pub get`、Dart 格式门禁、完整 `flutter analyze`、完整 `flutter test` 和 DS 同步校验。已在入口中执行的检查不必重复运行。需要单独定位问题时使用：
+依次执行本地文档链接/锚点检查、`flutter pub get`、Dart 格式门禁、`flutter analyze` 和完整 `flutter test`。本地映射测试验证导入基线的可访问性，不读取外部 Producer。已在入口执行的检查不必重复运行；定位时可单独运行 `node tool/check-docs.mjs`、`flutter analyze` 或指定测试文件。
 
-```bash
-flutter analyze
-flutter test
-node tool/ds-sync.mjs
-```
-
-修改公共组件、路由或 Theme 时，完整分析和测试是必要检查。主题门禁核对当前 Token 清单；完整 DS 门禁同时核对当前组件、主题、图标与同步基线。后两者通过 `.pb-scaffold.json` 定位外部 Producer，须保证对应目录及构建产物可用。同步通过不代表业务或视觉已验收。
-
-只修改文档时还需核查 Markdown 链接及锚点、改名后的引用、入口与现有代码是否一致；涉及组件或 Token 索引时执行对应 DS 门禁。不要为了核对文档运行会改写 DS 生成文件的导出命令。
+只改文档运行文档检查并核对内容；公共组件、路由、Theme 或运行机制变化执行完整检查。`tool/ds-sync.mjs` 和 `tool/ds-theme.mjs` 仅用于用户明确要求的外部 DS 专项，依赖外部 Producer，不属于日常客户端门禁。不要为文档检查运行改写生成资源的同步命令。
 
 ## Widget 场景
 
@@ -55,7 +46,7 @@ flutter test integration_test/timing_persistence_test.dart -d <device-id> --no-u
 
 ## 移动视觉验证
 
-Evidence 指定设备时，优先使用相同设备的 Simulator/Emulator。当前 iPhone 14 Evidence 对应 `390x844` logical viewport。macOS 上可以：
+普通 Flutter 任务按目标移动设备和产品场景验证；现有手机布局基准为 `390×844` 逻辑视口，并补充窄屏与大文字缩放。明确的固定 Evidence 专项才需要对齐其指定设备。macOS 上可以：
 
 ```bash
 flutter devices
@@ -67,7 +58,7 @@ xcrun simctl io <udid> screenshot <path>
 
 如果没有可用移动设备，必须区分报告：静态检查和 Widget test 可以通过，但视觉验证未执行；桌面/Web 结果不能宣称等价于移动 Screenshot。
 
-动效需在正常运动偏好与减少动态效果下分别运行，覆盖中断、快速连续操作、返回和恢复。静态截图或相同参数不能证明过程一致；本项目固定采集压制动态效果，正常动效要求见 UI 文档，当前未验证项见已知缺口。
+动效需在正常运动偏好与减少动态效果下分别运行，覆盖中断、快速连续操作、返回和恢复。静态截图或相同参数不能证明过程一致；历史固定采集压制动态效果，当前过程要求见 [动效规格](../product/motion.md)，未验证项见 [已知缺口](../known-gaps.md)。
 
 ## iOS 依赖
 
@@ -96,4 +87,12 @@ flutter test integration_test/experience_test.dart -d <device-id> --no-uninstall
 flutter test integration_test/layout_polish_test.dart -d <移动设备 ID>
 ```
 
-此脚本使用内存存储与固定日期，三主题各输出 11 张截图，覆盖倒计时、时长滚轮、计圈浅深、每日记录浅深、空日、周/月按压及关闭步骤指示的 FlowSheet；日志前缀为 `YIKE_POLISH_SCREENSHOT=`。按压截图使用设备事件来源，避免测试框架的彩色触点覆盖图形。截图应在运行期间复制到宿主机，再人工复核；最近一轮结果见 [布局与交互精修](reviews/2026-10-23-layout-polish.md)。
+此脚本使用内存存储与固定日期，三主题各输出 11 张截图，覆盖倒计时、时长滚轮、计圈浅深、每日记录浅深、空日、周/月按压及关闭步骤指示的 FlowSheet；日志前缀为 `YIKE_POLISH_SCREENSHOT=`。按压截图使用设备事件来源，避免测试框架的彩色触点覆盖图形。截图应在运行期间复制到宿主机，再人工复核；最近一轮结果见 [布局与交互精修](../reviews/2026-10-23-layout-polish.md)。
+
+## 动效、时间与性能
+
+通过注入 clockProvider 验证真实时间投影、秒边界、暂停冻结、到零及回到前台，不用帧数累加业务时长。连续动画使用有界 pump，检查中间帧与最终态；避免 pumpAndSettle 永远等待。检查只变化数字位、水下副本同步、完成仅当场可见播放、历史/保存重试不重播、打卡撤销重做与列表稳定身份。
+
+原生运行分别覆盖正常/减少动态效果、三主题、浅深、覆盖路由、根 Tab 与后台恢复。过程录屏/分时截图与脚本记录互相补充，单帧不证明连续过程。持久化只通过真实 MMKV 或进程重启验证其声明范围。
+
+profile 在移动真机记录场景、刷新率、样本数量、UI/raster 的 p50/p90/p99 与超预算帧。采样先热身；水位、日影、换主题与长列表分开测。模拟器/debug 可定位功能和布局，不写成真机性能通过。大量历史的初始化/序列化/统计另做有代表性的样本，不以小数据测试替代。

@@ -1,12 +1,14 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../theme/ts.dart';
+import '../../../theme/yike_motion.dart';
+import '../../motion/motion_activity.dart';
+import '../../motion/rolling_digits.dart';
 import '../../../theme/yike_artwork.dart';
 import '../../../theme/yike_geometry.dart';
 
-/// A static presentation of the synchronized DS artwork at a supplied progress.
-/// The business clock and motion never live in this widget.
-class YikeDial extends StatelessWidget {
+/// Local presentation only; supplied progress never settles business time.
+class YikeDial extends StatefulWidget {
   const YikeDial({
     super.key,
     this.digits,
@@ -19,43 +21,131 @@ class YikeDial extends StatelessWidget {
     this.width,
     this.brand = false,
     this.tokens,
+    this.animateDigits = false,
+    this.digitIdentity,
+    this.descending = false,
+    this.beat = 0,
+    this.wavePhase = 0,
   });
   final String? digits, caption;
   final double progress;
   final bool paused, resting, completed, countdown, brand;
   final double? width;
   final TS? tokens;
+  final bool animateDigits, descending;
+  final Object? digitIdentity;
+  final double beat, wavePhase;
+  @override
+  State<YikeDial> createState() => _YikeDialState();
+}
+
+class _YikeDialState extends State<YikeDial>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _roll = AnimationController(
+    vsync: this,
+    value: 1,
+  );
+  String? _previous;
+  bool _enabled = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _enabled =
+        !MediaQuery.disableAnimationsOf(context) &&
+        MotionGate.activeOf(context) &&
+        TickerMode.valuesOf(context).enabled;
+    if (!_enabled) _roll.value = 1;
+  }
+
+  int? _seconds(String? digits) {
+    if (digits == null) return null;
+    var seconds = 0;
+    for (final part in digits.split(':')) {
+      final number = int.tryParse(part);
+      if (number == null) return null;
+      seconds = seconds * 60 + number;
+    }
+    return seconds;
+  }
+
+  @override
+  void didUpdateWidget(covariant YikeDial oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.animateDigits ||
+        !_enabled ||
+        oldWidget.digitIdentity != widget.digitIdentity) {
+      _roll.value = 1;
+    } else if (widget.digits != oldWidget.digits) {
+      final before = _seconds(oldWidget.digits),
+          after = _seconds(widget.digits);
+      if (before != null &&
+          after != null &&
+          (after - before).abs() == 1 &&
+          oldWidget.digits?.length == widget.digits?.length) {
+        _previous = oldWidget.digits;
+        _roll.duration = (widget.tokens ?? TS.of(context)).motion.durationFast;
+        _roll.forward(from: 0);
+      } else {
+        _roll.value = 1;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _roll.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ts = tokens ?? TS.of(context);
+    final ts = widget.tokens ?? TS.of(context);
+    final digits = widget.digits, caption = widget.caption;
+    final paused = widget.paused,
+        resting = widget.resting,
+        completed = widget.completed;
+    final brand = widget.brand;
     final theme = ts.pack.id.split('/').last;
-    final w = width ?? ts.sizing.plot;
+    final w = widget.width ?? ts.sizing.plot;
     final h = w * ts.artworkAspectRatio;
-    final p = progress.clamp(0.0, 1.0);
-    final readout = Column(
+    final p = widget.progress.clamp(0.0, 1.0);
+    Widget readout(bool inverse) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (theme == 'water' && caption != null) ...[
-          Text(caption!, style: ts.textStyle.micro),
+          Text(
+            caption,
+            style: ts.textStyle.micro.copyWith(
+              color: inverse ? ts.colors.onPrimary : null,
+            ),
+          ),
           SizedBox(height: ts.spacing.lg),
         ],
         if (digits != null)
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              digits!,
-              maxLines: 1,
-              style: ts.textStyle.numericDisplay.copyWith(
-                color: completed && !resting
-                    ? ts.colors.primary
-                    : ts.colors.onSurface,
+            child: AnimatedBuilder(
+              animation: _roll,
+              builder: (context, _) => RollingDigits(
+                value: digits,
+                previous: _previous ?? digits,
+                phase: _roll.value,
+                descending: widget.descending,
+                inverse: inverse,
+                style: ts.textStyle.numericDisplay.copyWith(
+                  color: inverse
+                      ? ts.colors.onPrimary
+                      : completed && !resting
+                      ? ts.colors.primary
+                      : ts.colors.onSurface,
+                ),
               ),
             ),
           ),
         if (theme != 'water' && caption != null) ...[
           SizedBox(height: ts.spacing.xs),
           Text(
-            caption!,
+            caption,
             style: ts.textStyle.micro.copyWith(
               color: paused ? ts.colors.primary : ts.colors.onSurfaceMuted,
             ),
@@ -87,7 +177,9 @@ class YikeDial extends StatelessWidget {
                         progress: p,
                         paused: paused,
                         resting: resting,
-                        countdown: countdown,
+                        countdown: widget.countdown,
+                        beat: widget.beat,
+                        wavePhase: widget.wavePhase,
                       ),
                     ),
                   ),
@@ -110,8 +202,39 @@ class YikeDial extends StatelessWidget {
                       widthFactor: theme == 'water'
                           ? YikeGeometry.waterReadoutWidth
                           : YikeGeometry.readoutWidth,
-                      child: readout,
+                      child: readout(false),
                     ),
+                  ),
+                ),
+              if (!brand && theme == 'water')
+                ClipPath(
+                  key: const ValueKey('water-submerged-readout'),
+                  clipper: _Submerged(p),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Positioned.fill(
+                        top: theme == 'sundial'
+                            ? w * YikeGeometry.sundialReadoutTop
+                            : 0,
+                        child: Align(
+                          alignment: Alignment(
+                            0,
+                            theme == 'water'
+                                ? YikeGeometry.waterReadoutY * 2 - 1
+                                : theme == 'sundial'
+                                ? 0
+                                : 0,
+                          ),
+                          child: FractionallySizedBox(
+                            widthFactor: theme == 'water'
+                                ? YikeGeometry.waterReadoutWidth
+                                : YikeGeometry.readoutWidth,
+                            child: readout(true),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -129,10 +252,13 @@ class _DialArtwork extends StatelessWidget {
     required this.paused,
     required this.resting,
     required this.countdown,
+    required this.beat,
+    required this.wavePhase,
   });
   final TS tokens;
   final double progress;
   final bool paused, resting, countdown;
+  final double beat, wavePhase;
   @override
   Widget build(BuildContext context) {
     final ts = tokens;
@@ -185,6 +311,7 @@ class _DialArtwork extends StatelessWidget {
                     ts,
                     resting: resting,
                     paused: paused,
+                    beat: beat,
                   ),
                 ),
               ] else if (theme == 'water')
@@ -206,16 +333,27 @@ class _DialArtwork extends StatelessWidget {
                       ),
                       if (!paused && progress > 0 && progress < 1)
                         Positioned(
-                          left: 0,
-                          right: 0,
-                          top: h * (1 - progress),
-                          child: Image.asset(
-                            art.layers['wave']!,
-                            height: ts.spacing.xs,
-                            fit: BoxFit.fill,
-                            excludeFromSemantics: true,
+                          left: -w * YikeMotion.waveTravel,
+                          right: -w * YikeMotion.waveTravel,
+                          top: h * (1 - progress) - ts.border.widthHairline,
+
+                          child: Transform.translate(
+                            offset: Offset(
+                              math.sin(wavePhase * 2 * math.pi) *
+                                  w *
+                                  YikeMotion.waveTravel,
+                              0,
+                            ),
+                            child: Image.asset(
+                              art.layers['wave']!,
+                              height: ts.spacing.xs * (1 + beat),
+                              fit: BoxFit.fill,
+                              excludeFromSemantics: true,
+                            ),
                           ),
                         ),
+                      if (beat > 0 && progress > 0 && progress < 1)
+                        CustomPaint(painter: _WaterRipple(progress, beat, ts)),
                       raster(art.layers['glass']!),
                     ],
                   ),
@@ -229,28 +367,31 @@ class _DialArtwork extends StatelessWidget {
                   top: w * YikeGeometry.sundialShadowInset,
                   width: w * YikeGeometry.sundialShadowScale,
                   height: w * YikeGeometry.sundialShadowScale,
-                  child: ShaderMask(
-                    blendMode: BlendMode.dstIn,
-                    shaderCallback: (rect) => SweepGradient(
-                      startAngle: 0,
-                      endAngle: 2 * math.pi,
-                      colors: const [
-                        Colors.white,
-                        Colors.white,
-                        Colors.transparent,
-                        Colors.transparent,
-                      ],
-                      stops: [
-                        0,
-                        (progress - .045).clamp(0, 1),
-                        progress.clamp(0, 1),
-                        1,
-                      ],
-                      transform: const GradientRotation(-math.pi / 2),
-                    ).createShader(rect),
-                    child: raster(
-                      art.layers['shadow']!,
-                      height: w * YikeGeometry.sundialShadowScale,
+                  child: Opacity(
+                    opacity: 1 - beat * YikeMotion.shadowBreath,
+                    child: ShaderMask(
+                      blendMode: BlendMode.dstIn,
+                      shaderCallback: (rect) => SweepGradient(
+                        startAngle: 0,
+                        endAngle: 2 * math.pi,
+                        colors: const [
+                          Colors.white,
+                          Colors.white,
+                          Colors.transparent,
+                          Colors.transparent,
+                        ],
+                        stops: [
+                          0,
+                          (progress - .045).clamp(0, 1),
+                          progress.clamp(0, 1),
+                          1,
+                        ],
+                        transform: const GradientRotation(-math.pi / 2),
+                      ).createShader(rect),
+                      child: raster(
+                        art.layers['shadow']!,
+                        height: w * YikeGeometry.sundialShadowScale,
+                      ),
                     ),
                   ),
                 ),
@@ -338,8 +479,9 @@ class _MechanicalFace extends CustomPainter {
     this.ts, {
     required this.resting,
     required this.paused,
+    required this.beat,
   });
-  final double progress;
+  final double progress, beat;
   final TS ts;
   final bool resting, paused;
   @override
@@ -362,7 +504,7 @@ class _MechanicalFace extends CustomPainter {
     canvas.drawLine(inner, point, ink);
     canvas.drawCircle(
       point,
-      ts.spacing.xsPlus,
+      ts.spacing.xsPlus * (1 + beat),
       Paint()..color = ts.colors.primary,
     );
     canvas.drawCircle(
@@ -377,5 +519,46 @@ class _MechanicalFace extends CustomPainter {
       old.progress != progress ||
       old.ts != ts ||
       old.resting != resting ||
-      old.paused != paused;
+      old.paused != paused ||
+      old.beat != beat;
+}
+
+class _Submerged extends CustomClipper<Path> {
+  const _Submerged(this.progress);
+  final double progress;
+  @override
+  Path getClip(Size size) => Path.combine(
+    PathOperation.intersect,
+    _WaterBody().getClip(size),
+    Path()..addRect(
+      Rect.fromLTRB(0, size.height * (1 - progress), size.width, size.height),
+    ),
+  );
+  @override
+  bool shouldReclip(_Submerged old) => old.progress != progress;
+}
+
+class _WaterRipple extends CustomPainter {
+  const _WaterRipple(this.progress, this.beat, this.ts);
+  final double progress, beat;
+  final TS ts;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = size.width * YikeMotion.rippleRadius * (1 - beat);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width / 2, size.height * (1 - progress)),
+        width: radius * 2,
+        height: radius / 3,
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = ts.border.widthHairline
+        ..color = ts.colors.onPrimary.withValues(alpha: beat),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_WaterRipple old) =>
+      old.progress != progress || old.beat != beat || old.ts != ts;
 }

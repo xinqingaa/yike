@@ -1,16 +1,11 @@
 ---
 name: acceptance
-description: >-
-  Enforce five-dimensional reconstruction acceptance discipline for any Coding
-  Agent consuming ProtoBridge Evidence. Use when completing Target implementation
-  and preparing reconstruction review. Prevents premature "done" claims by
-  requiring explicit verification of structure, components, tokens, states, and
-  interactions against fixed Evidence.
+description: 仅在用户明确要求固定 ProtoBridge Evidence 还原验收时，执行结构、组件、Token、状态与交互五维复查；普通 Flutter 功能与动效验收不适用。
 ---
 
 # Acceptance
 
-本 Skill 只负责触发 Target 还原验收，不复制第二套消费流程或验收规则。通用协作与交付要求见 [协作与工作流](../../../docs/workflow.md)。
+本 Skill 仅在用户明确要求固定 Evidence 还原验收时使用，只负责触发 Target 还原验收，不复制第二套消费流程或验收规则。通用协作与交付要求见 [协作与工作流](../../../docs/workflow.md)。
 
 ## 使用方式
 

@@ -4,7 +4,7 @@ import 'prefs_codec.dart';
 
 export 'prefs_codec.dart';
 
-/// Registered on-disk identities. Add keys to docs/architecture.md first.
+/// Registered on-disk identities. Add keys to docs/engineering/storage.md first.
 enum PrefsKey {
   themeMode('theme_mode'),
   themePack('theme_pack'),
