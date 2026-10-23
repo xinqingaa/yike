@@ -22,7 +22,7 @@
 
 ## 根导航与面板
 
-`app/navigation.dart` 的 `rootTabProvider` 是根 Tab 的选择来源，`home` 通过 `CommonTabView` 组合三个页面；底部导航切换 Tab，根页面不支持左右滑动切换。专注页内部三个计时模式使用另一组可滑动 Tab，由专注模块处理模式切换确认。
+`app/navigation.dart` 的 `rootTabProvider` 是根 Tab 的选择来源，`home` 通过 `CommonTabView` 组合三个页面；底部导航切换 Tab，根页面不支持左右滑动切换。专注页内部三个计时模式只接受顶部 Tab 点击，不支持滑动。专注模块先处理当前会话确认，再同步业务模式和 TabController；取消确认不会先进入目标页面再返回。
 
 新建/编辑习惯、日期明细、归档列表、时长选择与常用倒计时步骤使用 `AppPop`，不增加命名路由。FlowSheet 的步骤返回与整个面板关闭分别由弹层管理，不能把返回等同于保存。
 

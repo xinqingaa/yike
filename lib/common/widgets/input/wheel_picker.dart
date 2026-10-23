@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -75,7 +76,9 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
     final bounded = index.clamp(0, options.length - 1);
     _controllers[widget.columns[column].id]!.animateToItem(
       bounded,
-      duration: TS.of(context).motion.durationFast,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : TS.of(context).motion.durationFast,
       curve: TS.of(context).motion.easingStandard,
     );
   }
@@ -159,6 +162,7 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
     );
     final selected = _index(index);
     return Semantics(
+      key: ValueKey('wheel-column-${column.id}'),
       label: column.label,
       value: column.options[selected].label,
       child: CallbackShortcuts(
@@ -190,40 +194,120 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
                   ),
                 ),
               ),
-              ListWheelScrollView.useDelegate(
-                controller: controller,
-                itemExtent: rowHeight,
-                physics: _enabled
-                    ? const FixedExtentScrollPhysics()
-                    : const NeverScrollableScrollPhysics(),
-                onSelectedItemChanged: (item) => _changed(index, item),
-                childDelegate: ListWheelChildBuilderDelegate(
-                  childCount: column.options.length,
-                  builder: (context, item) => GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _enabled ? () => _move(index, item) : null,
-                    child: Center(
-                      child: Text(
-                        column.options[item].label,
-                        style: item == selected
-                            ? (column.numeric
-                                  ? ts.textStyle.numericTitle
-                                  : ts.textStyle.subtitle)
-                            : ts.textStyle.content.copyWith(
-                                color: ts.colors.onSurfaceMuted,
-                              ),
-                      ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final selectedStyle = column.numeric
+                      ? ts.textStyle.numericTitle
+                      : ts.textStyle.subtitle;
+                  final otherStyle = column.numeric
+                      ? ts.textStyle.numericContent
+                      : ts.textStyle.content;
+                  Size measure(String text, TextStyle style) {
+                    final painter = TextPainter(
+                      text: TextSpan(text: text, style: style),
+                      textDirection: Directionality.of(context),
+                      textScaler: MediaQuery.textScalerOf(context),
+                    )..layout();
+                    final size = painter.size;
+                    painter.dispose();
+                    return size;
+                  }
+
+                  var numberWidth = 0.0, numberHeight = 0.0;
+                  for (final option in column.options) {
+                    for (final style in [selectedStyle, otherStyle]) {
+                      final size = measure(option.label, style);
+                      numberWidth = math.max(numberWidth, size.width);
+                      numberHeight = math.max(numberHeight, size.height);
+                    }
+                  }
+                  final unitSize = measure(
+                    column.unit ?? '',
+                    ts.textStyle.caption,
+                  );
+                  final unitGap = column.unit == null ? 0.0 : ts.spacing.xs;
+                  final scale = math.min(
+                    1.0,
+                    math.min(
+                      math.max(0.0, constraints.maxWidth - unitGap * 2) /
+                          math.max(1, numberWidth + unitSize.width * 2),
+                      (rowHeight - ts.spacing.xs) / math.max(1, numberHeight),
                     ),
-                  ),
-                ),
+                  );
+                  TextStyle scaled(TextStyle style) => style.copyWith(
+                    fontSize: style.fontSize! * scale,
+                    letterSpacing: style.letterSpacing == null
+                        ? null
+                        : style.letterSpacing! * scale,
+                  );
+                  final unitWidth = unitSize.width * scale;
+                  final unitHeight = unitSize.height * scale;
+                  final fittedNumberWidth = numberWidth * scale;
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      ListWheelScrollView.useDelegate(
+                        controller: controller,
+                        itemExtent: rowHeight,
+                        physics: _enabled
+                            ? const FixedExtentScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
+                        onSelectedItemChanged: (item) => _changed(index, item),
+                        childDelegate: ListWheelChildBuilderDelegate(
+                          childCount: column.options.length,
+                          builder: (context, item) => GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _enabled ? () => _move(index, item) : null,
+                            child: Center(
+                              child: SizedBox(
+                                width: fittedNumberWidth,
+                                child: Text(
+                                  column.options[item].label,
+                                  key: item == selected
+                                      ? ValueKey('wheel-number-${column.id}')
+                                      : null,
+                                  maxLines: 1,
+                                  textAlign: TextAlign.center,
+                                  style: scaled(
+                                    item == selected
+                                        ? selectedStyle
+                                        : otherStyle.copyWith(
+                                            color: ts.colors.onSurfaceMuted,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (column.unit != null)
+                        Positioned(
+                          left:
+                              (constraints.maxWidth + fittedNumberWidth) / 2 +
+                              unitGap,
+                          top:
+                              (rowHeight * widget.visibleRows - unitHeight) /
+                                  2 +
+                              ts.spacing.xs,
+                          width: unitWidth,
+                          child: IgnorePointer(
+                            child: ExcludeSemantics(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  column.unit!,
+                                  key: ValueKey('wheel-unit-${column.id}'),
+                                  style: scaled(ts.textStyle.caption),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
-              if (column.unit != null)
-                Positioned(
-                  right: ts.spacing.xs,
-                  child: IgnorePointer(
-                    child: Text(column.unit!, style: ts.textStyle.caption),
-                  ),
-                ),
             ],
           ),
         ),

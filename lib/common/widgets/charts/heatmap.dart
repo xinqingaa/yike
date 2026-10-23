@@ -23,6 +23,7 @@ class CommonHeatmap extends StatefulWidget {
     this.value,
     this.onChanged,
     this.label = '每日完成记录',
+    this.showLabel = true,
     this.readonly = false,
     this.dayLabels = const {},
     this.plotBuilder,
@@ -32,6 +33,7 @@ class CommonHeatmap extends StatefulWidget {
   final String? value;
   final ValueChanged<String>? onChanged;
   final String label;
+  final bool showLabel;
   final bool readonly;
   final Map<String, String> dayLabels;
   final CommonHeatmapPlotBuilder? plotBuilder;
@@ -94,104 +96,116 @@ class _CommonHeatmapState extends State<CommonHeatmap> {
         .expand((week) => week)
         .where((cell) => cell.date == widget.value)
         .firstOrNull;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(widget.label, style: ts.textStyle.label),
-        SizedBox(height: ts.spacing.sm),
-        if (_weeks.isEmpty)
-          Text('暂无数据', style: ts.textStyle.caption)
-        else if (widget.readonly && widget.plotBuilder != null)
-          widget.plotBuilder!(context, _weeks, _maximum)
-        else
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: ts.sizing.controlSm,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(height: header),
-                    for (var i = 0; i < 7; i++) ...[
-                      if (i > 0) SizedBox(height: gap),
-                      SizedBox(
-                        height: cell,
-                        child: Center(
-                          child: Text(
-                            const ['一', '二', '三', '四', '五', '六', '日'][i],
-                            style: ts.textStyle.micro,
+    return Semantics(
+      container: !widget.showLabel,
+      label: widget.showLabel ? null : widget.label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.showLabel) ...[
+            Text(widget.label, style: ts.textStyle.label),
+            SizedBox(height: ts.spacing.sm),
+          ],
+          if (_weeks.isEmpty)
+            Text('暂无数据', style: ts.textStyle.caption)
+          else if (widget.readonly && widget.plotBuilder != null)
+            widget.plotBuilder!(context, _weeks, _maximum)
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: ts.sizing.controlSm,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: header),
+                      for (var i = 0; i < 7; i++) ...[
+                        if (i > 0) SizedBox(height: gap),
+                        SizedBox(
+                          height: cell,
+                          child: Center(
+                            child: Text(
+                              const ['一', '二', '三', '四', '五', '六', '日'][i],
+                              style: ts.textStyle.micro,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: CallbackShortcuts(
-                    bindings: {
-                      const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
-                          _move(-7),
-                      const SingleActivator(
-                        LogicalKeyboardKey.arrowRight,
-                      ): () =>
-                          _move(7),
-                      const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
-                          _move(-1),
-                      const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
-                          _move(1),
-                      const SingleActivator(LogicalKeyboardKey.home): () =>
-                          _move(-1, edge: true),
-                      const SingleActivator(LogicalKeyboardKey.end): () =>
-                          _move(1, edge: true),
-                      const SingleActivator(LogicalKeyboardKey.enter): () {
-                        if (selected != null) _select(selected);
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: CallbackShortcuts(
+                      bindings: {
+                        const SingleActivator(
+                          LogicalKeyboardKey.arrowLeft,
+                        ): () =>
+                            _move(-7),
+                        const SingleActivator(
+                          LogicalKeyboardKey.arrowRight,
+                        ): () =>
+                            _move(7),
+                        const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+                            _move(-1),
+                        const SingleActivator(
+                          LogicalKeyboardKey.arrowDown,
+                        ): () =>
+                            _move(1),
+                        const SingleActivator(LogicalKeyboardKey.home): () =>
+                            _move(-1, edge: true),
+                        const SingleActivator(LogicalKeyboardKey.end): () =>
+                            _move(1, edge: true),
+                        const SingleActivator(LogicalKeyboardKey.enter): () {
+                          if (selected != null) _select(selected);
+                        },
+                        const SingleActivator(LogicalKeyboardKey.space): () {
+                          if (selected != null) _select(selected);
+                        },
                       },
-                      const SingleActivator(LogicalKeyboardKey.space): () {
-                        if (selected != null) _select(selected);
-                      },
-                    },
-                    child: Focus(
-                      canRequestFocus:
-                          !widget.readonly && widget.onChanged != null,
-                      child: GestureDetector(
-                        onTapUp: widget.readonly
-                            ? null
-                            : (details) {
-                                final point = details.localPosition;
-                                if (point.dy < header) return;
-                                final column = (point.dx / (cell + gap))
-                                    .floor();
-                                final row = ((point.dy - header) / (cell + gap))
-                                    .floor();
-                                if (column >= _weeks.length ||
-                                    row >= 7 ||
-                                    row < 0 ||
-                                    point.dx % (cell + gap) > cell ||
-                                    (point.dy - header) % (cell + gap) > cell) {
-                                  return;
-                                }
-                                _select(_weeks[column][row]);
-                              },
-                        child: SizedBox(
-                          width: _weeks.length * (cell + gap) - gap,
-                          height: height,
-                          child: CustomPaint(
-                            painter: _HeatmapPainter(
-                              weeks: _weeks,
-                              maximum: _maximum,
-                              selected: widget.readonly ? null : widget.value,
-                              labels: widget.dayLabels,
-                              ts: ts,
-                              direction: Directionality.of(context),
-                              onSelect:
-                                  widget.readonly || widget.onChanged == null
-                                  ? null
-                                  : _select,
+                      child: Focus(
+                        canRequestFocus:
+                            !widget.readonly && widget.onChanged != null,
+                        child: GestureDetector(
+                          onTapUp: widget.readonly
+                              ? null
+                              : (details) {
+                                  final point = details.localPosition;
+                                  if (point.dy < header) return;
+                                  final column = (point.dx / (cell + gap))
+                                      .floor();
+                                  final row =
+                                      ((point.dy - header) / (cell + gap))
+                                          .floor();
+                                  if (column >= _weeks.length ||
+                                      row >= 7 ||
+                                      row < 0 ||
+                                      point.dx % (cell + gap) > cell ||
+                                      (point.dy - header) % (cell + gap) >
+                                          cell) {
+                                    return;
+                                  }
+                                  _select(_weeks[column][row]);
+                                },
+                          child: SizedBox(
+                            width: _weeks.length * (cell + gap) - gap,
+                            height: height,
+                            child: CustomPaint(
+                              painter: _HeatmapPainter(
+                                weeks: _weeks,
+                                maximum: _maximum,
+                                selected: widget.readonly ? null : widget.value,
+                                labels: widget.dayLabels,
+                                ts: ts,
+                                direction: Directionality.of(context),
+                                onSelect:
+                                    widget.readonly || widget.onChanged == null
+                                    ? null
+                                    : _select,
+                              ),
                             ),
                           ),
                         ),
@@ -199,40 +213,40 @@ class _CommonHeatmapState extends State<CommonHeatmap> {
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        SizedBox(height: ts.spacing.sm),
-        widget.legend ??
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('少', style: ts.textStyle.caption),
-                SizedBox(width: ts.spacing.xs),
-                for (final color in [
-                  ts.colors.surfaceVariant,
-                  ts.colors.primarySoft,
-                  ts.colors.primary,
-                ])
-                  Padding(
-                    padding: EdgeInsets.only(right: ts.spacing.xs),
-                    child: SizedBox.square(
-                      dimension: ts.sizing.iconSm,
-                      child: ColoredBox(color: color),
-                    ),
-                  ),
-                Text('多', style: ts.textStyle.caption),
               ],
             ),
-        if (!widget.readonly && selected?.value != null)
-          Padding(
-            padding: EdgeInsets.only(top: ts.spacing.sm),
-            child: Text(
-              '${selected!.date}: ${selected.value}',
-              style: ts.textStyle.caption,
+          SizedBox(height: ts.spacing.sm),
+          widget.legend ??
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('少', style: ts.textStyle.caption),
+                  SizedBox(width: ts.spacing.xs),
+                  for (final color in [
+                    ts.colors.surfaceVariant,
+                    ts.colors.primarySoft,
+                    ts.colors.primary,
+                  ])
+                    Padding(
+                      padding: EdgeInsets.only(right: ts.spacing.xs),
+                      child: SizedBox.square(
+                        dimension: ts.sizing.iconSm,
+                        child: ColoredBox(color: color),
+                      ),
+                    ),
+                  Text('多', style: ts.textStyle.caption),
+                ],
+              ),
+          if (!widget.readonly && selected?.value != null)
+            Padding(
+              padding: EdgeInsets.only(top: ts.spacing.sm),
+              child: Text(
+                '${selected!.date}: ${selected.value}',
+                style: ts.textStyle.caption,
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

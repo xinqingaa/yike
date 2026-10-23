@@ -278,7 +278,13 @@ void main() {
       await tester.tap(find.bySemanticsLabel('2026-10-16'));
       await tester.pumpAndSettle();
       expect(find.text('23:59'), findsOneWidget);
-      expect(find.text('1 分钟'), findsWidgets);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('day-record-duration-0')),
+          matching: find.text('1分'),
+        ),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );

@@ -71,7 +71,7 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
         : draft.name.trim().characters.length > 30
         ? '名称最多 30 个字符'
         : null;
-    return YikeSheetBody(
+    return AppSheetContent(
       expand: true,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

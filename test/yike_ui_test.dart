@@ -167,39 +167,29 @@ void main() {
     await tester.tap(find.text('正计时'));
     await tester.pumpAndSettle();
     expect(find.text('切换计时模式？'), findsOneWidget);
-    await tester.tap(find.text('取消'));
+    await tester.tap(find.byTooltip('关闭'));
     await tester.pumpAndSettle();
     expect(find.text('继续'), findsOneWidget);
     expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);
     expect(tester.takeException(), isNull);
   });
-  testWidgets(
-    'swipe selects actual mode panels and cancellation restores both',
-    (tester) async {
-      final container = await pumpYike(tester);
-      final panels = find.byType(CommonTabView).last;
-      await tester.drag(panels, const Offset(-320, 0));
-      await tester.pumpAndSettle();
-      expect(container.read(focusViewProvider).mode, TimerMode.stopwatch);
-      expect(find.text('00:00'), findsOneWidget);
-      expect(find.text('开始计时'), findsOneWidget);
-      await tester.drag(panels, const Offset(-320, 0));
-      await tester.pumpAndSettle();
-      expect(container.read(focusViewProvider).mode, TimerMode.countdown);
-      expect(find.text('自定义'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('focus-primary')));
-      await tester.pumpAndSettle();
-      await tester.drag(panels, const Offset(320, 0));
-      await tester.pumpAndSettle();
-      expect(find.text('切换计时模式？'), findsOneWidget);
-      await tester.tap(find.text('取消'));
-      await tester.pumpAndSettle();
-      expect(container.read(focusViewProvider).mode, TimerMode.countdown);
-      expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 2);
-      expect(find.text('暂停'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+  testWidgets('focus modes only change through the top tabs', (tester) async {
+    final container = await pumpYike(tester);
+    final panels = find.byType(CommonTabView).last;
+    await tester.drag(panels, const Offset(-320, 0));
+    await tester.pumpAndSettle();
+    expect(container.read(focusViewProvider).mode, TimerMode.pomodoro);
+    expect(find.text('25:00'), findsOneWidget);
+    await tester.tap(find.text('正计时'));
+    await tester.pumpAndSettle();
+    expect(container.read(focusViewProvider).mode, TimerMode.stopwatch);
+    expect(find.text('00:00'), findsOneWidget);
+    await tester.tap(find.text('倒计时'));
+    await tester.pumpAndSettle();
+    expect(container.read(focusViewProvider).mode, TimerMode.countdown);
+    expect(find.text('自定义时长'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'settings navigation rows match 53px and accept label and blank-space taps',
@@ -234,7 +224,7 @@ void main() {
       await navigateTab(tester, '打卡');
       await tester.tap(find.byKey(const ValueKey('habit-detail-habit-water')));
       await tester.pumpAndSettle();
-      expect(find.text('最近365天完成 0 次'), findsOneWidget);
+      expect(find.bySemanticsLabel('最近365天完成 0 次'), findsOneWidget);
       expect(container.read(habitsProvider).first.dates, isEmpty);
       await tester.tap(find.text('编辑'));
       await tester.pumpAndSettle();
@@ -251,7 +241,7 @@ void main() {
     },
   );
   testWidgets(
-    'review day browsing stays in period and close retains selection',
+    'review day browsing stays in period and close retains browsing context',
     (tester) async {
       final container = await pumpYike(
         tester,
@@ -270,13 +260,19 @@ void main() {
       await tester.tap(find.bySemanticsLabel('2026-10-16'));
       await tester.pumpAndSettle();
       expect(find.text('08:50'), findsOneWidget);
-      await tester.tap(find.text('‹  前一天'));
+      await tester.tap(find.byKey(const ValueKey('day-previous')));
       await tester.pumpAndSettle();
       expect(find.text('这一天没有记录'), findsOneWidget);
-      expect(container.read(reviewSelectionProvider).selected, '2026-10-15');
+      expect(
+        container.read(reviewSelectionProvider).lastViewedDate,
+        '2026-10-15',
+      );
       await tester.tap(find.byTooltip('关闭'));
       await tester.pumpAndSettle();
-      expect(container.read(reviewSelectionProvider).selected, '2026-10-15');
+      expect(
+        container.read(reviewSelectionProvider).lastViewedDate,
+        '2026-10-15',
+      );
       expect(tester.takeException(), isNull);
     },
   );
@@ -360,7 +356,13 @@ void main() {
           laps: List.generate(30, (i) => (i + 1) * 60),
         ),
       );
-      expect(find.text('1:00:00'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(YikeDial),
+          matching: find.text('1:00:00'),
+        ),
+        findsOneWidget,
+      );
       expect(find.byType(CommonScrollableDataList), findsOneWidget);
       await tester.ensureVisible(find.text('暂停'));
       await tester.tap(find.text('暂停'));

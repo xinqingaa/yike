@@ -271,14 +271,27 @@ class _DialSector extends CustomClipper<Path> {
   Path getClip(Size size) {
     final center = Offset(size.width / 2, size.height * .5);
     final radius = size.width * YikeGeometry.mechanicalOuter;
+    final outer = Rect.fromCircle(center: center, radius: radius);
+    // arcTo normalizes a complete turn to an empty arc. Keep both endpoints
+    // explicit so full countdowns and exact stopwatch hours remain visible.
+    if (progress <= 0) return Path();
+    if (progress >= 1) {
+      final full = Path()..addOval(outer);
+      if (!ring) return full;
+      return Path.combine(
+        PathOperation.difference,
+        full,
+        Path()..addOval(
+          Rect.fromCircle(
+            center: center,
+            radius: size.width * YikeGeometry.mechanicalInner,
+          ),
+        ),
+      );
+    }
     final path = Path()
       ..moveTo(center.dx, center.dy)
-      ..arcTo(
-        Rect.fromCircle(center: center, radius: radius),
-        -math.pi / 2,
-        math.pi * 2 * progress,
-        false,
-      )
+      ..arcTo(outer, -math.pi / 2, math.pi * 2 * progress, false)
       ..close();
     return ring
         ? Path.combine(

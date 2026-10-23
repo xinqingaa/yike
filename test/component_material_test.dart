@@ -239,8 +239,7 @@ class _FlowTestPage extends FlowSheetPage<void> {
 class _FlowTestPageState extends FlowSheetPageState<_FlowTestPage, void> {
   @override
   Widget build(BuildContext context) => CommonFlowSheetContent(
-    step: widget.step,
-    stepCount: 2,
+    progress: CommonFlowSheetProgress(step: widget.step, total: 2),
     body: Column(children: List.generate(40, (i) => Text('正文 $i'))),
     actions: [
       CommonButton(

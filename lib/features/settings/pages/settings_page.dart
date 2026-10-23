@@ -273,7 +273,7 @@ class YikeSettingsPage extends ConsumerWidget {
       context,
       title: '重置所有数据？',
       material: CommonSurfaceMaterial.glass,
-      builder: (context, handle) => YikeSheetBody(
+      builder: (context, handle) => AppSheetContent(
         body: Text(
           '清除当前会话、历史和用户习惯，恢复默认配置与四个预置习惯。此操作无法撤销。',
           style: TS.of(context).textStyle.content,
@@ -316,7 +316,7 @@ class _IntervalSheetState extends ConsumerState<_IntervalSheet> {
   late final _value = localValueProvider(widget.initial);
   final _saveFailed = localValueProvider(false);
   @override
-  Widget build(BuildContext context) => YikeSheetBody(
+  Widget build(BuildContext context) => AppSheetContent(
     body: Column(
       children: [
         CommonWheelPicker(
@@ -399,8 +399,6 @@ class _PresetList extends ConsumerWidget {
     final prefs = ref.watch(timingPreferencesProvider);
     final ts = TS.of(context);
     return CommonFlowSheetContent(
-      step: 0,
-      stepCount: 2,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -486,8 +484,6 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
   Widget build(BuildContext context) {
     final ts = TS.of(context);
     return CommonFlowSheetContent(
-      step: 1,
-      stepCount: 2,
       body: Column(
         children: [
           DurationWheels(
@@ -567,8 +563,6 @@ class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
   Widget build(BuildContext context) {
     final options = {5, 10, 60, 180, 300, 600, widget.initial}.toList()..sort();
     return CommonFlowSheetContent(
-      step: 0,
-      stepCount: 2,
       body: Column(
         children: [
           CommonWheelPicker(
@@ -637,8 +631,6 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
   final _saveFailed = localValueProvider(false);
   @override
   Widget build(BuildContext context) => CommonFlowSheetContent(
-    step: 1,
-    stepCount: 2,
     body: Column(
       children: [
         DurationWheels(

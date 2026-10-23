@@ -7,6 +7,7 @@ import '../../../common/widgets.dart';
 import '../../../common/widgets/yike/layout.dart';
 import '../../../theme/ts.dart';
 import '../widgets/habit_icon.dart';
+import '../widgets/habit_heatmap.dart';
 import 'habit_editor.dart';
 
 class HabitDetailPage extends ConsumerWidget {
@@ -55,6 +56,31 @@ class HabitDetailPage extends ConsumerWidget {
         ? habit.goal
         : (effectiveEnd.difference(DateTime.parse(effectiveStart)).inDays + 1)
               .clamp(0, 7);
+    Future<void> manage(String action) async {
+      if (habit == null) return;
+      if (action == 'archive') {
+        ref
+            .read(habitsProvider.notifier)
+            .save(
+              habit.copyWith(restore: habit.archived, archivedOn: todayKey),
+            );
+        Navigator.of(context).pop();
+      } else {
+        final confirm = await AppPop.confirm(
+          context,
+          title: '删除这个习惯？',
+          content: '「${habit.name}」及全部打卡记录会被删除，此操作无法撤销。',
+          confirmText: '确认删除',
+          danger: true,
+          material: CommonSurfaceMaterial.glass,
+        );
+        if (confirm) {
+          ref.read(habitsProvider.notifier).remove(habit.id);
+          if (context.mounted) Navigator.of(context).pop();
+        }
+      }
+    }
+
     return Scaffold(
       appBar: CommonAppBar(
         title: '',
@@ -165,10 +191,11 @@ class HabitDetailPage extends ConsumerWidget {
                     ),
                   ],
                   SizedBox(height: ts.spacing.lg),
-                  Text('最近一年', style: ts.textStyle.subtitle),
+                  Text('完成记录', style: ts.textStyle.subtitle),
                   SizedBox(height: ts.spacing.md),
                   CommonHeatmap(
                     label: '最近365天完成 $yearCount 次',
+                    showLabel: false,
                     readonly: true,
                     days: [
                       for (var i = 0; i < 365; i++)
@@ -182,47 +209,10 @@ class HabitDetailPage extends ConsumerWidget {
                               : 0,
                         ),
                     ],
-                    plotBuilder: (context, weeks, maximum) => Padding(
-                      padding: EdgeInsets.symmetric(vertical: ts.spacing.md),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (final column in weeks)
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  for (final cell in column)
-                                    Padding(
-                                      padding: EdgeInsets.all(
-                                        ts.border.widthHairline / 2,
-                                      ),
-                                      child: Container(
-                                        width: ts.sizing.stepDot / 2,
-                                        height: ts.sizing.stepDot / 2,
-                                        decoration: BoxDecoration(
-                                          shape: ts.pack.id.endsWith('sundial')
-                                              ? BoxShape.rectangle
-                                              : BoxShape.circle,
-                                          color: cell.value == 1
-                                              ? ts.colors.primary
-                                              : cell.date.compareTo(
-                                                          habit.created,
-                                                        ) <
-                                                        0 ||
-                                                    cell.date.compareTo(
-                                                          todayKey,
-                                                        ) >
-                                                        0
-                                              ? Colors.transparent
-                                              : ts.colors.border,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
+                    plotBuilder: (context, weeks, maximum) => HabitHeatmapPlot(
+                      weeks: weeks,
+                      habit: habit,
+                      today: todayKey,
                     ),
                     legend: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -231,69 +221,28 @@ class HabitDetailPage extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(dayId(first), style: ts.textStyle.micro),
-                            Text(
-                              '$todayKey · $yearCount次',
-                              style: ts.textStyle.micro,
-                            ),
+                            Text(todayKey, style: ts.textStyle.micro),
                           ],
                         ),
                         SizedBox(height: ts.spacing.sm),
-                        Text(
-                          '实心为完成，空心为缺失，淡色为归档期间；创建前与未来留空。空记录表示未打卡。',
-                          style: ts.textStyle.micro,
-                        ),
+                        const HabitHeatmapLegend(),
                       ],
                     ),
                   ),
                   SizedBox(height: ts.spacing.lg),
-                  Text('日期记录', style: ts.textStyle.caption),
-                  SizedBox(height: ts.spacing.lg),
-                  CommonGroupedList(
-                    groups: [
-                      CommonListGroup(
-                        id: 'manage',
-                        title: '',
-                        items: [
-                          CommonListItem(
-                            id: 'archive',
-                            title: habit.archived ? '恢复习惯' : '归档习惯',
-                            value: '保留记录，从打卡页隐藏',
-                            navigation: true,
-                          ),
-                          const CommonListItem(
-                            id: 'delete',
-                            title: '删除习惯',
-                            navigation: true,
-                          ),
-                        ],
-                      ),
-                    ],
-                    onNavigate: (_, action) async {
-                      if (action == 'archive') {
-                        ref
-                            .read(habitsProvider.notifier)
-                            .save(
-                              habit.copyWith(
-                                restore: habit.archived,
-                                archivedOn: todayKey,
-                              ),
-                            );
-                        Navigator.of(context).pop();
-                      } else {
-                        final confirm = await AppPop.confirm(
-                          context,
-                          title: '删除这个习惯？',
-                          content: '「${habit.name}」及全部打卡记录会被删除，此操作无法撤销。',
-                          confirmText: '确认删除',
-                          danger: true,
-                          material: CommonSurfaceMaterial.glass,
-                        );
-                        if (confirm) {
-                          ref.read(habitsProvider.notifier).remove(habit.id);
-                          if (context.mounted) Navigator.of(context).pop();
-                        }
-                      }
-                    },
+                  CommonListCell(
+                    key: const ValueKey('manage/archive'),
+                    title: habit.archived ? '恢复习惯' : '归档习惯',
+                    description: habit.archived ? '保留已有记录' : '保留记录，从打卡页隐藏',
+                    navigation: true,
+                    onNavigate: () => manage('archive'),
+                  ),
+                  const CommonDivider(),
+                  CommonListCell(
+                    key: const ValueKey('manage/delete'),
+                    title: '删除习惯',
+                    navigation: true,
+                    onNavigate: () => manage('delete'),
                   ),
                 ],
               ),

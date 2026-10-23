@@ -47,7 +47,16 @@ class _YikeSelectionBarState extends State<YikeSelectionBar>
       final index = widget.items.indexWhere(
         (item) => item.value == widget.value,
       );
-      if (_controller.index != index) _controller.animateTo(index);
+      if (_controller.index != index) {
+        final ts = TS.of(context);
+        _controller.animateTo(
+          index,
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : ts.motion.durationTabViewport,
+          curve: ts.motion.easingStandard,
+        );
+      }
     }
   }
 
@@ -69,52 +78,9 @@ class _YikeSelectionBarState extends State<YikeSelectionBar>
     size: widget.size,
     grow: true,
     controller: _controller,
-    onSelected: (value) async {
+    onSelectionRequested: (value) async {
       await widget.onSelected(value);
       _align();
     },
   );
-}
-
-class YikeSheetBody extends StatelessWidget {
-  const YikeSheetBody({
-    super.key,
-    required this.body,
-    required this.actions,
-    this.expand = false,
-  });
-  final Widget body, actions;
-  final bool expand;
-  @override
-  Widget build(BuildContext context) {
-    final ts = TS.of(context);
-    return Column(
-      mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Flexible(
-          fit: expand ? FlexFit.tight : FlexFit.loose,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              ts.spacing.md,
-              ts.spacing.sm,
-              ts.spacing.md,
-              ts.spacing.md,
-            ),
-            child: body,
-          ),
-        ),
-        const CommonDivider(),
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            ts.spacing.md,
-            ts.spacing.smPlus,
-            ts.spacing.md,
-            0,
-          ),
-          child: actions,
-        ),
-      ],
-    );
-  }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../theme/ts.dart';
 import '../action/icon.dart';
 import '../action/icon_button.dart';
+import '../action/pressable_surface.dart';
 import 'calendar_dates.dart';
 
 class CommonCalendarDay {
@@ -36,6 +37,7 @@ class CommonMonthCalendar extends StatefulWidget {
     this.showHeader = true,
     this.customDayAppearance = false,
     this.dayBuilder,
+    this.dayShape,
     this.label = '选择日期',
   });
   final String month;
@@ -48,6 +50,7 @@ class CommonMonthCalendar extends StatefulWidget {
   final bool showHeader;
   final bool customDayAppearance;
   final CommonCalendarDayBuilder? dayBuilder;
+  final OutlinedBorder? dayShape;
   final String label;
 
   @override
@@ -222,7 +225,7 @@ class _CommonMonthCalendarState extends State<CommonMonthCalendar> {
     final node = _nodes[date]!;
     return Semantics(
       button: true,
-      selected: state.selected,
+      selected: widget.value == null ? null : state.selected,
       enabled: !disabled,
       label: widget.dayLabels[date] ?? date,
       excludeSemantics: true,
@@ -244,11 +247,14 @@ class _CommonMonthCalendarState extends State<CommonMonthCalendar> {
         },
         child: Opacity(
           opacity: disabled ? ts.opacity.disabled : ts.opacity.visible,
-          child: InkWell(
+          child: CommonPressableSurface(
             focusNode: node,
-            canRequestFocus: !disabled,
-            onTap: disabled ? null : () => widget.onChanged!(date),
-            borderRadius: BorderRadius.circular(ts.radius.full),
+            onPressed: disabled ? null : () => widget.onChanged!(date),
+            shape:
+                widget.dayShape ??
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(ts.radius.full),
+                ),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: ts.sizing.touch),
               child: widget.customDayAppearance

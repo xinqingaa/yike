@@ -3,7 +3,7 @@
     "proto-bridge": {
       "command": "node",
       "args": [
-        "/Users/lrq/work/yike/tool/mcp.mjs"
+        "${CLAUDE_PROJECT_DIR:-.}/tool/mcp.mjs"
       ]
     }
   }

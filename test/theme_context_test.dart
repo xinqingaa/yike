@@ -90,6 +90,50 @@ void main() {
     );
     expect(container.read(themePackProvider).id, 'yike/mechanical');
   });
+  test('numeric styles never fall back during theme transitions', () {
+    for (final pack in generatedThemePacks.where(
+      (p) => p.id.startsWith('yike/'),
+    )) {
+      for (final brightness in Brightness.values) {
+        final source = TS(brightness: brightness, pack: pack);
+        for (final targetPack in generatedThemePacks.where(
+          (p) => p.id.startsWith('yike/'),
+        )) {
+          final target = TS(
+            brightness: brightness == Brightness.light
+                ? Brightness.dark
+                : Brightness.light,
+            pack: targetPack,
+          );
+          for (final t in [.01, .25, .5, .75, .99]) {
+            final blended = source.lerp(target, t);
+            final actual = [
+              blended.textStyle.numericDisplay,
+              blended.textStyle.numericTitle,
+              blended.textStyle.numericContent,
+            ];
+            final from = [
+              source.textStyle.numericDisplay,
+              source.textStyle.numericTitle,
+              source.textStyle.numericContent,
+            ];
+            final to = [
+              target.textStyle.numericDisplay,
+              target.textStyle.numericTitle,
+              target.textStyle.numericContent,
+            ];
+            for (var i = 0; i < actual.length; i++) {
+              final expected = TextStyle.lerp(from[i], to[i], t)!;
+              expect(actual[i].fontSize, closeTo(expected.fontSize!, .001));
+              expect(actual[i].height, closeTo(expected.height!, .001));
+              expect(actual[i].fontWeight, expected.fontWeight);
+            }
+          }
+        }
+      }
+    }
+  });
+
   test(
     'theme geometry and shadows remain continuous across brightness midpoint',
     () {

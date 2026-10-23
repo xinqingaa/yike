@@ -10,7 +10,7 @@ lib/
 ├── storage/          AppPrefs：MMKV 偏好与业务快照
 ├── common/
 │   ├── widgets/      可复用 UI 组件
-│   └── overlay/      AppPop 共享弹层入口
+│   └── overlay/      AppPop 入口、按职责拆分的弹层及共享外壳
 └── features/         按业务 feature 组织的页面、模型与页面 Notifier
 ```
 

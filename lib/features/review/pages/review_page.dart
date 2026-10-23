@@ -1,30 +1,29 @@
 import '../../focus/focus.dart';
 import '../../habits/habits.dart';
 import '../providers/review_presentation.dart';
-import '../../../app/navigation.dart';
 import '../../../common/time.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:unified_popups/unified_popups.dart'
-    show SheetSizeConfig, SheetDimension;
 import '../../../common/state/local_value.dart';
 import '../../../common/overlay/app_pop.dart';
 import '../../../common/widgets.dart';
-import '../../../common/widgets/yike/dial.dart';
 import '../../../common/widgets/yike/layout.dart';
 import '../../../theme/ts.dart';
+import '../widgets/day_detail_sheet.dart';
+import '../widgets/review_labels.dart';
 
-String recordIdentity(FocusRecordView record) => record.sessionId.isEmpty
-    ? '${record.date}/${record.time}/${record.mode}'
-    : record.sessionId;
-
-String modeLabel(TimerMode mode) => const ['番茄钟', '正计时', '倒计时'][mode.index];
-
-class ReviewPage extends ConsumerWidget {
+class ReviewPage extends ConsumerStatefulWidget {
   const ReviewPage({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReviewPage> createState() => _ReviewPageState();
+}
+
+class _ReviewPageState extends ConsumerState<ReviewPage> {
+  final _detailOpen = localValueProvider(false);
+  @override
+  Widget build(BuildContext context) {
+    final opening = ref.watch(_detailOpen);
     final ts = TS.of(context);
     final selected = ref.watch(reviewSelectionProvider);
     final today = ref.watch(todayProvider);
@@ -54,21 +53,31 @@ class ReviewPage extends ConsumerWidget {
         clear: true,
       ),
     );
-    void open(String date) {
-      update(selected.copyWith(selected: date));
-      AppPop.sheet<void>(
-        context,
-        title: selected.month ? '本月' : '本周',
-        material: CommonSurfaceMaterial.glass,
-        size: SheetSizeConfig(
-          height: SheetDimension.fraction(ts.sizing.panelMedium),
-        ),
-        builder: (_, handle) => DayDetailSheet(
-          initial: date,
-          first: selected.first,
-          last: selected.last.isAfter(today) ? today : selected.last,
-        ),
-      );
+    Future<void> open(String date) async {
+      if (opening || ref.read(_detailOpen)) return;
+      ref.read(_detailOpen.notifier).set(true);
+      update(selected.copyWith(lastViewedDate: date));
+      try {
+        await AppPop.sheet<void>(
+          context,
+          title: '每日记录',
+          material: CommonSurfaceMaterial.glass,
+          builder: (context, _) => ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight:
+                  MediaQuery.sizeOf(context).height *
+                  TS.of(context).sizing.panelMedium,
+            ),
+            child: DayDetailSheet(
+              initial: date,
+              first: selected.first,
+              last: selected.last.isAfter(today) ? today : selected.last,
+            ),
+          ),
+        );
+      } finally {
+        if (mounted) ref.read(_detailOpen.notifier).set(false);
+      }
     }
 
     return ListView(
@@ -89,29 +98,33 @@ class ReviewPage extends ConsumerWidget {
           ],
         ),
         SizedBox(height: ts.spacing.md),
-        Row(
-          children: [
-            SizedBox(
-              width: ts.sizing.controlMd * 2 + ts.spacing.lg + ts.spacing.xs,
-              child: YikeSelectionBar(
-                size: CommonPrimaryTabsSize.sm,
-                items: const [
-                  CommonTabItem(value: 'week', label: '周'),
-                  CommonTabItem(value: 'month', label: '月'),
-                ],
-                value: selected.month ? 'month' : 'week',
-                onSelected: (value) => update(
-                  ReviewSelection(
-                    month: value == 'month',
-                    anchor: selected.selected == null
-                        ? current
-                              ? today
-                              : selected.anchor
-                        : DateTime.parse(selected.selected!),
-                  ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: ts.sizing.controlMd * 2 + ts.spacing.lg + ts.spacing.xs,
+            child: YikeSelectionBar(
+              size: CommonPrimaryTabsSize.sm,
+              items: const [
+                CommonTabItem(value: 'week', label: '周'),
+                CommonTabItem(value: 'month', label: '月'),
+              ],
+              value: selected.month ? 'month' : 'week',
+              onSelected: (value) => update(
+                ReviewSelection(
+                  month: value == 'month',
+                  anchor: selected.lastViewedDate == null
+                      ? current
+                            ? today
+                            : selected.anchor
+                      : DateTime.parse(selected.lastViewedDate!),
                 ),
               ),
             ),
+          ),
+        ),
+        SizedBox(height: ts.spacing.sm),
+        Row(
+          children: [
             CommonIconButton(
               name: CommonIconName.chevronLeft,
               label: '上一期',
@@ -155,109 +168,107 @@ class ReviewPage extends ConsumerWidget {
         SizedBox(height: ts.spacing.md),
         CommonDivider(),
         SizedBox(height: ts.spacing.md),
-        if (records.isEmpty && checkins == 0)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: ts.spacing.lg),
-            child: Column(
+        if (records.isEmpty && checkins == 0) ...[
+          Text(
+            selected.month ? '这一月还没有记录' : '这一周还没有记录',
+            style: ts.textStyle.subtitle,
+          ),
+          SizedBox(height: ts.spacing.xs),
+          Text('从底部“专注”或“打卡”开始记录。', style: ts.textStyle.caption),
+          SizedBox(height: ts.spacing.md),
+        ],
+        if (selected.month)
+          CommonMonthCalendar(
+            month: from.substring(0, 7),
+            today: dayId(today),
+            showHeader: false,
+            customDayAppearance: true,
+            dayShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                ts.pack.id.endsWith('sundial') ? ts.radius.xs : ts.radius.full,
+              ),
+            ),
+            label: '本月每日专注',
+            disabledDates: {
+              for (
+                var day = selected.first;
+                !day.isAfter(selected.last);
+                day = day.add(const Duration(days: 1))
+              )
+                if (day.isAfter(today)) dayId(day),
+            },
+            onChanged: open,
+            dayBuilder: (context, day) => _MonthDay(
+              day: day,
+              checkins: ref
+                  .watch(habitsProvider)
+                  .where((habit) => habit.dates.contains(day.date))
+                  .length,
+              seconds: records
+                  .where((r) => r.date == day.date)
+                  .fold<num>(0, (sum, r) => sum + r.seconds),
+            ),
+          )
+        else
+          _WeekChart(
+            selection: selected,
+            today: today,
+            records: records,
+            checkins: ref
+                .watch(habitsProvider)
+                .expand((habit) => habit.dates)
+                .toList(),
+            onSelected: open,
+          ),
+        if (total > 0) ...[
+          SizedBox(height: ts.spacing.md),
+          Text('按类型', style: ts.textStyle.subtitle),
+          for (final mode in TimerMode.values) ...[
+            SizedBox(height: ts.spacing.md),
+            Row(
               children: [
-                YikeDial(width: ts.sizing.brand, brand: true, progress: 0),
-                SizedBox(height: ts.spacing.md),
                 Text(
-                  selected.month ? '这一月还没有专注记录' : '这一周还没有专注记录',
-                  style: ts.textStyle.subtitle,
+                  modeLabel(mode),
+                  style: ts.textStyle.content.copyWith(
+                    color: ts.colors.onSurfaceMuted,
+                  ),
                 ),
-                SizedBox(height: ts.spacing.md),
-                SizedBox(
-                  width: ts.sizing.actionMinInline,
-                  child: CommonButton(
-                    label: '去专注',
-                    kind: CommonButtonKind.accent,
-                    shape: CommonButtonShape.pill,
-                    onPressed: () => ref.read(rootTabProvider.notifier).set(0),
+                SizedBox(width: ts.spacing.sm),
+                Expanded(
+                  child: Text(
+                    '${records.where((r) => r.mode == mode).map(recordIdentity).toSet().length} 次 · ${durationLabel(records.where((r) => r.mode == mode).fold<num>(0, (sum, r) => sum + r.seconds))}',
+                    style: ts.textStyle.caption,
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
-          )
-        else ...[
-          if (selected.month)
-            CommonMonthCalendar(
-              month: from.substring(0, 7),
-              today: dayId(today),
-              value: selected.selected,
-              showHeader: false,
-              customDayAppearance: true,
-              label: '本月每日专注',
-              disabledDates: {
-                for (
-                  var day = selected.first;
-                  !day.isAfter(selected.last);
-                  day = day.add(const Duration(days: 1))
-                )
-                  if (day.isAfter(today)) dayId(day),
-              },
-              onChanged: open,
-              dayBuilder: (context, day) => _MonthDay(
-                day: day,
-                seconds: records
-                    .where((r) => r.date == day.date)
-                    .fold<num>(0, (sum, r) => sum + r.seconds),
-              ),
-            )
-          else
-            _WeekChart(
-              selection: selected,
-              today: today,
-              records: records,
-              onSelected: open,
-            ),
-          if (total > 0) ...[
-            SizedBox(height: ts.spacing.md),
-            Text('按类型', style: ts.textStyle.subtitle),
-            for (final mode in TimerMode.values) ...[
-              SizedBox(height: ts.spacing.md),
-              Row(
-                children: [
-                  Text(
-                    modeLabel(mode),
-                    style: ts.textStyle.content.copyWith(
-                      color: ts.colors.onSurfaceMuted,
+            SizedBox(height: ts.spacing.xs),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(ts.radius.full),
+              child: SizedBox(
+                height: ts.sizing.progressTrack,
+                child: Stack(
+                  children: [
+                    ColoredBox(
+                      color: ts.colors.border,
+                      child: const SizedBox.expand(),
                     ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${records.where((r) => r.mode == mode).map(recordIdentity).toSet().length} 次 · ${durationLabel(records.where((r) => r.mode == mode).fold<num>(0, (sum, r) => sum + r.seconds))}',
-                    style: ts.textStyle.caption,
-                  ),
-                ],
-              ),
-              SizedBox(height: ts.spacing.xs),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(ts.radius.full),
-                child: SizedBox(
-                  height: ts.sizing.progressTrack,
-                  child: Stack(
-                    children: [
-                      ColoredBox(
-                        color: ts.colors.border,
+                    FractionallySizedBox(
+                      widthFactor:
+                          records
+                              .where((r) => r.mode == mode)
+                              .fold<num>(0, (sum, r) => sum + r.seconds) /
+                          total,
+                      child: ColoredBox(
+                        color: ts.colors.primary,
                         child: const SizedBox.expand(),
                       ),
-                      FractionallySizedBox(
-                        widthFactor:
-                            records
-                                .where((r) => r.mode == mode)
-                                .fold<num>(0, (sum, r) => sum + r.seconds) /
-                            total,
-                        child: ColoredBox(
-                          color: ts.colors.primary,
-                          child: const SizedBox.expand(),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ],
         ],
       ],
@@ -283,11 +294,13 @@ class _WeekChart extends StatelessWidget {
     required this.selection,
     required this.today,
     required this.records,
+    required this.checkins,
     required this.onSelected,
   });
   final ReviewSelection selection;
   final DateTime today;
   final List<FocusRecordView> records;
+  final List<String> checkins;
   final ValueChanged<String> onSelected;
   @override
   Widget build(BuildContext context) {
@@ -305,7 +318,7 @@ class _WeekChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '每块 25 分钟 · 量程 ${maxSeconds % 60 == 0 ? maxSeconds ~/ 60 : (maxSeconds / 60).toStringAsFixed(1)} 分钟',
+          '${ts.pack.id.endsWith('mechanical') ? '每格 25 分钟 · ' : ''}单位：分钟 · 量程 ${maxSeconds % 60 == 0 ? maxSeconds ~/ 60 : (maxSeconds / 60).toStringAsFixed(1)} 分钟',
           style: ts.textStyle.caption,
         ),
         SizedBox(height: ts.spacing.sm),
@@ -318,11 +331,18 @@ class _WeekChart extends StatelessWidget {
                   builder: (context) {
                     final date = selection.first.add(Duration(days: i));
                     final future = date.isAfter(today);
-                    return InkWell(
-                      onTap: future ? null : () => onSelected(dayId(date)),
+                    return CommonPressableSurface(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          ts.pack.id.endsWith('water')
+                              ? ts.radius.full
+                              : ts.radius.xs,
+                        ),
+                      ),
+                      key: ValueKey('review-day-${dayId(date)}'),
+                      onPressed: future ? null : () => onSelected(dayId(date)),
                       child: Semantics(
                         label: '${dayId(date)}，${durationLabel(values[i])}',
-                        selected: selection.selected == dayId(date),
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: ts.spacing.xs,
@@ -343,17 +363,33 @@ class _WeekChart extends StatelessWidget {
                                 child: _WeekColumn(
                                   fraction: values[i] / maxSeconds,
                                   blockFraction: 1500 / maxSeconds,
-                                  selected: selection.selected == dayId(date),
+                                  future: future,
                                 ),
                               ),
                               SizedBox(height: ts.spacing.xs),
                               Text(
-                                const ['一', '二', '三', '四', '五', '六', '日'][i],
+                                '周${const ['一', '二', '三', '四', '五', '六', '日'][i]}',
                                 style: ts.textStyle.caption.copyWith(
                                   color: dayId(date) == dayId(today)
                                       ? ts.colors.primary
                                       : ts.colors.onSurfaceMuted,
                                 ),
+                              ),
+                              SizedBox(height: ts.spacing.xs),
+                              Text(
+                                '${date.day}',
+                                maxLines: 1,
+                                style: ts.textStyle.micro,
+                              ),
+                              SizedBox(height: ts.spacing.xs),
+                              Text(
+                                checkins.contains(dayId(date))
+                                    ? '${checkins.where((day) => day == dayId(date)).length}次'
+                                    : ' ',
+                                style: ts.textStyle.micro.copyWith(
+                                  color: ts.colors.primary,
+                                ),
+                                maxLines: 1,
                               ),
                             ],
                           ),
@@ -373,11 +409,11 @@ class _WeekChart extends StatelessWidget {
 class _WeekColumn extends StatelessWidget {
   const _WeekColumn({
     required this.fraction,
-    required this.selected,
     required this.blockFraction,
+    required this.future,
   });
   final double fraction, blockFraction;
-  final bool selected;
+  final bool future;
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
@@ -385,12 +421,8 @@ class _WeekColumn extends StatelessWidget {
     final sundial = ts.pack.id.endsWith('sundial');
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: water ? ts.colors.surface : Colors.transparent,
-        border: water || selected
-            ? Border.fromBorderSide(
-                selected ? ts.border.focus : ts.border.defaultBorder,
-              )
-            : null,
+        color: future ? Colors.transparent : ts.colors.surface,
+        border: Border.fromBorderSide(ts.border.defaultBorder),
         borderRadius: BorderRadius.circular(
           water ? ts.radius.full : ts.radius.xs,
         ),
@@ -472,9 +504,14 @@ class _WeekColumn extends StatelessWidget {
 }
 
 class _MonthDay extends StatelessWidget {
-  const _MonthDay({required this.day, required this.seconds});
+  const _MonthDay({
+    required this.day,
+    required this.seconds,
+    required this.checkins,
+  });
   final CommonCalendarDay day;
   final num seconds;
+  final int checkins;
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
@@ -507,7 +544,7 @@ class _MonthDay extends StatelessWidget {
             CommonIconName.yikeSundialFocusMedium,
             CommonIconName.yikeSundialFocusHigh,
           ][level];
-    return AspectRatio(
+    final graph = AspectRatio(
       aspectRatio: 1,
       child: Padding(
         padding: EdgeInsets.all(ts.spacing.xs),
@@ -530,20 +567,6 @@ class _MonthDay extends StatelessWidget {
                     shape: water ? BoxShape.circle : BoxShape.rectangle,
                     border: Border.fromBorderSide(ts.border.defaultBorder),
                     borderRadius: water
-                        ? null
-                        : BorderRadius.circular(ts.radius.xs),
-                  ),
-                ),
-              ),
-            if (day.selected)
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: mechanical || water
-                        ? BoxShape.circle
-                        : BoxShape.rectangle,
-                    border: Border.fromBorderSide(ts.border.focus),
-                    borderRadius: mechanical || water
                         ? null
                         : BorderRadius.circular(ts.radius.xs),
                   ),
@@ -572,6 +595,21 @@ class _MonthDay extends StatelessWidget {
           ],
         ),
       ),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        graph,
+        SizedBox(
+          height: ts.textStyle.micro.fontSize! * ts.textStyle.micro.height!,
+          child: checkins > 0
+              ? Text(
+                  '$checkins次',
+                  style: ts.textStyle.micro.copyWith(color: ts.colors.primary),
+                )
+              : null,
+        ),
+      ],
     );
   }
 }
@@ -613,128 +651,4 @@ class _TodayMarker extends CustomPainter {
 
   @override
   bool shouldRepaint(_TodayMarker old) => old.ts != ts;
-}
-
-class DayDetailSheet extends ConsumerStatefulWidget {
-  const DayDetailSheet({
-    super.key,
-    required this.initial,
-    required this.first,
-    required this.last,
-  });
-  final String initial;
-  final DateTime first, last;
-  @override
-  ConsumerState<DayDetailSheet> createState() => _DayDetailSheetState();
-}
-
-class _DayDetailSheetState extends ConsumerState<DayDetailSheet> {
-  late final _selected = localValueProvider(widget.initial);
-  @override
-  Widget build(BuildContext context) {
-    final date = ref.watch(_selected);
-    final parsed = DateTime.parse(date);
-    final records =
-        ref.watch(focusRecordsProvider).where((r) => r.date == date).toList()
-          ..sort((a, b) => a.time.compareTo(b.time));
-    final habits = ref
-        .watch(habitsProvider)
-        .where((h) => h.dates.contains(date))
-        .toList();
-    final ts = TS.of(context);
-    void shift(int delta) {
-      final next = dayId(parsed.add(Duration(days: delta)));
-      ref.read(_selected.notifier).set(next);
-      ref
-          .read(reviewSelectionProvider.notifier)
-          .select(ref.read(reviewSelectionProvider).copyWith(selected: next));
-    }
-
-    return Column(
-      children: [
-        Expanded(
-          child: CommonDataList(
-            key: ValueKey(date),
-            itemCount: records.length + 2,
-            divided: false,
-            surface: CommonDataListSurface.none,
-            rounded: CommonDataListRounded.none,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: ts.spacing.md),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${parsed.month}月${parsed.day}日 周${const ['一', '二', '三', '四', '五', '六', '日'][parsed.weekday - 1]}',
-                          style: ts.textStyle.subtitle,
-                        ),
-                      ),
-                      Text(
-                        durationLabel(
-                          records.fold<num>(0, (sum, r) => sum + r.seconds),
-                        ),
-                        style: ts.textStyle.caption,
-                      ),
-                    ],
-                  ),
-                );
-              }
-              if (index == records.length + 1) {
-                return Padding(
-                  padding: EdgeInsets.symmetric(vertical: ts.spacing.md),
-                  child: Text(
-                    habits.isNotEmpty
-                        ? '打卡：${habits.map((h) => h.name).join('、')}'
-                        : records.isEmpty
-                        ? '这一天没有记录'
-                        : '这一天没有打卡记录',
-                    style: ts.textStyle.content,
-                  ),
-                );
-              }
-              final record = records[index - 1];
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: ts.spacing.sm),
-                child: Row(
-                  children: [
-                    Text(record.time, style: ts.textStyle.caption),
-                    SizedBox(width: ts.spacing.lg),
-                    Text(modeLabel(record.mode), style: ts.textStyle.content),
-                    const Spacer(),
-                    Text(
-                      durationLabel(record.seconds),
-                      style: ts.textStyle.numericContent,
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        CommonDivider(),
-        Row(
-          children: [
-            Expanded(
-              child: CommonButton(
-                label: '‹  前一天',
-                kind: CommonButtonKind.quiet,
-                disabled: !parsed.isAfter(widget.first),
-                onPressed: () => shift(-1),
-              ),
-            ),
-            Expanded(
-              child: CommonButton(
-                label: '后一天  ›',
-                kind: CommonButtonKind.quiet,
-                disabled: !parsed.isBefore(widget.last),
-                onPressed: () => shift(1),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 }

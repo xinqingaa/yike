@@ -1,4 +1,5 @@
 export 'widgets/action/button.dart';
+export 'widgets/action/pressable_surface.dart';
 export 'widgets/action/icon.dart';
 export 'widgets/action/icon_button.dart';
 

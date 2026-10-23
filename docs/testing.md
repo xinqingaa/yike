@@ -74,3 +74,26 @@ xcrun simctl io <udid> screenshot <path>
 工程通过 CocoaPods 接入原生依赖，`pubspec.yaml` 显式关闭 Swift Package Manager。依赖要求以该文件及锁文件为准，不把历史工具链问题写成固定版本禁令。`Pods/`、`.symlinks/` 与 `build/` 为生成目录，不提交。
 
 测试宿主遵守 [状态管理规范](architecture.md#状态管理)。单独挂载 Consumer 组件时由宿主提供 ProviderScope；启动入口自行建立根作用域，偏好与主题作用域覆盖须覆盖实际依赖。
+
+## 体验回归与原生截图
+
+`test/experience_regression_test.dart` 覆盖模式请求提交时机、关闭/遮罩/返回取消、短时确认、空周与仅打卡周、日期明细留白、全年方格、滚轮单位距离及整列手势、归档完成事实和减少动态效果；`theme_context_test.dart` 同时核对三种数字文字角色在主题插值中的连续性。
+
+在移动设备运行可重复的三主题体验检查：
+
+```bash
+flutter test integration_test/experience_test.dart -d <device-id> --no-uninstall
+```
+
+测试使用 FakeAppPrefs 内存实例，不读写生产 `yike` 数据。每个主题进入计时切换、时长滚轮、FlowSheet、习惯详情浅深模式、空周、日期明细、仅打卡周与月历，输出 9 张原生截图；日志中的 `YIKE_SCREENSHOT=` 是设备临时目录路径。iOS Simulator 的绝对路径可在宿主机查看或复制，Android 需从测试应用临时目录取回。采集时需及时复制到宿主机，测试退出后设备临时目录可能被清理。截图需人工目视检查，不因脚本通过自动认定视觉接受；当前脚本的范围也不等于全部固定 Evidence Case。
+
+
+## 布局精修回归
+
+`test/layout_polish_test.dart` 检查滚轮数字自身居中及大字体缩放、FlowSheet 可选进度不留空位、倒计时等宽选项和取消语义、计圈基线与滚动、日期按压与无选择语义、手机安全区内操作、每日详情长列表与固定翻日。
+
+```bash
+flutter test integration_test/layout_polish_test.dart -d <移动设备 ID>
+```
+
+此脚本使用内存存储与固定日期，三主题各输出 11 张截图，覆盖倒计时、时长滚轮、计圈浅深、每日记录浅深、空日、周/月按压及关闭步骤指示的 FlowSheet；日志前缀为 `YIKE_POLISH_SCREENSHOT=`。按压截图使用设备事件来源，避免测试框架的彩色触点覆盖图形。截图应在运行期间复制到宿主机，再人工复核；最近一轮结果见 [布局与交互精修](reviews/2026-10-23-layout-polish.md)。

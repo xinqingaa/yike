@@ -5,11 +5,11 @@ class ReviewSelection {
   const ReviewSelection({
     required this.anchor,
     this.month = false,
-    this.selected,
+    this.lastViewedDate,
   });
   final DateTime anchor;
   final bool month;
-  final String? selected;
+  final String? lastViewedDate;
   DateTime get first =>
       month ? DateTime.utc(anchor.year, anchor.month) : weekStart(anchor);
   DateTime get last => month
@@ -18,12 +18,12 @@ class ReviewSelection {
   ReviewSelection copyWith({
     DateTime? anchor,
     bool? month,
-    String? selected,
+    String? lastViewedDate,
     bool clear = false,
   }) => ReviewSelection(
     anchor: anchor ?? this.anchor,
     month: month ?? this.month,
-    selected: clear ? null : selected ?? this.selected,
+    lastViewedDate: clear ? null : lastViewedDate ?? this.lastViewedDate,
   );
 }
 

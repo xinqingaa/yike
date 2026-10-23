@@ -1,4 +1,6 @@
 import '../models/focus_view.dart';
+import '../widgets/countdown_utility.dart';
+import '../widgets/lap_list.dart';
 import '../providers/focus_presentation.dart';
 import '../../../common/time.dart';
 import 'dart:math' as math;
@@ -8,7 +10,6 @@ import '../../../common/overlay/app_pop.dart';
 import '../../../common/state/local_value.dart';
 import '../../../common/widgets.dart';
 import '../../../common/widgets/yike/dial.dart';
-import '../../../common/widgets/yike/layout.dart';
 import '../../../router/routes.dart';
 import '../../../theme/ts.dart';
 import '../../../common/overlay/duration_sheet.dart';
@@ -25,17 +26,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
     length: 3,
     initialIndex: ref.read(focusViewProvider).mode.index,
     vsync: this,
-  )..addListener(_tabChanged);
+  );
   final _switching = localValueProvider(false);
   final _recordPromptOpen = localValueProvider(false);
-
-  void _tabChanged() {
-    if (!_tabs.indexIsChanging &&
-        _tabs.offset.abs() < .001 &&
-        _tabs.index != ref.read(focusViewProvider).mode.index) {
-      _requestMode(TimerMode.values[_tabs.index].name);
-    }
-  }
 
   Future<void> _requestMode(String value) async {
     if (ref.read(_switching)) return;
@@ -44,7 +37,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
       await _selectMode(value);
     } finally {
       if (mounted) {
-        _tabs.animateTo(ref.read(focusViewProvider).mode.index);
         ref.read(_switching.notifier).set(false);
       }
     }
@@ -52,7 +44,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   @override
   void dispose() {
-    _tabs.removeListener(_tabChanged);
     _tabs.dispose();
     super.dispose();
   }
@@ -79,7 +70,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
     }
   }
 
+  String _modeLabel(TimerMode mode) => const ['番茄钟', '正计时', '倒计时'][mode.index];
+
   Future<void> _selectMode(String value) async {
+    _actions.calibrate();
     final next = TimerMode.values.byName(value);
     final current = ref.read(focusViewProvider);
     if (next == current.mode) return;
@@ -88,36 +82,32 @@ class _FocusPageState extends ConsumerState<FocusPage>
         context,
         title: '切换计时模式？',
         material: CommonSurfaceMaterial.glass,
-        builder: (context, handle) => YikeSheetBody(
+        builder: (context, handle) => AppSheetContent(
           body: Text(
-            '先结束当前阶段再切换。短于设置阈值时会再次确认是否记录，休息不计入专注。',
+            current.resting
+                ? '结束当前休息后进入${_modeLabel(next)}，休息不计入专注。'
+                : current.finished
+                ? '当前阶段已完成。进入${_modeLabel(next)}后，已保存的记录会保留；放弃只离开当前阶段。'
+                : '即将进入${_modeLabel(next)}。结束会记录本次有效专注；放弃不生成本次记录。',
             style: TS.of(context).textStyle.content,
           ),
-          actions: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
+          actions: Row(
             children: [
-              CommonButton(
-                label: '结束并切换',
-                size: CommonControlSize.lg,
-                shape: CommonButtonShape.pill,
-                kind: CommonButtonKind.accent,
-                onPressed: () => handle.complete('record'),
+              Expanded(
+                child: CommonButton(
+                  label: '放弃',
+                  kind: CommonButtonKind.outlined,
+                  destructive: true,
+                  onPressed: () => handle.complete('discard'),
+                ),
               ),
-              CommonButton(
-                label: '放弃并切换',
-                size: CommonControlSize.lg,
-                shape: CommonButtonShape.pill,
-                destructive: true,
-                kind: CommonButtonKind.outlined,
-                onPressed: () => handle.complete('discard'),
-              ),
-              CommonButton(
-                label: '取消',
-                size: CommonControlSize.lg,
-                shape: CommonButtonShape.pill,
-                kind: CommonButtonKind.quiet,
-                onPressed: handle.dismiss,
+              SizedBox(width: TS.of(context).spacing.smPlus),
+              Expanded(
+                child: CommonButton(
+                  label: '结束',
+                  kind: CommonButtonKind.accent,
+                  onPressed: () => handle.complete('record'),
+                ),
               ),
             ],
           ),
@@ -168,7 +158,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
       context,
       title: '放弃这次专注？',
       material: CommonSurfaceMaterial.glass,
-      builder: (context, handle) => YikeSheetBody(
+      builder: (context, handle) => AppSheetContent(
         body: Text(
           '本次专注不会生成新记录。倒计时已完成部分会保留。',
           style: TS.of(context).textStyle.content,
@@ -199,7 +189,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
       context,
       title: '计时已暂停',
       material: CommonSurfaceMaterial.glass,
-      builder: (context, handle) => YikeSheetBody(
+      builder: (context, handle) => AppSheetContent(
         body: Text(
           '已恢复到最后保存的进度，关闭期间没有计时。',
           style: TS.of(context).textStyle.content,
@@ -215,6 +205,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               kind: CommonButtonKind.accent,
               onPressed: () => handle.complete('resume'),
             ),
+            SizedBox(height: TS.of(context).spacing.smPlus),
             CommonButton(
               label: ref.read(focusViewProvider).resting ? '跳过休息' : '结束并记录',
               size: CommonControlSize.lg,
@@ -277,7 +268,16 @@ class _FocusPageState extends ConsumerState<FocusPage>
       },
     );
     ref.listen(focusViewProvider.select((value) => value.mode), (_, mode) {
-      if (_tabs.index != mode.index) _tabs.animateTo(mode.index);
+      if (_tabs.index != mode.index) {
+        final ts = TS.of(context);
+        _tabs.animateTo(
+          mode.index,
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : ts.motion.durationTabViewport,
+          curve: ts.motion.easingStandard,
+        );
+      }
     });
     final prefs = ref.watch(timingPreferencesProvider);
     final today = ref.watch(todayProvider);
@@ -330,7 +330,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
                 ],
                 grow: true,
                 controller: _tabs,
-                onSelected: _requestMode,
+                disabled: ref.watch(_switching),
+                onSelectionRequested: _requestMode,
               ),
             ],
           ),
@@ -340,6 +341,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
             ignoring: ref.watch(_switching),
             child: CommonTabView(
               controller: _tabs,
+              swipe: false,
               children: [
                 for (final mode in TimerMode.values)
                   _panel(
@@ -396,7 +398,35 @@ class _FocusPageState extends ConsumerState<FocusPage>
         : '第 ${value.round} 轮专注';
     return LayoutBuilder(
       builder: (context, constraints) {
-        final dialHeight = ts.sizing.plot * ts.artworkAspectRatio;
+        final availableWidth = constraints.maxWidth - ts.spacing.lg * 2;
+        var dialWidth = math.min(ts.sizing.plot, availableWidth);
+        if (value.mode == TimerMode.countdown) {
+          final utilityHeight = CountdownUtility.heightFor(
+            context,
+            availableWidth,
+            prefs.presets.whereType<int>().toList(),
+          );
+          final fixedHeight =
+              utilityHeight +
+              ts.sizing.controlLg * 2 +
+              ts.spacing.smPlus * 2 +
+              ts.spacing.sm * 3;
+          final preferred = math.min(
+            ts.sizing.plot - ts.spacing.md,
+            availableWidth,
+          );
+          final minimumWidth = math.min(preferred, ts.sizing.controlLg * 3);
+          dialWidth = math.max(
+            minimumWidth,
+            math.min(
+              preferred,
+              (constraints.maxHeight - fixedHeight) / ts.artworkAspectRatio,
+            ),
+          );
+        }
+        final dialHeight = dialWidth * ts.artworkAspectRatio;
+        final compactLaps =
+            constraints.maxHeight < dialHeight + ts.sizing.controlLg * 6;
         final minimum = math.max(
           constraints.maxHeight,
           dialHeight + ts.sizing.controlLg * 3 + ts.spacing.lg * 2,
@@ -417,12 +447,20 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(
-                      height: ts.pack.id.endsWith('mechanical')
+                      height:
+                          value.mode == TimerMode.stopwatch &&
+                              !value.ready &&
+                              compactLaps
+                          ? ts.spacing.xs / 2
+                          : value.mode == TimerMode.countdown
+                          ? ts.spacing.sm
+                          : ts.pack.id.endsWith('mechanical')
                           ? ts.spacing.xl
                           : ts.spacing.md,
                     ),
                     Center(
                       child: YikeDial(
+                        width: dialWidth,
                         digits: timerDigits(value.seconds),
                         caption: value.caption,
                         progress: value.progress,
@@ -442,7 +480,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                         style: ts.textStyle.caption,
                       ),
                     const Spacer(),
-                    if (value.finished)
+                    if (value.finished && value.mode != TimerMode.countdown)
                       Text(
                         prefs.sound ? '提示音已开启' : '提示音已关闭',
                         textAlign: TextAlign.center,
@@ -480,82 +518,37 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       SizedBox(height: ts.spacing.xl),
                     ],
                     if (value.mode == TimerMode.stopwatch && !value.ready) ...[
-                      SizedBox(height: ts.spacing.sm),
                       SizedBox(
-                        height: ts.sizing.controlSm * 2,
-                        child: CommonScrollableDataList(
-                          itemCount: value.laps.length + 1,
-                          padding: EdgeInsets.zero,
-                          itemBuilder: (context, index) {
-                            final current = index == 0;
-                            final lapIndex = value.laps.length - index;
-                            final total = current
-                                ? value.seconds
-                                : value.laps[lapIndex];
-                            final previous = lapIndex > 0
-                                ? value.laps[lapIndex - 1]
-                                : 0;
-                            return Row(
-                              children: [
-                                Text(
-                                  '第 ${value.laps.length + 1 - index} 圈',
-                                  style: ts.textStyle.caption,
-                                ),
-                                SizedBox(width: ts.spacing.lg),
-                                Text(
-                                  timerDigits(total - previous),
-                                  style: ts.textStyle.numericContent,
-                                ),
-                                const Spacer(),
-                                Text(
-                                  current
-                                      ? value.paused
-                                            ? '已暂停'
-                                            : '进行中'
-                                      : '累计 ${timerDigits(total)}',
-                                  style: ts.textStyle.caption,
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                        height: compactLaps ? ts.spacing.xs : ts.spacing.sm,
                       ),
-                      SizedBox(height: ts.spacing.md),
+                      LapList(value: value, compact: compactLaps),
+                      SizedBox(
+                        height: compactLaps ? ts.spacing.xs : ts.spacing.md,
+                      ),
                     ],
-                    if (value.mode == TimerMode.countdown && value.ready) ...[
-                      SizedBox(height: ts.spacing.lg),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: ts.spacing.xs,
-                        runSpacing: ts.spacing.xs,
-                        children: [
-                          for (final preset in prefs.presets.whereType<int>())
-                            CommonChip(
-                              label: durationLabel(preset, compact: true),
-                              selected: value.target == preset,
-                              tone: value.target == preset
-                                  ? CommonChipTone.primary
-                                  : CommonChipTone.secondary,
-                              onTap: () => _actions.selectCountdown(preset),
-                            ),
-                          CommonButton(
-                            label: '自定义',
-                            kind: CommonButtonKind.quiet,
-                            onPressed: () async {
-                              final duration = await pickYikeDuration(
-                                context,
-                                title: '倒计时时长',
-                                initial: value.seconds,
-                                confirm: '确认时长',
-                              );
-                              if (duration != null) {
-                                _actions.selectCountdown(duration);
-                              }
-                            },
-                          ),
-                        ],
+                    if (value.mode == TimerMode.countdown) ...[
+                      SizedBox(height: ts.spacing.smPlus),
+                      CountdownUtility(
+                        key: const ValueKey('countdown-utility'),
+                        value: value,
+                        preferences: prefs,
+                        onRecovery: _recovery,
+                        availableWidth:
+                            constraints.maxWidth - ts.spacing.lg * 2,
+                        onSelected: _actions.selectCountdown,
+                        onCustom: () async {
+                          final duration = await pickYikeDuration(
+                            context,
+                            title: '倒计时时长',
+                            initial: value.seconds,
+                            confirm: '确认时长',
+                          );
+                          if (duration != null && mounted) {
+                            _actions.selectCountdown(duration);
+                          }
+                        },
                       ),
-                      SizedBox(height: ts.spacing.lg),
+                      SizedBox(height: ts.spacing.smPlus),
                     ],
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -564,6 +557,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                             value.status == TimerStatus.running) ...[
                           CommonButton(
                             label: '计圈',
+                            size: CommonControlSize.lg,
                             kind: CommonButtonKind.secondary,
                             shape: CommonButtonShape.pill,
                             onPressed: _actions.lap,
@@ -587,27 +581,57 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       ],
                     ),
                     SizedBox(height: ts.spacing.sm),
-                    if (value.paused && value.recovered)
+                    if (value.paused &&
+                        value.recovered &&
+                        value.mode != TimerMode.countdown)
                       CommonButton(
                         label: '查看恢复选项',
                         kind: CommonButtonKind.quiet,
                         onPressed: _recovery,
                       ),
-                    if (value.resting ||
+                    if (value.mode == TimerMode.countdown)
+                      SizedBox(
+                        key: const ValueKey('countdown-secondary'),
+                        height: ts.sizing.controlLg,
+                        child: value.ready
+                            ? null
+                            : value.finished
+                            ? CommonButton(
+                                label:
+                                    '再计${durationLabel(value.target, compact: true)}',
+                                kind: CommonButtonKind.quiet,
+                                onPressed: _actions.again,
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (value.paused)
+                                    Flexible(
+                                      child: CommonButton(
+                                        label: '结束并记录',
+                                        size: CommonControlSize.lg,
+                                        shape: CommonButtonShape.pill,
+                                        kind: CommonButtonKind.quiet,
+                                        onPressed: _finish,
+                                      ),
+                                    ),
+                                  Flexible(
+                                    child: CommonButton(
+                                      label: '取消计时',
+                                      kind: CommonButtonKind.quiet,
+                                      onPressed: _abandon,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      )
+                    else if (value.resting ||
                         (value.finished && value.mode == TimerMode.pomodoro))
                       CommonButton(
                         label: value.finished && value.resting ? '' : '跳过休息',
                         disabled: value.finished && value.resting,
                         kind: CommonButtonKind.quiet,
                         onPressed: () => _reset(),
-                      )
-                    else if (value.finished &&
-                        value.mode == TimerMode.countdown)
-                      CommonButton(
-                        label:
-                            '再计${durationLabel(value.target, compact: true)}',
-                        kind: CommonButtonKind.quiet,
-                        onPressed: _actions.again,
                       )
                     else if (!value.ready)
                       Row(
@@ -634,16 +658,14 @@ class _FocusPageState extends ConsumerState<FocusPage>
                           ),
                         ],
                       )
-                    else
+                    else if (value.mode == TimerMode.pomodoro)
                       SizedBox(
                         height: ts.sizing.controlMd,
                         child: Center(
-                          child: value.mode == TimerMode.pomodoro
-                              ? Text(
-                                  '专注 ${prefs.focusMinutes} 分钟 · 短休 ${prefs.shortMinutes} 分钟',
-                                  style: ts.textStyle.caption,
-                                )
-                              : null,
+                          child: Text(
+                            '专注 ${prefs.focusMinutes} 分钟 · 短休 ${prefs.shortMinutes} 分钟',
+                            style: ts.textStyle.caption,
+                          ),
                         ),
                       ),
                   ],

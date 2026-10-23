@@ -41,7 +41,7 @@
 | API | 职责 |
 | --- | --- |
 | `CommonStepper` | 有界数值输入；按钮、键盘与文本统一回调 |
-| `CommonWheelPicker` | 1–3 列独立滚轮；同时承接 duration-picker，外部状态可更新 |
+| `CommonWheelPicker` | 1–3 列独立滚轮；数字自身在列内居中、单位紧邻右侧，窄列等比缩放，外部状态可更新 |
 | `CommonRingProgress` / `CommonMetric` / `CommonTag` | 自绘环形进度、指标数值与只读标签 |
 | `CommonMiniBars` | 自绘柱状趋势；保留原始读数语义，长序列横向滚动 |
 | `CommonHeatmap` | 自绘日期热力图；缺失与零值不同，受控选择，可替换只读图层 |
@@ -51,7 +51,7 @@
 | `CommonLaunchScreen` | Flutter 欢迎页或静态启动页；导航与忙碌状态由调用者控制 |
 | `CommonGlassSurface` | unified_popups 的玻璃容器，支持高对比度/显式实色降级 |
 
-`CommonDecisionActions` 统一单个主要按钮或左次要、右主要按钮；`CommonFlowSheetContent` 提供固定步骤点和页脚按钮、独立滚动正文。二者是组合辅助，不新增 Producer componentId。图表和日历不创建第二套状态或弹层。
+`CommonDecisionActions` 统一单个主要按钮或左次要、右主要按钮；`CommonFlowSheetContent` 提供独立滚动正文与固定页脚。步骤指示默认关闭，仅传入 `progress: CommonFlowSheetProgress(step: ..., total: ...)` 时占位和显示；普通编辑分支不传 progress。这些是组合辅助，不新增 Producer componentId。图表和日历不创建第二套状态或弹层。`CommonPressableSurface` 使用主题强调色与 pressed Token，在子内容上方绘制短暂按压反馈；支持主题形状与键盘焦点，供不透明图形及选项使用。回顾月历不传 value，不保留日期选择语义；通用月历传 value 时仍支持受控选择。
 
 ## AppPop 弹层
 
@@ -67,7 +67,9 @@
 
 业务代码只调 `AppPop`，不直接调 `Pop`。需要样式的 AppPop 方法显式接收调用处 `BuildContext`，并统一转换 Theme、Token 与材质。
 
-`CommonGlassSurface` 组合使用 unified_popups 的 LiquidGlass；明确轮廓，提供清透和实色降级。`AppPop.actionSheet` 是 Sheet 内的动作列表组合。
+`CommonGlassSurface` 组合使用 unified_popups 的 LiquidGlass；明确轮廓，提供清透和实色降级。`AppPop.actionSheet` 是 Sheet 内的动作列表组合。`app_pop.dart` 只维护公开调用边界，内部实现按 `toast.dart`、`confirm.dart`、`sheet.dart`、`flow_sheet.dart`、`loading.dart`、`menu.dart` 分工；`popup_theme.dart` 负责材质与外壳，`sheet_header.dart` 负责紧凑头部，`sheet_actions.dart` 封装结果句柄。
+
+`SheetStyle` 统一提供左右 md 留白，正文不得再次添加同一层左右 Padding。`AppSheetContent`（从 AppPop 导出）提供滚动正文与固定操作区，可按需启用分隔线；`CommonFlowSheetContent` 在同一外壳内提供步骤与固定页脚，默认不绘制分隔线。
 
 公共组件不保留旧构造参数或历史别名；feature 必须直接迁移到当前 API。
 
@@ -100,7 +102,7 @@ PrimaryTabs 本身只提供选择条，TabView 是可选的独立视口。局部
 
 ## 尺寸与交互约定
 
-`CommonPrimaryTabs.size` 支持 `md`（controlMd 轨道）和 `sm`（controlSm 轨道），选中面使用上下 xs 内缩。`CommonTabView` 持有真实的可滑动面板；受控业务确认由页面 Provider 协调。
+`CommonPrimaryTabs.size` 支持 `md`（controlMd 轨道）和 `sm`（controlSm 轨道），选中面使用上下 xs 内缩。`CommonTabView` 持有真实的可滑动面板；受控业务确认由页面 Provider 协调。需要先确认再切换时，等宽 PrimaryTabs 使用 `onSelectionRequested`，该回调只发出请求，选中位置由调用者在确认后更新 controller；请求点击和键盘激活不提前推进 TabBar。
 
 `CommonListCell` 导航行的标题、数值和留白共用整行 InkWell，箭头仅用于提示。普通文字行以 content 行高加上下 md 内边距布局，避免嵌套箭头按钮把行撑到 76px。开关行保留独立开关触摸范围，行背景点击也能切换；disabled 禁止两种入口。`CommonGroupedList` 标题与容器左边对齐，无额外卡片外边距，并裁剪整行反馈到容器圆角。
 

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/local_value.dart';
 import '../overlay/app_pop.dart';
 import '../widgets.dart';
-import '../widgets/yike/layout.dart';
 import '../../theme/ts.dart';
 
 Future<int?> pickYikeDuration(
@@ -60,7 +59,7 @@ class _DurationSheetBodyState extends ConsumerState<DurationSheetBody> {
     final value = ref.watch(_value);
     final invalid = value < widget.minimum || value > widget.maximum;
     final ts = TS.of(context);
-    return YikeSheetBody(
+    return AppSheetContent(
       body: Column(
         children: [
           DurationWheels(
@@ -116,26 +115,23 @@ class DurationWheels extends StatelessWidget {
   final ValueChanged<int> onChanged;
   @override
   Widget build(BuildContext context) {
-    CommonWheelColumn column(String id, String unit, int max, bool padded) =>
+    CommonWheelColumn column(String id, String label, String unit, int max) =>
         CommonWheelColumn(
           id: id,
-          label: unit,
+          label: label,
           unit: unit,
           numeric: true,
           options: [
             for (var i = 0; i <= max; i++)
-              CommonWheelOption(
-                value: i,
-                label: padded ? i.toString().padLeft(2, '0') : '$i',
-              ),
+              CommonWheelOption(value: i, label: i.toString().padLeft(2, '0')),
           ],
         );
     return CommonWheelPicker(
       visibleRows: 3,
       columns: [
-        column('hour', '小时', maxHour, false),
-        column('minute', '分钟', 59, true),
-        if (seconds) column('second', '秒', 59, true),
+        column('hour', '小时', '时', maxHour),
+        column('minute', '分钟', '分', 59),
+        if (seconds) column('second', '秒', '秒', 59),
       ],
       values: [value ~/ 3600, value ~/ 60 % 60, if (seconds) value % 60],
       onChanged: (values) => onChanged(

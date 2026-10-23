@@ -167,6 +167,9 @@ abstract final class ThemeInterpolation {
         caption: TextStyle.lerp(a.caption, b.caption, t)!,
         captionStrong: TextStyle.lerp(a.captionStrong, b.captionStrong, t)!,
         micro: TextStyle.lerp(a.micro, b.micro, t)!,
+        numericDisplay: TextStyle.lerp(a.numericDisplay, b.numericDisplay, t)!,
+        numericTitle: TextStyle.lerp(a.numericTitle, b.numericTitle, t)!,
+        numericContent: TextStyle.lerp(a.numericContent, b.numericContent, t)!,
         trackingDisplay: AppLetterSpacing.pixels(
           lerpDouble(
             a.trackingDisplay.resolve(a.display),
