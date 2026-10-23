@@ -1,3 +1,6 @@
+import '../../../common/motion/motion_list.dart';
+import '../widgets/checkin_feedback.dart';
+import '../models/habit_view.dart';
 import '../../local_data/local_data.dart';
 import '../providers/habits_presentation.dart';
 import '../../../common/time.dart';
@@ -21,15 +24,13 @@ class CheckinPage extends ConsumerWidget {
     final today = ref.watch(todayProvider);
     final id = dayId(today);
     final done = active.where((h) => h.dates.contains(id)).length;
-    return CommonDataList(
+    return MotionList<Object>(
       key: const PageStorageKey('checkin-scroll'),
-      itemCount: active.length + 2,
-      surface: CommonDataListSurface.none,
-      rounded: CommonDataListRounded.none,
-      divided: false,
+      items: ['header', ...active, 'archive'],
+      identity: (item) => item is HabitViewData ? item.id : item,
       padding: EdgeInsets.all(ts.spacing.lg),
-      itemBuilder: (context, index) {
-        if (index == 0) {
+      itemBuilder: (context, item) {
+        if (item == 'header') {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -106,7 +107,7 @@ class CheckinPage extends ConsumerWidget {
             ],
           );
         }
-        if (index == active.length + 1) {
+        if (item == 'archive') {
           return Padding(
             padding: EdgeInsets.only(top: ts.spacing.md),
             child: CommonGroupedList(
@@ -130,7 +131,7 @@ class CheckinPage extends ConsumerWidget {
             ),
           );
         }
-        final habit = active[index - 1];
+        final habit = item as HabitViewData;
         final checked = habit.dates.contains(id);
         final start = dayId(weekStart(today));
         final weeklyCount = habit.dates
@@ -201,44 +202,49 @@ class CheckinPage extends ConsumerWidget {
                       Semantics(
                         container: true,
                         selected: checked,
-                        child: CommonIconButton(
-                          key: ValueKey('check-${habit.id}'),
-                          name: checked
-                              ? CommonIconName.check
-                              : habitIconName(habit.icon),
-                          label: checked
-                              ? '取消${habit.name}打卡'
-                              : '为${habit.name}打卡',
-                          variant: checked
-                              ? CommonIconButtonVariant.tonal
-                              : CommonIconButtonVariant.outlined,
-                          onPressed: () {
-                            final ticket = ref
-                                .read(habitsProvider.notifier)
-                                .toggle(
-                                  habit.id,
-                                  id,
-                                  undoDuration: ts.motion.durationToast,
-                                );
-                            if (ticket == null) return;
-                            AppPop.toast(
-                              context,
-                              '「${habit.name}」${checked ? '已取消打卡' : '今天已打卡'}${ref.read(localDataProvider).writeError == null ? '' : '（尚未保存）'}',
-                              actionLabel: '撤销',
-                              replacementKey: 'habit-checkin',
-                              bottomInset:
-                                  ts.sizing.bottomNavigation +
-                                  ts.spacing.md +
-                                  ts.spacing.xs,
-                              onAction: () {
-                                if (context.mounted) {
-                                  ref
-                                      .read(habitsProvider.notifier)
-                                      .undo(ticket);
-                                }
-                              },
-                            );
-                          },
+                        child: CheckinFeedback(
+                          key: ValueKey('feedback-${habit.id}'),
+                          checked: checked,
+                          habitId: habit.id,
+                          child: CommonIconButton(
+                            key: ValueKey('check-${habit.id}'),
+                            name: checked
+                                ? CommonIconName.check
+                                : habitIconName(habit.icon),
+                            label: checked
+                                ? '取消${habit.name}打卡'
+                                : '为${habit.name}打卡',
+                            variant: checked
+                                ? CommonIconButtonVariant.tonal
+                                : CommonIconButtonVariant.outlined,
+                            onPressed: () {
+                              final ticket = ref
+                                  .read(habitsProvider.notifier)
+                                  .toggle(
+                                    habit.id,
+                                    id,
+                                    undoDuration: ts.motion.durationToast,
+                                  );
+                              if (ticket == null) return;
+                              AppPop.toast(
+                                context,
+                                '「${habit.name}」${checked ? '已取消打卡' : '今天已打卡'}${ref.read(localDataProvider).writeError == null ? '' : '（尚未保存）'}',
+                                actionLabel: '撤销',
+                                replacementKey: 'habit-checkin',
+                                bottomInset:
+                                    ts.sizing.bottomNavigation +
+                                    ts.spacing.md +
+                                    ts.spacing.xs,
+                                onAction: () {
+                                  if (context.mounted) {
+                                    ref
+                                        .read(habitsProvider.notifier)
+                                        .undo(ticket);
+                                  }
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -308,7 +314,11 @@ class _WeekDot extends StatelessWidget {
     return ExcludeSemantics(
       child: Opacity(
         opacity: future ? ts.opacity.disabled : 1,
-        child: Container(
+        child: AnimatedContainer(
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : ts.motion.durationFast,
+          curve: ts.motion.easingStandard,
           width: ts.spacing.smPlus,
           height: ts.spacing.smPlus,
           decoration: BoxDecoration(

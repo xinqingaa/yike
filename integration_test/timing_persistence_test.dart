@@ -1,3 +1,4 @@
+import '../test/support/dial_finder.dart';
 import 'dart:io' show pid;
 
 import 'package:flutter/material.dart';
@@ -123,7 +124,7 @@ void main() {
     await tester.tap(find.byTooltip('返回'));
     await tester.pumpAndSettle();
     expect(app.read(focusViewProvider).target, 26 * 60);
-    expect(find.text('26:00'), findsOneWidget);
+    expect(dialDigits('26:00'), findsOneWidget);
     // Do not explicitly flush or close before process termination: exercise
     // ordinary application writes rather than a special test-only save path.
     await tester.pumpWidget(const SizedBox.shrink());

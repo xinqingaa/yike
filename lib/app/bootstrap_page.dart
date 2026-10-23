@@ -14,7 +14,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !MediaQuery.disableAnimationsOf(context)) {
+      if (mounted) {
         Navigator.of(context).pushReplacementNamed(AppRoutes.home);
       }
     });

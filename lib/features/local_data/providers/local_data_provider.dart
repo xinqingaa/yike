@@ -40,7 +40,20 @@ class LocalDataController extends Notifier<LocalDataState> {
   }
 
   bool commit(YikeData data, {bool persist = true, int? completions}) {
-    if (state.readError != null) return false;
+    final result = commitResult(
+      data,
+      persist: persist,
+      completions: completions,
+    );
+    return result.accepted && state.writeError == null;
+  }
+
+  CommitResult commitResult(
+    YikeData data, {
+    bool persist = true,
+    int? completions,
+  }) {
+    if (state.readError != null) return CommitResult.rejected;
     if (persist) {
       data = data.copyWith(
         focus: FocusEngine.advance(data.focus, ref.read(clockProvider)()),
@@ -61,7 +74,8 @@ class LocalDataController extends Notifier<LocalDataState> {
       revision: state.revision + 1,
       completions: completions ?? state.completions,
     );
-    return error == null;
+    if (!persist) return CommitResult.inMemory;
+    return error == null ? CommitResult.saved : CommitResult.acceptedUnsaved;
   }
 
   bool retry() => commit(state.data);

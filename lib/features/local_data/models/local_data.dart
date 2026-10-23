@@ -69,6 +69,16 @@ class YikeData {
   }
 }
 
+enum CommitResult {
+  rejected,
+  inMemory,
+  acceptedUnsaved,
+  saved;
+
+  bool get accepted => this != rejected;
+  bool get persisted => this == saved;
+}
+
 class LocalDataState {
   const LocalDataState({
     required this.data,

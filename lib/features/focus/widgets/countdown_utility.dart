@@ -1,3 +1,4 @@
+import '../../../common/motion/content_transition.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -49,50 +50,57 @@ class CountdownUtility extends StatelessWidget {
         availableWidth,
         preferences.presets.whereType<int>().toList(),
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Visibility(
-            visible: value.ready,
-            maintainState: true,
-            maintainAnimation: true,
-            maintainSize: true,
-            child: CountdownChoices(
-              availableWidth: availableWidth,
-              presets: preferences.presets.whereType<int>().toList(),
-              value: value.target,
-              onSelected: onSelected,
-              onCustom: onCustom,
-            ),
-          ),
-          if (!value.ready)
-            Positioned.fill(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      value.finished
-                          ? preferences.sound
-                                ? '提示音已开启'
-                                : '提示音已关闭'
-                          : '本次 ${durationLabel(value.target)}',
-                      textAlign: TextAlign.center,
-                      style: ts.textStyle.caption,
-                    ),
-                    if (value.paused && value.recovered) ...[
-                      SizedBox(height: ts.spacing.sm),
-                      CommonButton(
-                        label: '查看恢复选项',
-                        kind: CommonButtonKind.quiet,
-                        onPressed: onRecovery,
-                      ),
-                    ],
-                  ],
-                ),
+      child: MotionContent(
+        identity: value.ready,
+        resize: false,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Visibility(
+              visible: value.ready,
+              maintainState: true,
+              maintainAnimation: true,
+              maintainSize: true,
+              child: CountdownChoices(
+                availableWidth: availableWidth,
+                presets: preferences.presets.whereType<int>().toList(),
+                value: value.target,
+                onSelected: onSelected,
+                onCustom: onCustom,
               ),
             ),
-        ],
+            if (!value.ready)
+              Positioned.fill(
+                child: Center(
+                  child: MotionContent(
+                    identity: (value.status, value.recovered),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          value.finished
+                              ? preferences.sound
+                                    ? '提示音已开启'
+                                    : '提示音已关闭'
+                              : '本次 ${durationLabel(value.target)}',
+                          textAlign: TextAlign.center,
+                          style: ts.textStyle.caption,
+                        ),
+                        if (value.paused && value.recovered) ...[
+                          SizedBox(height: ts.spacing.sm),
+                          CommonButton(
+                            label: '查看恢复选项',
+                            kind: CommonButtonKind.quiet,
+                            onPressed: onRecovery,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

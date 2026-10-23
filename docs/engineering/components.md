@@ -116,3 +116,13 @@ PrimaryTabs 本身只提供选择条，TabView 是可选的独立视口。局部
 ## 导入基线与身份
 
 目录分类不改变既有 componentId 或 role；精确映射由根目录 `proto-bridge.target.json` 维护，不能从外观描述推断。CommonFormSection 等本地组合壳不冒充导入组件，新增本地能力也不自动新增 Producer 身份。外部 Contract 的核对仅在用户明确要求的 [专项](../integrations/proto-bridge.md) 中执行，日常组件设计以本地产品和工程规则为准。
+
+## 公共动效接入
+
+`common/motion` 的 MotionContent、MotionSize、MotionExpand 与 MotionList 各自管理内容替换、尺寸、局部展开及身份差异。退场立即失去命中、焦点和语义；减少动态效果直接呈现当前内容并保留草稿/滚动。列表通过身份索引保持未变化行，不使用整组重新入场。
+
+MotionPage 用于周期和日期明细的水平翻页，裁切新旧内容，不叠加淡化文字。MotionExpand 默认保持左对齐；CommonListCell 的数值受父约束限制，箭头固定在尾部，不与标题平分剩余宽度。表盘的文字度量和所有字形使用同一份已解析字体、粗体、方向、语言与缩放，静止和翻动共用槽位；缩放后的读数高度参与主题布局。水体裁切完整尺寸图层，不压缩杯形；状态文案独立于水下读数。
+
+AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay；应用边界拥有 AppStatusPopup 的寿命，feature 不持有底层句柄。AppPop 的模态打开和实际 dismissed 深度用于状态浮层优先级及背景一次性反馈的抑制。
+
+模态深度由应用 ProviderScope 中的 popupActivityProvider 管理，不使用静态全局状态；未保存提示的展开选择也由实例 Provider 管理。

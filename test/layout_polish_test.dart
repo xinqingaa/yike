@@ -1,3 +1,4 @@
+import 'support/pump_presentation.dart';
 import 'dart:ui' show Tristate;
 
 import 'package:flutter/material.dart';
@@ -54,7 +55,7 @@ void main() {
               ),
             ),
           );
-          await tester.pumpAndSettle();
+          await pumpPresentation(tester);
           for (var i = 0; i < count; i++) {
             final column = tester.getRect(
               find.byKey(ValueKey('wheel-column-$i')),
@@ -176,22 +177,22 @@ void main() {
   ) async {
     final app = await pumpYike(tester, size: const Size(320, 640));
     await tester.tap(find.text('倒计时'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     final preset = find.byKey(const ValueKey('countdown-preset-600'));
     await tester.ensureVisible(preset);
     await tester.tap(preset);
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(app.read(focusViewProvider).target, 600);
     expect(app.read(focusViewProvider).ready, isTrue);
     final custom = find.byKey(const ValueKey('countdown-custom'));
     await tester.ensureVisible(custom);
     await tester.tap(custom);
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.text('时'), findsOneWidget);
     expect(find.text('分'), findsOneWidget);
     expect(find.text('秒'), findsOneWidget);
     await tester.tap(find.byTooltip('关闭'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(app.read(focusViewProvider).target, 600);
     expect(app.read(focusViewProvider).ready, isTrue);
     expect(tester.takeException(), isNull);
@@ -240,10 +241,10 @@ void main() {
         closeTo(baseline(total), .01),
       );
       expect(find.text('暂停 · 13'), findsOneWidget);
-      final viewport = find.byType(CommonScrollableDataList);
+      final viewport = find.byKey(const ValueKey('lap-scroll'));
       final top = tester.getTopLeft(viewport);
       await tester.drag(viewport, const Offset(0, -800));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(tester.getTopLeft(viewport), top);
       expect(tester.takeException(), isNull);
     },
@@ -257,16 +258,16 @@ void main() {
         addTearDown(tester.view.resetPadding);
         await pumpYike(tester, theme: theme);
         await tester.tap(find.text('倒计时'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         final primary = find.byKey(const ValueKey('focus-primary')).last;
         expect(
           tester.getRect(primary).bottom,
           lessThanOrEqualTo(tester.getRect(find.byType(CommonBottomNav)).top),
         );
         await tester.tap(find.text('正计时'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         await tester.tap(find.text('开始计时'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         final cancel = find.widgetWithText(CommonButton, '取消计时');
         expect(
           tester.getRect(cancel).bottom,
@@ -291,20 +292,20 @@ void main() {
                 as ShapeDecoration;
         expect(feedback().color!.a, 0);
         final gesture = await tester.startGesture(tester.getCenter(day));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(
           feedback().color,
           ts.colors.primary.withValues(alpha: ts.opacity.pressed),
         );
         expect(feedback().shape, isA<RoundedRectangleBorder>());
         await gesture.up();
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(find.text('每日记录'), findsOneWidget);
         await tester.tap(find.byTooltip('关闭'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(feedback().color!.a, 0);
         await tester.tap(day);
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(find.text('每日记录'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
@@ -318,25 +319,25 @@ void main() {
       final app = await pumpYike(tester);
       await navigateTab(tester, '回顾');
       await tester.tap(find.text('月'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       final day = find.bySemanticsLabel('2026-10-16');
       expect(
         tester.getSemantics(day).flagsCollection.isSelected,
         Tristate.none,
       );
       await tester.tap(day);
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.byKey(const ValueKey('day-previous')));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.byTooltip('关闭'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(reviewSelectionProvider).lastViewedDate, '2026-10-15');
       expect(
         tester.getSemantics(day).flagsCollection.isSelected,
         Tristate.none,
       );
       await tester.tap(find.text('周'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(reviewSelectionProvider).anchor, DateTime(2026, 10, 15));
       semantics.dispose();
       expect(tester.takeException(), isNull);
@@ -364,7 +365,7 @@ void main() {
       final day = find.byKey(const ValueKey('review-day-2026-10-16'));
       await tester.ensureVisible(day);
       await tester.tap(day);
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       final time = find.byKey(const ValueKey('day-record-time-0'));
       final mode = find.byKey(const ValueKey('day-record-mode-0'));
       double baseline(Finder finder) {
@@ -395,11 +396,11 @@ void main() {
         find.byType(CommonDataList).last,
         const Offset(0, -1500),
       );
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(tester.getRect(next), before);
       expect(find.text('喝够 8 杯水'), findsOneWidget);
       await tester.tap(next);
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(
         find.text('10月16日 周五'),
         findsNothing,

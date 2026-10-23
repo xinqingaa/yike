@@ -23,10 +23,12 @@ class CommonBottomNav extends StatelessWidget {
     required this.items,
     required this.currentIndex,
     required this.onTap,
+    this.selection,
   }) : assert(items.length >= 2 && items.length <= 5);
   final List<CommonBottomNavItem> items;
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final Animation<double>? selection;
 
   @override
   Widget build(BuildContext context) {
@@ -61,30 +63,55 @@ class CommonBottomNav extends StatelessWidget {
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    AnimatedPositioned(
-                      duration: reduceMotion
-                          ? Duration.zero
-                          : ts.motion.durationSlow,
-                      curve: ts.motion.easingStandard,
-                      left: width * currentIndex + ts.spacing.xs,
-                      top: ts.spacing.xs,
-                      bottom: ts.spacing.xs,
-                      width: width - ts.spacing.xs * 2,
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: ts.colors.tabbarSelectionTint,
-                            border: Border.fromBorderSide(ts.border.glass),
-                            borderRadius: BorderRadius.circular(
-                              (ts.radius.lg - ts.spacing.xs).clamp(
-                                0.0,
-                                double.infinity,
+                    if (selection != null)
+                      AnimatedBuilder(
+                        animation: selection!,
+                        builder: (context, child) => Positioned(
+                          left: width * selection!.value + ts.spacing.xs,
+                          top: ts.spacing.xs,
+                          bottom: ts.spacing.xs,
+                          width: width - ts.spacing.xs * 2,
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: ts.colors.tabbarSelectionTint,
+                                border: Border.fromBorderSide(ts.border.glass),
+                                borderRadius: BorderRadius.circular(
+                                  (ts.radius.lg - ts.spacing.xs).clamp(
+                                    0.0,
+                                    double.infinity,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      AnimatedPositioned(
+                        duration: reduceMotion
+                            ? Duration.zero
+                            : ts.motion.durationTabViewport,
+                        curve: ts.motion.easingStandard,
+                        left: width * currentIndex + ts.spacing.xs,
+                        top: ts.spacing.xs,
+                        bottom: ts.spacing.xs,
+                        width: width - ts.spacing.xs * 2,
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: ts.colors.tabbarSelectionTint,
+                              border: Border.fromBorderSide(ts.border.glass),
+                              borderRadius: BorderRadius.circular(
+                                (ts.radius.lg - ts.spacing.xs).clamp(
+                                  0.0,
+                                  double.infinity,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                     MediaQuery.removePadding(
                       context: context,
                       removeBottom: true,

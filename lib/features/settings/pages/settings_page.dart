@@ -1,3 +1,4 @@
+import '../../../common/motion/content_transition.dart';
 import '../../focus/focus.dart';
 import '../../../app/reset_data.dart';
 import '../../../common/time.dart';
@@ -336,8 +337,9 @@ class _IntervalSheetState extends ConsumerState<_IntervalSheet> {
           values: [ref.watch(_value)],
           onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
         ),
-        if (ref.watch(_saveFailed))
-          Text(
+        MotionExpand(
+          expanded: ref.watch(_saveFailed),
+          child: Text(
             '尚未保存，请重试；关闭后可能丢失',
             style: TS
                 .of(context)
@@ -345,6 +347,7 @@ class _IntervalSheetState extends ConsumerState<_IntervalSheet> {
                 .caption
                 .copyWith(color: TS.of(context).colors.error),
           ),
+        ),
       ],
     ),
     actions: CommonButton(
@@ -493,11 +496,13 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
               ref.read(_error.notifier).set(null);
             },
           ),
-          if (ref.watch(_error) != null)
-            Text(
-              ref.watch(_error)!,
+          MotionExpand(
+            expanded: ref.watch(_error) != null,
+            child: Text(
+              ref.watch(_error) ?? '',
               style: ts.textStyle.caption.copyWith(color: ts.colors.error),
             ),
+          ),
         ],
       ),
       actions: [
@@ -583,8 +588,9 @@ class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
             values: [ref.watch(_value)],
             onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
           ),
-          if (ref.watch(_saveFailed))
-            Text(
+          MotionExpand(
+            expanded: ref.watch(_saveFailed),
+            child: Text(
               '尚未保存，请重试；关闭后可能丢失',
               style: TS
                   .of(context)
@@ -592,6 +598,7 @@ class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
                   .caption
                   .copyWith(color: TS.of(context).colors.error),
             ),
+          ),
         ],
       ),
       actions: [
@@ -640,8 +647,9 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
             ref.read(_invalid.notifier).set(false);
           },
         ),
-        if (ref.watch(_invalid))
-          Text(
+        MotionExpand(
+          expanded: ref.watch(_invalid),
+          child: Text(
             '至少选择 1 秒',
             style: TS
                 .of(context)
@@ -649,8 +657,10 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
                 .caption
                 .copyWith(color: TS.of(context).colors.error),
           ),
-        if (ref.watch(_saveFailed))
-          Text(
+        ),
+        MotionExpand(
+          expanded: ref.watch(_saveFailed),
+          child: Text(
             '尚未保存，请重试；关闭后可能丢失',
             style: TS
                 .of(context)
@@ -658,6 +668,7 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
                 .caption
                 .copyWith(color: TS.of(context).colors.error),
           ),
+        ),
       ],
     ),
     actions: [

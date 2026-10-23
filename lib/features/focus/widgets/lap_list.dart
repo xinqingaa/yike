@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/time.dart';
-import '../../../common/widgets.dart';
+import '../../../common/motion/motion_list.dart';
 import '../../../theme/ts.dart';
 import '../models/focus_view.dart';
 
@@ -79,12 +79,12 @@ class LapList extends StatelessWidget {
         SizedBox(height: ts.spacing.xs),
         SizedBox(
           height: rowHeight * (compact ? 2 : 3),
-          child: CommonScrollableDataList(
-            padding: EdgeInsets.zero,
-            itemCount: value.laps.length + 1,
-            itemBuilder: (context, index) {
-              final current = index == 0;
-              final number = value.laps.length + 1 - index;
+          child: MotionList<int>(
+            key: const ValueKey('lap-scroll'),
+            items: [for (var n = value.laps.length + 1; n > 0; n--) n],
+            identity: (number) => number,
+            itemBuilder: (context, number) {
+              final current = number == value.laps.length + 1;
               final total = current ? value.seconds : value.laps[number - 1];
               final previous = number > 1 ? value.laps[number - 2] : 0;
               return Container(

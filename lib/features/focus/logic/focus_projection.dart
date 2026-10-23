@@ -1,3 +1,4 @@
+import '../../../theme/yike_motion.dart';
 import '../models/focus_data.dart';
 import '../models/focus_view.dart';
 
@@ -29,7 +30,8 @@ class FocusProjection {
     final progress = session.mode == TimerMode.countdown
         ? remaining / session.targetMs
         : session.mode == TimerMode.stopwatch
-        ? (elapsed > 0 && elapsed % 3600000 == 0
+        ? (elapsed >= 3600000 &&
+                  elapsed % 3600000 < YikeMotion.hourHold.inMilliseconds
               ? 1.0
               : (elapsed % 3600000) / 3600000)
         : remaining / 3600000;

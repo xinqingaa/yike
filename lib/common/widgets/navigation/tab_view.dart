@@ -9,11 +9,13 @@ class CommonTabView extends StatelessWidget {
     this.controller,
     this.swipe = true,
     this.keepAlive = true,
+    this.selectedNow,
   });
   final List<Widget> children;
   final TabController? controller;
   final bool swipe;
   final bool keepAlive;
+  final bool Function(int index)? selectedNow;
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +33,20 @@ class CommonTabView extends StatelessWidget {
             child: AnimatedBuilder(
               animation: tabs,
               child: children[i],
-              builder: (context, child) =>
-                  MotionGate(active: tabs.index == i, child: child!),
+              builder: (context, child) => MotionGate(
+                active: tabs.index == i,
+                activeNow: () => selectedNow?.call(i) ?? tabs.index == i,
+                child: IgnorePointer(
+                  ignoring: tabs.index != i,
+                  child: ExcludeFocus(
+                    excluding: tabs.index != i,
+                    child: ExcludeSemantics(
+                      excluding: tabs.index != i,
+                      child: child!,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
       ],

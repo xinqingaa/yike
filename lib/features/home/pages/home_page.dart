@@ -3,6 +3,7 @@ import '../../../common/motion/motion_activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/widgets.dart';
+import '../../../theme/ts.dart';
 import '../../../common/widgets/yike/layout.dart';
 import '../../habits/habits.dart';
 import '../../focus/focus.dart';
@@ -15,12 +16,35 @@ class YikeHomePage extends ConsumerStatefulWidget {
 }
 
 class _YikeHomePageState extends ConsumerState<YikeHomePage>
-    with SingleTickerProviderStateMixin {
-  late final TabController _controller = TabController(
-    length: 3,
-    vsync: this,
-    initialIndex: ref.read(rootTabProvider),
-  );
+    with TickerProviderStateMixin {
+  late TabController _controller;
+  Duration? _tabDuration;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : TS.of(context).motion.durationTabViewport;
+    if (_tabDuration == null) {
+      _controller = TabController(
+        length: 3,
+        vsync: this,
+        initialIndex: ref.read(rootTabProvider),
+        animationDuration: duration,
+      );
+    } else if (_tabDuration != duration) {
+      final previous = _controller;
+      _controller = TabController(
+        length: 3,
+        vsync: this,
+        initialIndex: previous.index,
+        animationDuration: duration,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) => previous.dispose());
+    }
+    _tabDuration = duration;
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -30,7 +54,16 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
   @override
   Widget build(BuildContext context) {
     final tab = ref.watch(rootTabProvider);
-    ref.listen(rootTabProvider, (_, next) => _controller.index = next);
+    ref.listen(
+      rootTabProvider,
+      (_, next) => _controller.animateTo(
+        next,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : TS.of(context).motion.durationTabViewport,
+        curve: TS.of(context).motion.easingGentle,
+      ),
+    );
     return Scaffold(
       body: MotionVisibility(
         child: SafeArea(
@@ -38,6 +71,7 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
           child: YikePageWidth(
             child: CommonTabView(
               controller: _controller,
+              selectedNow: (index) => ref.read(rootTabProvider) == index,
               swipe: false,
               children: const [FocusPage(), CheckinPage(), ReviewPage()],
             ),
@@ -47,6 +81,7 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
       bottomNavigationBar: YikePageWidth(
         child: CommonBottomNav(
           currentIndex: tab,
+          selection: _controller.animation,
           onTap: (value) => ref.read(rootTabProvider.notifier).set(value),
           items: const [
             CommonBottomNavItem(

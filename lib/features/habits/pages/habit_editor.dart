@@ -1,13 +1,11 @@
+import '../../../common/motion/content_transition.dart';
 import '../models/habit_view.dart';
 import '../../local_data/local_data.dart';
-import '../../../common/identity.dart';
-import '../providers/habits_presentation.dart';
-import '../../../common/time.dart';
+import '../providers/habit_editor_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unified_popups/unified_popups.dart'
     show SheetSizeConfig, SheetDimension;
-import '../../../common/state/local_value.dart';
 import '../../../common/overlay/app_pop.dart';
 import '../../../common/widgets.dart';
 import '../../../common/widgets/yike/layout.dart';
@@ -35,21 +33,9 @@ class HabitEditor extends ConsumerStatefulWidget {
 }
 
 class _HabitEditorState extends ConsumerState<HabitEditor> {
-  late final initial =
-      widget.habit ??
-      HabitViewData(
-        id: 'habit-${ref.read(identityProvider)()}',
-        name: '',
-        created: dayId(ref.read(todayProvider)),
-      );
-  late final _draft = localValueProvider(initial);
-  final _submitted = localValueProvider(false);
-  late final _name = TextEditingController(text: initial.name);
-  late final _time = TextEditingController(
-    text:
-        '${(initial.reminderMinutes ~/ 60).toString().padLeft(2, '0')}:${(initial.reminderMinutes % 60).toString().padLeft(2, '0')}',
-  );
-  final _timeError = localValueProvider<String?>(null);
+  late final _editor = habitEditorProvider(widget.habit);
+  late final _name = TextEditingController(text: ref.read(_editor).draft.name);
+  late final _time = TextEditingController(text: ref.read(_editor).timeText);
   @override
   void dispose() {
     _name.dispose();
@@ -57,36 +43,30 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
     super.dispose();
   }
 
-  void _change(HabitViewData value) => ref.read(_draft.notifier).set(value);
+  void _change(HabitViewData value) => ref.read(_editor.notifier).change(value);
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
-    final draft = ref.watch(_draft);
-    final submitted = ref.watch(_submitted);
-    final nameError =
-        submitted &&
-            !validHabitName(draft.name) &&
-            draft.name.characters.length <= 30
-        ? '写一个习惯名称'
-        : draft.name.trim().characters.length > 30
-        ? '名称最多 30 个字符'
-        : null;
+    final editor = ref.watch(_editor);
+    final draft = editor.draft;
     return AppSheetContent(
       expand: true,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (ref.watch(localDataProvider).writeError != null)
-            Text(
+          MotionExpand(
+            expanded: ref.watch(localDataProvider).writeError != null,
+            child: Text(
               '尚未保存，请重试保存；关闭后可能丢失',
               style: ts.textStyle.caption.copyWith(color: ts.colors.error),
             ),
+          ),
           CommonTextField(
             controller: _name,
             label: '习惯名称',
             showLabel: true,
             hint: '比如，读 20 页书',
-            errorText: nameError,
+            errorText: editor.nameError,
             onChanged: (value) => _change(draft.copyWith(name: value)),
           ),
           SizedBox(height: ts.spacing.md),
@@ -118,56 +98,51 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
             value: draft.weekly ? 'weekly' : 'daily',
             onSelected: (v) => _change(draft.copyWith(weekly: v == 'weekly')),
           ),
-          if (draft.weekly) ...[
-            SizedBox(height: ts.spacing.md),
-            Text('每周目标', style: ts.textStyle.caption),
-            CommonWheelPicker(
-              columns: [
-                CommonWheelColumn(
-                  id: 'goal',
-                  label: '每周次数',
-                  unit: '次',
-                  numeric: true,
-                  options: [
-                    for (var i = 1; i <= 7; i++)
-                      CommonWheelOption(value: i, label: '$i'),
+          MotionExpand(
+            expanded: draft.weekly,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: ts.spacing.md),
+                Text('每周目标', style: ts.textStyle.caption),
+                CommonWheelPicker(
+                  columns: [
+                    CommonWheelColumn(
+                      id: 'goal',
+                      label: '每周次数',
+                      unit: '次',
+                      numeric: true,
+                      options: [
+                        for (var i = 1; i <= 7; i++)
+                          CommonWheelOption(value: i, label: '$i'),
+                      ],
+                    ),
                   ],
+                  values: [draft.goal],
+                  onChanged: (v) =>
+                      _change(draft.copyWith(goal: v.first as int)),
                 ),
               ],
-              values: [draft.goal],
-              onChanged: (v) => _change(draft.copyWith(goal: v.first as int)),
             ),
-          ],
+          ),
           SizedBox(height: ts.spacing.lg),
           CommonListCell(
             title: '提醒',
             switchValue: draft.reminder,
             onSwitchChanged: (v) => _change(draft.copyWith(reminder: v)),
           ),
-          if (draft.reminder)
-            CommonTextField(
+          MotionExpand(
+            expanded: draft.reminder,
+            child: CommonTextField(
               controller: _time,
               label: '提醒时间',
               showLabel: true,
               keyboardType: TextInputType.datetime,
-              errorText: ref.watch(_timeError),
-              onChanged: (value) {
-                final parts = value.split(':');
-                final h = parts.length == 2 ? int.tryParse(parts.first) : null;
-                final m = parts.length == 2 ? int.tryParse(parts.last) : null;
-                if (h == null ||
-                    m == null ||
-                    h < 0 ||
-                    h > 23 ||
-                    m < 0 ||
-                    m > 59) {
-                  ref.read(_timeError.notifier).set('输入有效时间，例如 21:00');
-                } else {
-                  ref.read(_timeError.notifier).set(null);
-                  _change(draft.copyWith(reminderMinutes: h * 60 + m));
-                }
-              },
+              errorText: editor.timeError,
+              onChanged: (value) =>
+                  ref.read(_editor.notifier).changeTime(value),
             ),
+          ),
           SizedBox(height: ts.spacing.lg),
         ],
       ),
@@ -179,20 +154,7 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
         block: true,
         shape: CommonButtonShape.pill,
         onPressed: () {
-          final draft = ref.read(_draft);
-          ref.read(_submitted.notifier).set(true);
-          if (!validHabitName(draft.name) ||
-              draft.name.trim().characters.length > 30 ||
-              (draft.reminder && ref.read(_timeError) != null)) {
-            return;
-          }
-          final saved = ref
-              .read(habitsProvider.notifier)
-              .save(
-                draft.copyWith(name: normalizeHabitName(draft.name)),
-                create: widget.habit == null,
-              );
-          if (saved) widget.onSaved();
+          if (ref.read(_editor.notifier).submit()) widget.onSaved();
         },
       ),
     );

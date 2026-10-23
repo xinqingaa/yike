@@ -38,7 +38,7 @@
 
 ## 当前交接
 
-[动效与布局连续性实施计划](reviews/2026-10-23-motion-implementation-plan.md) 统一记录保留初稿、历史验证边界、未保存自定义浮层、动效封装、更新隔离、全场景契约、六个批次与验收矩阵，作为新对话实施入口；计划尚未实施。
+[动效与布局连续性实施记录](reviews/2026-10-23-motion-implementation.md) 记录六批代码接入、工程检查、iOS 原生过程和待测边界；[原实施计划](reviews/2026-10-23-motion-implementation-plan.md) 保留批准范围与验收矩阵。
 
 ## 历史评审
 

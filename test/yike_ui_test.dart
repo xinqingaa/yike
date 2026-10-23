@@ -1,3 +1,5 @@
+import 'support/dial_finder.dart';
+import 'support/pump_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -47,7 +49,7 @@ Future<ProviderContainer> pumpYike(
       child: const PbApp(),
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpPresentation(tester);
   final container = ProviderScope.containerOf(
     tester.element(find.byType(YikeHomePage)),
   );
@@ -93,7 +95,7 @@ Future<ProviderContainer> pumpYike(
                 ),
               ),
         );
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
   }
   return container;
 }
@@ -105,7 +107,7 @@ Future<void> navigateTab(WidgetTester tester, String title) async {
       matching: find.text(title),
     ),
   );
-  await tester.pumpAndSettle();
+  await pumpPresentation(tester);
 }
 
 void main() {
@@ -115,20 +117,20 @@ void main() {
         '$theme $mode roots, settings and editor render without overflow',
         (tester) async {
           await pumpYike(tester, theme: theme, mode: mode);
-          expect(find.text('25:00'), findsOneWidget);
+          expect(dialDigits('25:00'), findsOneWidget);
           await tester.tap(find.byTooltip('设置'));
-          await tester.pumpAndSettle();
+          await pumpPresentation(tester);
           expect(find.text('跟随系统'), findsOneWidget);
           expect(find.byType(YikeDial), findsNWidgets(3));
           await tester.tap(find.byTooltip('返回'));
-          await tester.pumpAndSettle();
+          await pumpPresentation(tester);
           await navigateTab(tester, '打卡');
           expect(find.text('喝够 8 杯水'), findsOneWidget);
           await tester.tap(find.byKey(const ValueKey('check-habit-water')));
-          await tester.pumpAndSettle();
+          await pumpPresentation(tester);
           expect(find.textContaining('今天 1 / 4'), findsOneWidget);
           await tester.tap(find.byTooltip('新建习惯'));
-          await tester.pumpAndSettle();
+          await pumpPresentation(tester);
           expect(find.byType(HabitEditor), findsOneWidget);
           expect(
             DefaultTextStyle.of(
@@ -137,12 +139,12 @@ void main() {
             isNot(TextDecoration.underline),
           );
           await tester.tap(find.byKey(const ValueKey('habit-save')));
-          await tester.pumpAndSettle();
+          await pumpPresentation(tester);
           expect(find.text('写一个习惯名称'), findsOneWidget);
           await tester.enterText(find.byType(TextField).first, '散步');
           await tester.pump();
           await tester.tap(find.byKey(const ValueKey('habit-save')));
-          await tester.pumpAndSettle();
+          await pumpPresentation(tester);
           await tester.scrollUntilVisible(
             find.text('散步'),
             150,
@@ -161,14 +163,14 @@ void main() {
   ) async {
     await pumpYike(tester);
     await tester.tap(find.text('开始专注'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.tap(find.text('暂停'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.tap(find.text('正计时'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.text('切换计时模式？'), findsOneWidget);
     await tester.tap(find.byTooltip('关闭'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.text('继续'), findsOneWidget);
     expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);
     expect(tester.takeException(), isNull);
@@ -177,15 +179,15 @@ void main() {
     final container = await pumpYike(tester);
     final panels = find.byType(CommonTabView).last;
     await tester.drag(panels, const Offset(-320, 0));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.pomodoro);
-    expect(find.text('25:00'), findsOneWidget);
+    expect(dialDigits('25:00'), findsOneWidget);
     await tester.tap(find.text('正计时'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.stopwatch);
-    expect(find.text('00:00'), findsOneWidget);
+    expect(dialDigits('00:00'), findsOneWidget);
     await tester.tap(find.text('倒计时'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.countdown);
     expect(find.text('自定义时长'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -196,11 +198,11 @@ void main() {
     (tester) async {
       await pumpYike(tester);
       await tester.tap(find.byTooltip('设置'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       final row = find.byKey(const ValueKey('pomodoro/focus'));
       expect(tester.getSize(row).height, closeTo(53, 1));
       await tester.tap(find.text('专注时长'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('确认'), findsOneWidget);
       final title = find.text('专注时长').last;
       final start = tester.getTopLeft(title).dy;
@@ -208,10 +210,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 120));
       expect(tester.getTopLeft(title).dy - start, greaterThan(30));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       final bounds = tester.getRect(row);
       await tester.tapAt(Offset(bounds.center.dx, bounds.center.dy));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('确认'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -223,19 +225,21 @@ void main() {
       final container = await pumpYike(tester);
       await navigateTab(tester, '打卡');
       await tester.tap(find.byKey(const ValueKey('habit-detail-habit-water')));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
+      await tester.ensureVisible(find.byType(CommonHeatmap));
+      await pumpPresentation(tester);
       expect(find.bySemanticsLabel('最近365天完成 0 次'), findsOneWidget);
       expect(container.read(habitsProvider).first.dates, isEmpty);
       await tester.tap(find.text('编辑'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.enterText(find.byType(TextField).first, '喝够 8 杯水（编辑）');
       await tester.pump();
       await tester.tap(find.text('保存'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(container.read(habitsProvider).first.id, 'habit-water');
       expect(find.text('喝够 8 杯水（编辑）'), findsOneWidget);
       await tester.tap(find.byTooltip('返回'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('喝够 8 杯水（编辑）'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -256,19 +260,19 @@ void main() {
       );
       await navigateTab(tester, '回顾');
       await tester.tap(find.text('月'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.bySemanticsLabel('2026-10-16'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('08:50'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('day-previous')));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('这一天没有记录'), findsOneWidget);
       expect(
         container.read(reviewSelectionProvider).lastViewedDate,
         '2026-10-15',
       );
       await tester.tap(find.byTooltip('关闭'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(
         container.read(reviewSelectionProvider).lastViewedDate,
         '2026-10-15',
@@ -282,20 +286,20 @@ void main() {
       await pumpYike(tester, size: const Size(320, 640), theme: 'water');
       await navigateTab(tester, '打卡');
       await tester.tap(find.byTooltip('新建习惯'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.enterText(find.byType(TextField).first, '拉伸');
       tester.view.viewInsets = const FakeViewPadding(bottom: 260);
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.ensureVisible(find.text('每周'));
       await tester.tap(find.text('每周'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.ensureVisible(find.byKey(const ValueKey('habit-save')));
       expect(
         tester.getRect(find.byKey(const ValueKey('habit-save'))).bottom,
         lessThanOrEqualTo(640 - 260),
       );
       await tester.tap(find.byKey(const ValueKey('habit-save')));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       tester.view.resetViewInsets();
       expect(find.byType(HabitEditor), findsNothing);
       expect(tester.takeException(), isNull);
@@ -306,39 +310,39 @@ void main() {
   ) async {
     final container = await pumpYike(tester);
     await tester.tap(find.byTooltip('设置'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.ensureVisible(find.byTooltip('打开常用倒计时'));
     await tester.tap(find.byTooltip('打开常用倒计时'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.tap(find.byTooltip('打开常用 1'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.text('清空此项'), findsOneWidget);
     await tester.tap(find.text('清空此项'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(container.read(timingPreferencesProvider).presets.first, isNull);
     await tester.tap(find.byTooltip('打开常用 1'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.tap(find.text('保存'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.text('这个时长已在其它常用项中'), findsOneWidget);
     expect(container.read(timingPreferencesProvider).presets.first, isNull);
     await tester.tap(find.byTooltip('返回上一步'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     final done = find.text('完成');
     final top = tester.getTopLeft(done).dy;
     await tester.tap(done);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 120));
     expect(tester.getTopLeft(done).dy - top, greaterThan(30));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.ensureVisible(find.byTooltip('打开短时记录确认阈值'));
     await tester.tap(find.byTooltip('打开短时记录确认阈值'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.tap(find.byTooltip('自定义时长'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.text('自定义时长'), findsOneWidget);
     await tester.tap(find.text('确认'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(container.read(timingPreferencesProvider).threshold, 10);
     expect(tester.takeException(), isNull);
   });
@@ -359,14 +363,14 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(YikeDial),
-          matching: find.text('1:00:00'),
+          matching: dialDigits('1:00:00'),
         ),
         findsOneWidget,
       );
-      expect(find.byType(CommonScrollableDataList), findsOneWidget);
+      expect(find.byKey(const ValueKey('lap-scroll')), findsOneWidget);
       await tester.ensureVisible(find.text('暂停'));
       await tester.tap(find.text('暂停'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('继续'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

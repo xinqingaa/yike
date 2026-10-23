@@ -1,3 +1,6 @@
+import 'package:yike/common/motion/rolling_digits.dart';
+import 'support/dial_finder.dart';
+import 'support/pump_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yike/common/clock.dart';
@@ -18,12 +21,12 @@ void main() {
         var now = DateTime.utc(2026, 10, 16, 12);
         final app = await pumpYike(tester, clock: () => now);
         await tester.tap(find.text('开始专注'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         await tester.tap(find.text('正计时'));
         await tester.pump();
         expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);
         expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(find.text('取消'), findsNothing);
         final end = tester.getRect(find.widgetWithText(CommonButton, '结束'));
         final discard = tester.getRect(find.widgetWithText(CommonButton, '放弃'));
@@ -40,7 +43,7 @@ void main() {
           case 'back':
             await tester.binding.handlePopRoute();
         }
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(find.text('切换计时模式？'), findsNothing);
         expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
         expect(app.read(focusViewProvider).status, TimerStatus.running);
@@ -61,11 +64,11 @@ void main() {
         );
         await tester.tap(find.text('正计时'));
         await tester.tap(find.text('倒计时'), warnIfMissed: false);
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
         expect(find.text('切换计时模式？'), findsOneWidget);
         await tester.tap(find.text(action));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);
         expect(app.read(focusViewProvider).ready, isTrue);
         expect(
@@ -75,7 +78,7 @@ void main() {
         if (action == '结束') {
           expect(app.read(focusRecordsProvider).single.seconds, 20);
         }
-        expect(find.text('00:00'), findsOneWidget);
+        expect(dialDigits('00:00'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );
@@ -93,13 +96,13 @@ void main() {
           ),
         );
         await tester.tap(find.text('正计时'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         await tester.tap(find.text('结束'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(find.text('记录这次短时专注？'), findsOneWidget);
         expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
         await tester.tap(find.text(accept ? '仍然记录' : '暂不结束'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(
           app.read(focusViewProvider).mode,
           accept ? TimerMode.stopwatch : TimerMode.pomodoro,
@@ -144,7 +147,7 @@ void main() {
         );
         final sourceOffset = sourceScroll.position.pixels;
         await tester.tap(find.byKey(const ValueKey('review-day-2026-10-16')));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(find.text('这一天没有记录'), findsOneWidget);
         expect(sourceScroll.position.pixels, sourceOffset);
         final dayText = tester.getRect(find.text('10月16日 周五'));
@@ -156,15 +159,17 @@ void main() {
           ),
         );
         await tester.tap(find.byTooltip('关闭'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         app.read(habitsProvider.notifier).toggle('habit-water', '2026-10-16');
-        await tester.pumpAndSettle();
-        expect(find.text('这一周还没有记录'), findsNothing);
+        await pumpPresentation(tester);
+        expect(find.text('这一周还没有记录').hitTestable(), findsNothing);
+        expect(find.semantics.byLabel(RegExp('这一周还没有记录')), findsNothing);
         expect(find.text('1次'), findsOneWidget);
-        expect(find.text('按类型'), findsNothing);
+        expect(find.text('按类型').hitTestable(), findsNothing);
+        expect(find.semantics.byLabel(RegExp('按类型')), findsNothing);
         await tester.ensureVisible(find.text('月'));
         await tester.tap(find.text('月'));
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         expect(find.text('1次'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
@@ -176,7 +181,7 @@ void main() {
       await pumpYike(tester, theme: theme);
       await navigateTab(tester, '打卡');
       await tester.tap(find.byKey(const ValueKey('habit-detail-habit-water')));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       final cell = find.byKey(const ValueKey('habit-day-2026-10-16'));
       final decoration =
           tester.widget<DecoratedBox>(cell).decoration as BoxDecoration;
@@ -223,7 +228,7 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPresentation(tester);
         for (var i = 0; i < count; i++) {
           final number = tester.getRect(find.text('11').at(i));
           final unit = tester.getRect(find.text('单位$i'));
@@ -270,7 +275,7 @@ void main() {
       Offset(rect.right - 12, rect.center.dy),
       const Offset(0, -60),
     );
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(selected, greaterThan(11));
     expect(tester.takeException(), isNull);
   });
@@ -285,22 +290,22 @@ void main() {
       );
       final app = await pumpYike(tester);
       await tester.tap(find.text('正计时'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);
       await tester.tap(find.text('开始计时'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('倒计时'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);
       await tester.tap(find.byTooltip('关闭'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       app.read(themePackProvider.notifier).select('yike/water');
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).status, TimerStatus.running);
       expect(
         find.descendant(
           of: find.byType(YikeDial),
-          matching: find.text('00:00'),
+          matching: dialDigits('00:00'),
         ),
         findsOneWidget,
       );
@@ -329,14 +334,16 @@ void main() {
       ]);
       await navigateTab(tester, '打卡');
       await tester.tap(find.text('已归档习惯'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('喝够 8 杯水'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       BoxDecoration decoration(String day) =>
           tester
                   .widget<DecoratedBox>(find.byKey(ValueKey('habit-day-$day')))
                   .decoration
               as BoxDecoration;
+      await tester.ensureVisible(find.byType(CommonHeatmap));
+      await pumpPresentation(tester);
       final ts = TS.of(tester.element(find.bySemanticsLabel('最近365天完成 1 次')));
       expect(decoration('2026-10-14').color, ts.colors.primary);
       expect(decoration('2026-10-15').color, ts.colors.surfaceVariant);
@@ -349,14 +356,20 @@ void main() {
     'theme animation frames keep the dial readout size stable when changing brightness',
     (tester) async {
       final app = await pumpYike(tester, theme: 'water');
-      final before = tester.widget<Text>(find.text('25:00')).style!.fontSize!;
+      final before = tester
+          .widget<RollingDigits>(dialDigits('25:00'))
+          .style
+          .fontSize!;
       app.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
       await tester.pump();
       for (var i = 0; i < 8; i++) {
         await tester.pump(const Duration(milliseconds: 45));
-        expect(tester.widget<Text>(find.text('25:00')).style!.fontSize, before);
+        expect(
+          tester.widget<RollingDigits>(dialDigits('25:00')).style.fontSize,
+          before,
+        );
       }
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(tester.takeException(), isNull);
     },
   );

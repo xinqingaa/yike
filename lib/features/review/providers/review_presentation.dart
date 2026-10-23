@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/time.dart';
+import '../../focus/focus.dart';
+import '../../habits/habits.dart';
 
 class ReviewSelection {
   const ReviewSelection({
@@ -37,3 +39,31 @@ final reviewSelectionProvider =
     NotifierProvider<ReviewPresentation, ReviewSelection>(
       ReviewPresentation.new,
     );
+
+class ReviewSummary {
+  const ReviewSummary({required this.records, required this.checkins});
+  final List<FocusRecordView> records;
+  final int checkins;
+  num get seconds =>
+      records.fold<num>(0, (sum, record) => sum + record.seconds);
+}
+
+final reviewSummaryProvider = Provider<ReviewSummary>(
+  (ref) {
+    final selection = ref.watch(reviewSelectionProvider);
+    final from = dayId(selection.first), through = dayId(selection.last);
+    bool contains(String date) =>
+        date.compareTo(from) >= 0 && date.compareTo(through) <= 0;
+    return ReviewSummary(
+      records: List.unmodifiable(
+        ref.watch(focusRecordsProvider).where((r) => contains(r.date)),
+      ),
+      checkins: ref
+          .watch(habitsProvider)
+          .expand((h) => h.dates)
+          .where(contains)
+          .length,
+    );
+  },
+  dependencies: [reviewSelectionProvider, focusRecordsProvider, habitsProvider],
+);

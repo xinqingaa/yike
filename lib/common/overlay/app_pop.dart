@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:unified_popups/unified_popups.dart';
 
 import '../widgets/display/glass_surface.dart';
+import 'popup_activity.dart';
+import 'status_popup.dart';
 import 'confirm.dart';
 import 'flow_sheet.dart';
 import 'loading.dart';
@@ -11,10 +13,16 @@ import 'sheet_actions.dart';
 import 'toast.dart';
 
 export 'sheet_actions.dart';
+export 'status_popup.dart' show AppStatusPopup;
 export 'sheet_content.dart';
 
 /// Application popup boundary; SDK handles and presentation stay in overlay.
 abstract final class AppPop {
+  static AppStatusPopup? status(
+    BuildContext context, {
+    required Widget content,
+  }) => AppStatusPopup.show(context, content);
+
   static void toast(
     BuildContext context,
     String message, {
@@ -37,7 +45,12 @@ abstract final class AppPop {
     BuildContext context, {
     String? message,
     Future<void>? until,
-  }) => LoadingPopup.show(context, message: message, until: until);
+  }) {
+    PopupActivity.modal(
+      context,
+      () => LoadingPopup.show(context, message: message, until: until),
+    );
+  }
 
   static Future<void> hideLoading() => LoadingPopup.hideLoading();
 
@@ -55,14 +68,17 @@ abstract final class AppPop {
     String cancelText = '取消',
     bool danger = false,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) => ConfirmPopup.show(
+  }) => PopupActivity.modal(
     context,
-    title: title,
-    content: content,
-    confirmText: confirmText,
-    cancelText: cancelText,
-    danger: danger,
-    material: material,
+    () => ConfirmPopup.show(
+      context,
+      title: title,
+      content: content,
+      confirmText: confirmText,
+      cancelText: cancelText,
+      danger: danger,
+      material: material,
+    ),
   );
 
   static Future<T?> sheet<T>(
@@ -74,14 +90,17 @@ abstract final class AppPop {
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) => SheetPopup.show<T>(
+  }) => PopupActivity.modal(
     context,
-    title: title,
-    builder: builder,
-    showCloseButton: showCloseButton,
-    size: size,
-    drag: drag,
-    material: material,
+    () => SheetPopup.show<T>(
+      context,
+      title: title,
+      builder: builder,
+      showCloseButton: showCloseButton,
+      size: size,
+      drag: drag,
+      material: material,
+    ),
   );
 
   static Future<R?> flowSheet<R>(
@@ -97,17 +116,20 @@ abstract final class AppPop {
       mode: SheetDragDismissMode.handleOnly,
     ),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) => FlowSheetPopup.show<R>(
+  }) => PopupActivity.modal(
     context,
-    controller: controller,
-    initialPage: initialPage,
-    title: title,
-    showCloseButton: showCloseButton,
-    headerStart: headerStart,
-    pageTitles: pageTitles,
-    size: size,
-    drag: drag,
-    material: material,
+    () => FlowSheetPopup.show<R>(
+      context,
+      controller: controller,
+      initialPage: initialPage,
+      title: title,
+      showCloseButton: showCloseButton,
+      headerStart: headerStart,
+      pageTitles: pageTitles,
+      size: size,
+      drag: drag,
+      material: material,
+    ),
   );
 
   static Future<T?> dropMenu<T>(
@@ -117,13 +139,16 @@ abstract final class AppPop {
     ValueChanged<T>? onSelected,
     MenuPlacement placement = MenuPlacement.auto,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) => MenuPopup.dropMenu<T>(
+  }) => PopupActivity.modal(
     context,
-    anchor: anchor,
-    menu: menu,
-    onSelected: onSelected,
-    placement: placement,
-    material: material,
+    () => MenuPopup.dropMenu<T>(
+      context,
+      anchor: anchor,
+      menu: menu,
+      onSelected: onSelected,
+      placement: placement,
+      material: material,
+    ),
   );
 
   static Future<T?> actionSheet<T>(
@@ -131,10 +156,13 @@ abstract final class AppPop {
     String? title,
     required List<AppSheetAction<T>> actions,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) => MenuPopup.actionSheet<T>(
+  }) => PopupActivity.modal(
     context,
-    title: title,
-    actions: actions,
-    material: material,
+    () => MenuPopup.actionSheet<T>(
+      context,
+      title: title,
+      actions: actions,
+      material: material,
+    ),
   );
 }

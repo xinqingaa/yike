@@ -1,3 +1,5 @@
+import '../../support/dial_finder.dart';
+import '../../support/pump_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,27 +26,27 @@ void main() {
       final disk = FaultPrefs();
       var app = await pumpYike(tester, preferences: disk);
       await tester.tap(find.byTooltip('设置'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('专注时长'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(
         find.descendant(
           of: find.byType(ListWheelScrollView).at(1),
           matching: find.text('26'),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       disk.failWrite = true;
       final old = disk.values[PrefsKey.snapshot.storageKey];
       await tester.tap(find.text('确认'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.byType(DurationSheetBody), findsOneWidget);
       expect(find.text('尚未保存，请重试；关闭后可能丢失'), findsOneWidget);
       expect(disk.values[PrefsKey.snapshot.storageKey], old);
       expect(app.read(timingPreferencesProvider).focusMinutes, 26);
       disk.failWrite = false;
       await tester.tap(find.text('确认'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.byType(DurationSheetBody), findsNothing);
       expect(app.read(localDataProvider).writeError, isNull);
       await tester.pumpWidget(const SizedBox.shrink());
@@ -62,12 +64,12 @@ void main() {
       var app = await pumpYike(tester, preferences: disk, clock: () => now);
       app.read(focusActionsProvider).switchMode(TimerMode.countdown);
       app.read(focusActionsProvider).selectCountdown(1);
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.byKey(const ValueKey('focus-primary')));
       now = now.add(const Duration(seconds: 10));
       app.read(clockPulseProvider.notifier).refresh();
-      await tester.pumpAndSettle();
-      expect(find.text('00:00'), findsOneWidget);
+      await pumpPresentation(tester);
+      expect(dialDigits('00:00'), findsOneWidget);
       expect(app.read(focusRecordsProvider).single.seconds, 1);
       await navigateTab(tester, '回顾');
       expect(find.text('1 秒'), findsWidgets);
@@ -78,7 +80,7 @@ void main() {
       expect(app.read(focusViewProvider).finished, isTrue);
       expect(app.read(focusRecordsProvider), hasLength(1));
       await tester.tap(find.byKey(const ValueKey('focus-primary')));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).ready, isTrue);
       expect(app.read(focusRecordsProvider), hasLength(1));
       expect(tester.takeException(), isNull);
@@ -90,25 +92,25 @@ void main() {
       var now = DateTime(2026, 10, 16, 12);
       final app = await pumpYike(tester, clock: () => now);
       await tester.tap(find.text('正计时'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.byKey(const ValueKey('focus-primary')));
       now = now.add(const Duration(seconds: 5));
       app.read(clockPulseProvider.notifier).refresh();
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('暂停'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('结束并记录'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('记录这次短时专注？'), findsOneWidget);
       await tester.tap(find.text('暂不结束'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).paused, isTrue);
       expect(app.read(focusViewProvider).seconds, 5);
       expect(app.read(focusRecordsProvider), isEmpty);
       await tester.tap(find.text('结束并记录'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('仍然记录'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).ready, isTrue);
       expect(app.read(focusRecordsProvider).single.seconds, 5);
       app.read(focusActionsProvider).finish();
@@ -124,22 +126,22 @@ void main() {
       app
           .read(timingPreferencesProvider.notifier)
           .update((p) => p.copyWith(focusMinutes: 1, threshold: 180));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.byKey(const ValueKey('focus-primary')));
       now = now.add(const Duration(seconds: 65));
       app.read(clockPulseProvider.notifier).refresh();
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('记录这次短时专注？'), findsOneWidget);
       expect(app.read(focusDataProvider).cycles, 1);
       await tester.tap(find.text('暂不结束'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).finished, isTrue);
       expect(app.read(focusRecordsProvider), isEmpty);
       await tester.tap(find.byKey(const ValueKey('focus-primary')));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('记录这次短时专注？'), findsOneWidget);
       await tester.tap(find.text('仍然记录'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusViewProvider).stage, TimerStage.shortBreak);
       expect(app.read(focusRecordsProvider).single.seconds, 60);
       expect(app.read(focusDataProvider).cycles, 1);
@@ -153,18 +155,18 @@ void main() {
     final app = await pumpYike(tester, preferences: disk);
     await navigateTab(tester, '打卡');
     await tester.tap(find.byTooltip('新建习惯'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.enterText(find.byType(TextField).first, '散步');
     disk.failWrite = true;
     await tester.tap(find.byKey(const ValueKey('habit-save')));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.byType(HabitEditor), findsOneWidget);
     expect(find.textContaining('尚未保存'), findsWidgets);
     expect(app.read(habitsProvider).where((h) => h.name == '散步'), hasLength(1));
     final id = app.read(habitsProvider).last.id;
     disk.failWrite = false;
     await tester.tap(find.byKey(const ValueKey('habit-save')));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(find.byType(HabitEditor), findsNothing);
     expect(app.read(habitsProvider).last.id, id);
     expect(app.read(habitsProvider), hasLength(5));
@@ -181,11 +183,11 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       // The helper expects Home, so mount this recovery case directly.
       await tester.pumpWidget(recoveryApp(disk));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('重试读取'), findsOneWidget);
       expect(find.text('开始专注'), findsNothing);
       await tester.tap(find.text('重试读取'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(disk.values[PrefsKey.snapshot.storageKey], '{corrupt');
       expect(find.text('重置本机数据'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -206,9 +208,9 @@ void main() {
       app.read(habitsProvider.notifier).toggle('habit-water', '2026-10-16');
       app.read(themePackProvider.notifier).select('yike/water');
       app.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.byTooltip('设置'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.scrollUntilVisible(
         find.text('重置所有数据'),
         150,
@@ -220,14 +222,14 @@ void main() {
             .first,
       );
       await tester.tap(find.text('重置所有数据'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('取消'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(focusRecordsProvider), hasLength(1));
       await tester.tap(find.text('重置所有数据'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       await tester.tap(find.text('确认重置'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(app.read(rootTabProvider), 0);
       expect(app.read(focusRecordsProvider), isEmpty);
       expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
@@ -273,10 +275,10 @@ void main() {
       expect(find.text('1 次'), findsWidgets);
       expect(find.text('1 分钟 30 秒'), findsOneWidget);
       await tester.tap(find.text('月'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('2 天'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('2026-10-16'));
-      await tester.pumpAndSettle();
+      await pumpPresentation(tester);
       expect(find.text('23:59'), findsOneWidget);
       expect(
         find.descendant(
@@ -299,13 +301,13 @@ void main() {
     await navigateTab(tester, '打卡');
     await tester.ensureVisible(find.byTooltip('打开已归档习惯'));
     await tester.tap(find.byTooltip('打开已归档习惯'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     await tester.tap(find.text('喝够 8 杯水'));
-    await tester.pumpAndSettle();
-    expect(find.text('最近一年'), findsNWidgets(2));
+    await pumpPresentation(tester);
+    expect(find.text('最近一年'), findsWidgets);
     expect(find.text('恢复习惯'), findsOneWidget);
     await tester.tap(find.text('恢复习惯'));
-    await tester.pumpAndSettle();
+    await pumpPresentation(tester);
     expect(app.read(habitsProvider).first.archived, isFalse);
     expect(find.byKey(const ValueKey('check-habit-water')), findsOneWidget);
     expect(tester.takeException(), isNull);

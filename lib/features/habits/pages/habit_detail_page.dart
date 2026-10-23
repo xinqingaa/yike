@@ -1,3 +1,4 @@
+import '../../../common/motion/content_transition.dart';
 import '../providers/habits_presentation.dart';
 import '../../../common/time.dart';
 import 'package:flutter/material.dart';
@@ -124,24 +125,40 @@ class HabitDetailPage extends ConsumerWidget {
                       ),
                       SizedBox(width: ts.spacing.md),
                       Expanded(
-                        child: Text(habit.name, style: ts.textStyle.titleLg),
+                        child: MotionContent(
+                          identity: habit.name,
+                          alignment: Alignment.centerLeft,
+                          child: Text(habit.name, style: ts.textStyle.titleLg),
+                        ),
                       ),
                     ],
                   ),
                   SizedBox(height: ts.spacing.md),
-                  Text(habit.frequency, style: ts.textStyle.caption),
-                  if (habit.reminder)
-                    Text(
+                  MotionContent(
+                    identity: habit.frequency,
+                    alignment: Alignment.centerLeft,
+                    child: Text(habit.frequency, style: ts.textStyle.caption),
+                  ),
+                  MotionExpand(
+                    expanded: habit.reminder,
+                    child: Text(
                       '提醒 ${(habit.reminderMinutes ~/ 60).toString().padLeft(2, '0')}:${(habit.reminderMinutes % 60).toString().padLeft(2, '0')}',
                       style: ts.textStyle.caption,
                     ),
-                  if (habit.archived) ...[
-                    SizedBox(height: ts.spacing.sm),
-                    Text(
-                      '已归档 · ${habit.archivedOn}',
-                      style: ts.textStyle.content,
+                  ),
+                  MotionExpand(
+                    expanded: habit.archived,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(height: ts.spacing.sm),
+                        Text(
+                          '已归档 · ${habit.archivedOn}',
+                          style: ts.textStyle.content,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                   SizedBox(height: ts.spacing.lg),
                   Row(
                     children: [
@@ -155,41 +172,50 @@ class HabitDetailPage extends ConsumerWidget {
                       _stat(ts, '最近一年', '$yearCount', habit.weekly ? '次' : '天'),
                     ],
                   ),
-                  if (habit.weekly) ...[
-                    SizedBox(height: ts.spacing.lg),
-                    Text('本周进度', style: ts.textStyle.subtitle),
-                    SizedBox(height: ts.spacing.md),
-                    Row(
+                  MotionExpand(
+                    expanded: habit.weekly,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        for (var i = 0; i < habit.goal; i++)
-                          Padding(
-                            padding: EdgeInsets.only(right: ts.spacing.sm),
-                            child: Container(
-                              width: ts.sizing.iconMd,
-                              height: ts.sizing.iconMd,
-                              decoration: BoxDecoration(
-                                shape: ts.pack.id.endsWith('sundial')
-                                    ? BoxShape.rectangle
-                                    : BoxShape.circle,
-                                color: i < weekCount
-                                    ? ts.colors.primary
-                                    : Colors.transparent,
-                                border: Border.fromBorderSide(
-                                  ts.border.defaultBorder,
+                        SizedBox(height: ts.spacing.lg),
+                        Text('本周进度', style: ts.textStyle.subtitle),
+                        SizedBox(height: ts.spacing.md),
+                        Row(
+                          children: [
+                            for (var i = 0; i < habit.goal; i++)
+                              Padding(
+                                padding: EdgeInsets.only(right: ts.spacing.sm),
+                                child: AnimatedContainer(
+                                  duration: motionEnabled(context)
+                                      ? ts.motion.durationFast
+                                      : Duration.zero,
+                                  width: ts.sizing.iconMd,
+                                  height: ts.sizing.iconMd,
+                                  decoration: BoxDecoration(
+                                    shape: ts.pack.id.endsWith('sundial')
+                                        ? BoxShape.rectangle
+                                        : BoxShape.circle,
+                                    color: i < weekCount
+                                        ? ts.colors.primary
+                                        : Colors.transparent,
+                                    border: Border.fromBorderSide(
+                                      ts.border.defaultBorder,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
+                          ],
+                        ),
+                        SizedBox(height: ts.spacing.sm),
+                        Text(
+                          weekCount >= habit.goal
+                              ? '本周目标已完成'
+                              : '本周 还差 ${habit.goal - weekCount} 次达成周目标',
+                          style: ts.textStyle.caption,
+                        ),
                       ],
                     ),
-                    SizedBox(height: ts.spacing.sm),
-                    Text(
-                      weekCount >= habit.goal
-                          ? '本周目标已完成'
-                          : '本周 还差 ${habit.goal - weekCount} 次达成周目标',
-                      style: ts.textStyle.caption,
-                    ),
-                  ],
+                  ),
                   SizedBox(height: ts.spacing.lg),
                   Text('完成记录', style: ts.textStyle.subtitle),
                   SizedBox(height: ts.spacing.md),
@@ -230,19 +256,31 @@ class HabitDetailPage extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: ts.spacing.lg),
-                  CommonListCell(
-                    key: const ValueKey('manage/archive'),
-                    title: habit.archived ? '恢复习惯' : '归档习惯',
-                    description: habit.archived ? '保留已有记录' : '保留记录，从打卡页隐藏',
-                    navigation: true,
-                    onNavigate: () => manage('archive'),
-                  ),
-                  const CommonDivider(),
-                  CommonListCell(
-                    key: const ValueKey('manage/delete'),
-                    title: '删除习惯',
-                    navigation: true,
-                    onNavigate: () => manage('delete'),
+                  CommonCard(
+                    key: const ValueKey('habit-management'),
+                    padding: EdgeInsets.zero,
+                    margin: EdgeInsets.zero,
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        CommonListCell(
+                          key: const ValueKey('manage/archive'),
+                          title: habit.archived ? '恢复习惯' : '归档习惯',
+                          description: habit.archived
+                              ? '保留已有记录'
+                              : '保留记录，从打卡页隐藏',
+                          navigation: true,
+                          onNavigate: () => manage('archive'),
+                        ),
+                        const CommonDivider(),
+                        CommonListCell(
+                          key: const ValueKey('manage/delete'),
+                          title: '删除习惯',
+                          navigation: true,
+                          onNavigate: () => manage('delete'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

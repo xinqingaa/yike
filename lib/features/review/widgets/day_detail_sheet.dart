@@ -1,3 +1,4 @@
+import '../../../common/motion/page_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -225,15 +226,20 @@ class _DayDetailSheetState extends ConsumerState<DayDetailSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Flexible(
-          child: CommonDataList(
-            key: ValueKey(date),
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            divided: false,
-            surface: CommonDataListSurface.none,
-            rounded: CommonDataListRounded.none,
-            itemCount: items.length,
-            itemBuilder: (_, index) => items[index],
+          child: MotionPage<String>(
+            value: date,
+            direction: (before, after) =>
+                after.compareTo(before).toDouble().sign,
+            child: CommonDataList(
+              key: ValueKey(date),
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              divided: false,
+              surface: CommonDataListSurface.none,
+              rounded: CommonDataListRounded.none,
+              itemCount: items.length,
+              itemBuilder: (_, index) => items[index],
+            ),
           ),
         ),
         SizedBox(height: ts.spacing.smPlus),

@@ -96,3 +96,14 @@ flutter test integration_test/layout_polish_test.dart -d <移动设备 ID>
 原生运行分别覆盖正常/减少动态效果、三主题、浅深、覆盖路由、根 Tab 与后台恢复。过程录屏/分时截图与脚本记录互相补充，单帧不证明连续过程。持久化只通过真实 MMKV 或进程重启验证其声明范围。
 
 profile 在移动真机记录场景、刷新率、样本数量、UI/raster 的 p50/p90/p99 与超预算帧。采样先热身；水位、日影、换主题与长列表分开测。模拟器/debug 可定位功能和布局，不写成真机性能通过。大量历史的初始化/序列化/统计另做有代表性的样本，不以小数据测试替代。
+
+## 本轮动效回归与真机采样
+
+`test/motion/` 检查变化位、同步裁切、暂停、事件实时可见性、同帧合并、列表身份与未保存浮层生命周期。运行中场景使用有界 pump；辅助方法 `test/support/pump_presentation.dart` 只推进呈现帧，不修改注入的业务时钟。
+
+```bash
+flutter test integration_test/motion_test.dart -d <移动设备 ID> --no-uninstall
+flutter test integration_test/motion_profile_test.dart -d <真机 ID> --profile --dart-define=YIKE_PROFILE_DEVICE=<设备型号>
+```
+
+原生过程脚本使用内存存储，每主题/动态效果偏好采集七张过程画面，日志前缀为 `YIKE_MOTION_SCREENSHOT=`。原生截图与过程断言分开评价；本轮范围见 [实施记录](../reviews/2026-10-23-motion-implementation.md)。profile 脚本要求 profile 模式与设备名称，记录刷新率、125 帧热身、样本量、UI/raster p50/p90/p99 及超预算帧。连续表盘、主题切换、计圈与导航独立采样；相同设备和场景比较前后，不将采样入口本身写成性能已通过。

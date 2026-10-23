@@ -22,6 +22,20 @@ class HabitUndo {
   final int navigationEpoch;
 }
 
+enum HabitFeedbackKind { added, removed, restored }
+
+class HabitFeedbackEvent {
+  const HabitFeedbackEvent(this.operation, this.habitId, this.kind);
+  final String operation, habitId;
+  final HabitFeedbackKind kind;
+  bool get checked => kind != HabitFeedbackKind.removed;
+}
+
+final habitFeedbackProvider =
+    NotifierProvider<LocalValue<HabitFeedbackEvent?>, HabitFeedbackEvent?>(
+      () => LocalValue(null),
+    );
+
 final habitUndoProvider = NotifierProvider<LocalValue<HabitUndo?>, HabitUndo?>(
   () => LocalValue(null),
 );
@@ -39,14 +53,15 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
   }
 
   void clearUndo() => ref.read(habitUndoProvider.notifier).set(null);
-  bool replace(List<HabitViewData> value) => ref
+  CommitResult replaceResult(List<HabitViewData> value) => ref
       .read(localDataProvider.notifier)
-      .commit(
+      .commitResult(
         ref
             .read(localDataProvider)
             .data
             .copyWith(habits: List.unmodifiable(value)),
       );
+  bool replace(List<HabitViewData> value) => replaceResult(value).persisted;
   bool save(HabitViewData habit, {bool create = false}) {
     final trimmed = normalizeHabitName(habit.name);
     if (!validHabitName(trimmed) ||
@@ -96,7 +111,7 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
     } else {
       records[date] = HabitCheckin(id: ref.read(identityProvider)(), at: now);
     }
-    replace([
+    final result = replaceResult([
       for (final h in state)
         if (h.id == id)
           h.copyWith(
@@ -106,6 +121,7 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
         else
           h,
     ]);
+    if (!result.accepted) return null;
     final ticket = HabitUndo(
       token: ref.read(identityProvider)(),
       navigationEpoch: ref.read(rootNavigationEpochProvider),
@@ -115,6 +131,17 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
       expires: now.add(undoDuration),
     );
     ref.read(habitUndoProvider.notifier).set(ticket);
+    ref
+        .read(habitFeedbackProvider.notifier)
+        .set(
+          HabitFeedbackEvent(
+            ticket.token,
+            id,
+            previous == null
+                ? HabitFeedbackKind.added
+                : HabitFeedbackKind.removed,
+          ),
+        );
     return ticket;
   }
 
@@ -138,7 +165,7 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
       records[ticket.date] = ticket.previous!;
     }
     clearUndo();
-    return replace([
+    final result = replaceResult([
       for (final h in state)
         if (h.id == habit.id)
           h.copyWith(
@@ -148,11 +175,25 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
         else
           h,
     ]);
+    if (result.accepted) {
+      ref
+          .read(habitFeedbackProvider.notifier)
+          .set(
+            HabitFeedbackEvent(
+              '${ticket.token}/undo',
+              ticket.habitId,
+              ticket.previous == null
+                  ? HabitFeedbackKind.removed
+                  : HabitFeedbackKind.restored,
+            ),
+          );
+    }
+    return result.persisted;
   }
 }
 
 final habitsProvider =
     NotifierProvider<HabitsPresentation, List<HabitViewData>>(
       HabitsPresentation.new,
-      dependencies: [localDataProvider],
+      dependencies: [localDataProvider, habitFeedbackProvider],
     );

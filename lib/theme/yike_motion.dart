@@ -1,6 +1,12 @@
 /// Flutter-owned motion geometry; durations and curves come from TS.motion.
 abstract final class YikeMotion {
-  static const digitTravel = .65;
+  static const hourHold = Duration(milliseconds: 700);
+  static const digitTravel = .35;
+  static double digitTravelFor(String theme) => switch (theme) {
+    'yike/water' => .22,
+    'yike/sundial' => .18,
+    _ => digitTravel,
+  };
   static const secondWindow = .18;
   static const minuteWindow = .7;
   static const secondStrength = .12;

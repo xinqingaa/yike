@@ -1,3 +1,4 @@
+import '../motion/content_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/local_value.dart';
@@ -72,16 +73,20 @@ class _DurationSheetBodyState extends ConsumerState<DurationSheetBody> {
               ref.read(_saveFailed.notifier).set(false);
             },
           ),
-          if (invalid && ref.watch(_attempted))
-            Text(
+          MotionExpand(
+            expanded: invalid && ref.watch(_attempted),
+            child: Text(
               '请选择 ${widget.minimum == 1 ? '至少 1 秒' : '有效时长'}，不超过 ${widget.maximum ~/ 60} 分钟',
               style: ts.textStyle.caption.copyWith(color: ts.colors.error),
             ),
-          if (ref.watch(_saveFailed))
-            Text(
+          ),
+          MotionExpand(
+            expanded: ref.watch(_saveFailed),
+            child: Text(
               '尚未保存，请重试；关闭后可能丢失',
               style: ts.textStyle.caption.copyWith(color: ts.colors.error),
             ),
+          ),
         ],
       ),
       actions: CommonButton(

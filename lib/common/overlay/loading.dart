@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:unified_popups/unified_popups.dart';
 
 import '../../theme/ts.dart';
+import 'popup_activity.dart';
 
 abstract final class LoadingPopup {
-  static void show(
+  static Future<void> show(
     BuildContext context, {
     String? message,
     Future<void>? until,
-  }) {
+  }) async {
     final ts = TS.of(context);
     final style = LoadingStyle(
       backgroundColor: ts.colors.surface,
@@ -21,8 +22,9 @@ abstract final class LoadingPopup {
     final lifetime = until == null
         ? const PopupLifetime.manual()
         : PopupLifetime.until(until);
+    late PopupOpenResult<void> popup;
     if (message == null || message.isEmpty) {
-      Pop.loading(
+      popup = Pop.loading(
         LoadingConfig.indicator(
           style: style,
           lifetime: lifetime,
@@ -33,7 +35,7 @@ abstract final class LoadingPopup {
         ),
       );
     } else {
-      Pop.loading(
+      popup = Pop.loading(
         LoadingConfig.text(
           message,
           style: style,
@@ -45,6 +47,7 @@ abstract final class LoadingPopup {
         ),
       );
     }
+    await popup.handleOrNull?.dismissed;
   }
 
   static Future<void> hideLoading() => Pop.hideLoading();
@@ -58,7 +61,10 @@ abstract final class LoadingPopup {
       (_) {},
       onError: (Object _, StackTrace _) {},
     );
-    show(context, message: message, until: settled);
+    PopupActivity.modal(
+      context,
+      () => show(context, message: message, until: settled),
+    );
     return task;
   }
 }

@@ -98,6 +98,7 @@ class _CommonHeatmapState extends State<CommonHeatmap> {
         .firstOrNull;
     return Semantics(
       container: !widget.showLabel,
+      explicitChildNodes: true,
       label: widget.showLabel ? null : widget.label,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,9 +1,12 @@
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../common/clock.dart';
+import '../../../common/motion/dial_frame.dart';
 import '../../../common/motion/motion_activity.dart';
 import '../../../common/time.dart';
 import '../../../common/widgets/yike/dial.dart';
@@ -12,23 +15,49 @@ import '../../../theme/yike_motion.dart';
 import '../logic/focus_projection.dart';
 import '../models/focus_data.dart';
 import '../models/focus_view.dart';
-import '../providers/focus_presentation.dart';
+import '../providers/focus_dial_presentation.dart';
 
-class FocusDial extends ConsumerWidget {
-  const FocusDial({super.key, required this.value, required this.width});
-  final FocusViewData value;
+class FocusDial extends ConsumerStatefulWidget {
+  const FocusDial({super.key, required this.mode, required this.width});
+  final TimerMode mode;
   final double width;
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(
-      focusDataProvider.select(
-        (data) => data.session?.mode == value.mode ? data.session : null,
-      ),
-    );
+  ConsumerState<FocusDial> createState() => _FocusDialState();
+}
+
+class _FocusDialState extends ConsumerState<FocusDial> {
+  final _completion = ValueNotifier<FocusCompletion?>(null);
+  StreamSubscription<FocusCompletion>? _subscription;
+  @override
+  void initState() {
+    super.initState();
+    ref.listenManual(focusCompletionEventsProvider, (_, events) {
+      unawaited(_subscription?.cancel());
+      _subscription = events.listen(_completed);
+    }, fireImmediately: true);
+  }
+
+  void _completed(FocusCompletion event) {
+    if (MotionGate.activeNowOf(context) &&
+        widget.mode == event.mode &&
+        !MediaQuery.disableAnimationsOf(context)) {
+      _completion.value = event;
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_subscription?.cancel());
+    _completion.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return _FocusDialMotion(
-      value: value,
-      session: session,
-      width: width,
+      data: ref.watch(focusDialPresentationProvider(widget.mode)),
+      width: widget.width,
+      completions: _completion,
       now: ref.watch(clockProvider),
     );
   }
@@ -36,14 +65,16 @@ class FocusDial extends ConsumerWidget {
 
 class _FocusDialMotion extends StatefulWidget {
   const _FocusDialMotion({
-    required this.value,
-    required this.session,
+    required this.data,
     required this.width,
     required this.now,
+    required this.completions,
   });
-  final FocusViewData value;
-  final FocusSession? session;
+  final FocusDialPresentation data;
+  FocusViewData get value => data.view;
+  FocusSession? get session => data.session;
   final double width;
+  final ValueListenable<FocusCompletion?> completions;
   final DateTime Function() now;
   @override
   State<_FocusDialMotion> createState() => _FocusDialMotionState();
@@ -51,12 +82,61 @@ class _FocusDialMotion extends StatefulWidget {
 
 class _FocusDialMotionState extends State<_FocusDialMotion>
     with TickerProviderStateMixin {
-  late final Ticker _frames = createTicker((_) => setState(() {}));
+  late final Ticker _frames = createTicker((_) => _project());
+  late final ValueNotifier<DialFrame> _frame = ValueNotifier(
+    DialFrame(progress: widget.value.progress),
+  );
+  final _seconds = ValueNotifier<int?>(null);
+
+  void _project() {
+    final projection = FocusProjection.at(
+      widget.session,
+      widget.value,
+      widget.now(),
+    );
+    final running =
+        widget.session?.status == TimerStatus.running && _active && !_reduced;
+    final second = projection.elapsedSeconds % 1;
+    final minute = projection.elapsedSeconds % 60;
+    _frame.value = DialFrame(
+      progress: projection.progress,
+      secondBeat: running
+          ? math.max(0, 1 - second / YikeMotion.secondWindow) *
+                YikeMotion.secondStrength
+          : 0,
+      minuteBeat: running && projection.elapsedSeconds >= 60
+          ? math.max(0, 1 - minute / YikeMotion.minuteWindow) *
+                YikeMotion.minuteStrength
+          : 0,
+      wavePhase: running ? second : 0,
+    );
+    _seconds.value = projection.seconds;
+  }
+
   late final AnimationController _completion = AnimationController(
     vsync: this,
     value: 1,
   );
   bool _active = false, _reduced = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.completions.addListener(_complete);
+  }
+
+  void _complete() {
+    final event = widget.completions.value;
+    if (!_active ||
+        _reduced ||
+        event == null ||
+        event.sessionId != widget.session?.id ||
+        event.stage != widget.session?.stage) {
+      return;
+    }
+    _completion.duration = TS.of(context).motion.durationSlow;
+    _completion.forward(from: 0);
+  }
 
   @override
   void didChangeDependencies() {
@@ -68,6 +148,7 @@ class _FocusDialMotionState extends State<_FocusDialMotion>
       _completion.stop();
       _completion.value = 1;
     }
+    _project();
     _syncFrames();
   }
 
@@ -77,13 +158,8 @@ class _FocusDialMotionState extends State<_FocusDialMotion>
     final before = oldWidget.session, after = widget.session;
     if (before?.id != after?.id || before?.stage != after?.stage) {
       _completion.value = 1;
-    } else if (before?.status != TimerStatus.finished &&
-        after?.status == TimerStatus.finished) {
-      if (_active && !_reduced) {
-        _completion.duration = TS.of(context).motion.durationSlow;
-        _completion.forward(from: 0);
-      }
     }
+    _project();
     _syncFrames();
   }
 
@@ -96,54 +172,52 @@ class _FocusDialMotionState extends State<_FocusDialMotion>
 
   @override
   void dispose() {
+    widget.completions.removeListener(_complete);
     _frames.dispose();
+    _frame.dispose();
+    _seconds.dispose();
     _completion.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final projection = FocusProjection.at(
-      widget.session,
-      widget.value,
-      widget.now(),
-    );
     final running =
         widget.session?.status == TimerStatus.running && _active && !_reduced;
-    final second = projection.elapsedSeconds % 1;
-    final minute = projection.elapsedSeconds % 60;
-    final beat = running
-        ? math.max(0, 1 - second / YikeMotion.secondWindow) *
-                  YikeMotion.secondStrength +
-              (projection.elapsedSeconds >= 60
-                  ? math.max(0, 1 - minute / YikeMotion.minuteWindow) *
-                        YikeMotion.minuteStrength
-                  : 0)
-        : 0.0;
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _completion,
-        builder: (context, _) => Transform.scale(
+        builder: (context, child) => Transform.scale(
           key: const ValueKey('focus-completion-motion'),
           scale:
               1 +
               math.sin(_completion.value * math.pi) *
                   YikeMotion.completionScale,
-          child: YikeDial(
-            width: widget.width,
-            digits: timerDigits(projection.seconds),
-            caption: widget.value.caption,
-            progress: projection.progress,
-            paused: widget.value.paused,
-            resting: widget.value.resting,
-            completed: widget.value.finished,
-            countdown: widget.value.mode == TimerMode.countdown,
-            animateDigits: running,
-            digitIdentity: '${widget.session?.id}/${widget.session?.stage}',
-            descending: widget.value.mode != TimerMode.stopwatch,
-            beat: beat,
-            wavePhase: running ? second : 0,
-          ),
+          child: child,
+        ),
+        child: ValueListenableBuilder<int?>(
+          valueListenable: _seconds,
+          builder: (context, _, _) {
+            final projection = FocusProjection.at(
+              widget.session,
+              widget.value,
+              widget.now(),
+            );
+            return YikeDial(
+              width: widget.width,
+              digits: timerDigits(projection.seconds),
+              caption: widget.value.caption,
+              progress: projection.progress,
+              paused: widget.value.paused,
+              resting: widget.value.resting,
+              completed: widget.value.finished,
+              countdown: widget.value.mode == TimerMode.countdown,
+              animateDigits: running,
+              digitIdentity: '${widget.session?.id}/${widget.session?.stage}',
+              descending: widget.value.mode != TimerMode.stopwatch,
+              frame: _frame,
+            );
+          },
         ),
       ),
     );

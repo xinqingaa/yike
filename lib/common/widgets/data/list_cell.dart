@@ -1,3 +1,4 @@
+import '../../motion/content_transition.dart';
 import 'package:flutter/material.dart';
 
 import '../../../theme/ts.dart';
@@ -59,43 +60,59 @@ class CommonListCell extends StatelessWidget {
                   ? ts.spacing.xs
                   : ts.spacing.md,
             ),
-            child: Row(
-              children: [
-                if (leading != null) ...[
-                  leading!,
-                  SizedBox(width: ts.spacing.sm),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(title, style: ts.textStyle.content),
-                      if (description != null)
-                        Text(description!, style: ts.textStyle.caption),
-                    ],
-                  ),
-                ),
-                if (value != null) ...[
-                  SizedBox(width: ts.spacing.sm),
-                  Text(value!, style: ts.textStyle.caption),
-                ],
-                if (switchValue != null)
-                  CommonSwitch(
-                    value: switchValue!,
-                    enabled: !disabled && onSwitchChanged != null,
-                    onChanged: onSwitchChanged,
-                  )
-                else if (navigation)
-                  Padding(
-                    padding: EdgeInsets.only(left: ts.spacing.sm),
-                    child: CommonIcon(
-                      name: CommonIconName.chevronRight,
-                      dimension: ts.sizing.iconSm,
-                      color: ts.colors.onSurfaceMuted,
+            child: LayoutBuilder(
+              builder: (context, constraints) => Row(
+                children: [
+                  if (leading != null) ...[
+                    leading!,
+                    SizedBox(width: ts.spacing.sm),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(title, style: ts.textStyle.content),
+                        MotionExpand(
+                          expanded: description != null,
+                          child: Text(
+                            description ?? '',
+                            style: ts.textStyle.caption,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-              ],
+                  if (value != null) ...[
+                    SizedBox(width: ts.spacing.sm),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth * .55,
+                      ),
+                      child: MotionContent(
+                        identity: value,
+                        alignment: Alignment.centerRight,
+                        child: Text(value!, style: ts.textStyle.caption),
+                      ),
+                    ),
+                  ],
+                  if (switchValue != null)
+                    CommonSwitch(
+                      value: switchValue!,
+                      enabled: !disabled && onSwitchChanged != null,
+                      onChanged: onSwitchChanged,
+                    )
+                  else if (navigation)
+                    Padding(
+                      padding: EdgeInsets.only(left: ts.spacing.sm),
+                      child: CommonIcon(
+                        name: CommonIconName.chevronRight,
+                        dimension: ts.sizing.iconSm,
+                        color: ts.colors.onSurfaceMuted,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

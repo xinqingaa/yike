@@ -1,3 +1,5 @@
+import '../../../common/motion/content_transition.dart';
+import '../../../common/motion/page_transition.dart';
 import '../../focus/focus.dart';
 import '../../habits/habits.dart';
 import '../providers/review_presentation.dart';
@@ -27,24 +29,17 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
     final ts = TS.of(context);
     final selected = ref.watch(reviewSelectionProvider);
     final today = ref.watch(todayProvider);
-    final from = dayId(selected.first), through = dayId(selected.last);
-    final records = ref
-        .watch(focusRecordsProvider)
-        .where(
-          (r) => r.date.compareTo(from) >= 0 && r.date.compareTo(through) <= 0,
-        )
-        .toList();
-    final checkins = ref
-        .watch(habitsProvider)
-        .expand((h) => h.dates)
-        .where((d) => d.compareTo(from) >= 0 && d.compareTo(through) <= 0)
-        .length;
-    final total = records.fold<num>(0, (sum, r) => sum + r.seconds);
+    final from = dayId(selected.first);
+    final summary = ref.watch(reviewSummaryProvider);
+    final records = summary.records, checkins = summary.checkins;
+    final total = summary.seconds;
     final current = !selected.last.isBefore(
       selected.month ? DateTime.utc(today.year, today.month) : weekStart(today),
     );
-    void update(ReviewSelection value) =>
-        ref.read(reviewSelectionProvider.notifier).select(value);
+    void update(ReviewSelection value) {
+      ref.read(reviewSelectionProvider.notifier).select(value);
+    }
+
     void shift(int amount) => update(
       selected.copyWith(
         anchor: selected.month
@@ -132,12 +127,19 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
               onPressed: () => shift(-1),
             ),
             Expanded(
-              child: Text(
-                selected.month
-                    ? '${selected.anchor.year} 年 ${selected.anchor.month} 月'
-                    : '${selected.first.month}月${selected.first.day}日 – ${selected.last.month == selected.first.month ? '' : '${selected.last.month}月'}${selected.last.day}日',
-                textAlign: TextAlign.center,
-                style: ts.textStyle.caption,
+              child: MotionPage<(bool, String)>(
+                value: (selected.month, from),
+                direction: (before, after) => before.$1 != after.$1
+                    ? (after.$1 ? 1 : -1)
+                    : after.$2.compareTo(before.$2).toDouble().sign,
+                resize: false,
+                child: Text(
+                  selected.month
+                      ? '${selected.anchor.year} 年 ${selected.anchor.month} 月'
+                      : '${selected.first.month}月${selected.first.day}日 – ${selected.last.month == selected.first.month ? '' : '${selected.last.month}月'}${selected.last.day}日',
+                  textAlign: TextAlign.center,
+                  style: ts.textStyle.caption,
+                ),
               ),
             ),
             CommonIconButton(
@@ -152,125 +154,155 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
         SizedBox(height: ts.spacing.md),
         CommonDivider(),
         SizedBox(height: ts.spacing.md),
-        Row(
-          children: [
-            _summary(ts, '专注', durationLabel(total), flex: 2),
-            _summary(
-              ts,
-              selected.month ? '专注天数' : '专注次数',
-              selected.month
-                  ? '${records.map((r) => r.date).toSet().length} 天'
-                  : '${records.map(recordIdentity).toSet().length} 次',
-            ),
-            _summary(ts, '打卡', '$checkins 次'),
-          ],
-        ),
-        SizedBox(height: ts.spacing.md),
-        CommonDivider(),
-        SizedBox(height: ts.spacing.md),
-        if (records.isEmpty && checkins == 0) ...[
-          Text(
-            selected.month ? '这一月还没有记录' : '这一周还没有记录',
-            style: ts.textStyle.subtitle,
-          ),
-          SizedBox(height: ts.spacing.xs),
-          Text('从底部“专注”或“打卡”开始记录。', style: ts.textStyle.caption),
-          SizedBox(height: ts.spacing.md),
-        ],
-        if (selected.month)
-          CommonMonthCalendar(
-            month: from.substring(0, 7),
-            today: dayId(today),
-            showHeader: false,
-            customDayAppearance: true,
-            dayShape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                ts.pack.id.endsWith('sundial') ? ts.radius.xs : ts.radius.full,
+        MotionPage<(bool, String)>(
+          value: (selected.month, from),
+          direction: (before, after) => before.$1 != after.$1
+              ? (after.$1 ? 1 : -1)
+              : after.$2.compareTo(before.$2).toDouble().sign,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  _summary(ts, '专注', durationLabel(total), flex: 2),
+                  _summary(
+                    ts,
+                    selected.month ? '专注天数' : '专注次数',
+                    selected.month
+                        ? '${records.map((r) => r.date).toSet().length} 天'
+                        : '${records.map(recordIdentity).toSet().length} 次',
+                  ),
+                  _summary(ts, '打卡', '$checkins 次'),
+                ],
               ),
-            ),
-            label: '本月每日专注',
-            disabledDates: {
-              for (
-                var day = selected.first;
-                !day.isAfter(selected.last);
-                day = day.add(const Duration(days: 1))
-              )
-                if (day.isAfter(today)) dayId(day),
-            },
-            onChanged: open,
-            dayBuilder: (context, day) => _MonthDay(
-              day: day,
-              checkins: ref
-                  .watch(habitsProvider)
-                  .where((habit) => habit.dates.contains(day.date))
-                  .length,
-              seconds: records
-                  .where((r) => r.date == day.date)
-                  .fold<num>(0, (sum, r) => sum + r.seconds),
-            ),
-          )
-        else
-          _WeekChart(
-            selection: selected,
-            today: today,
-            records: records,
-            checkins: ref
-                .watch(habitsProvider)
-                .expand((habit) => habit.dates)
-                .toList(),
-            onSelected: open,
-          ),
-        if (total > 0) ...[
-          SizedBox(height: ts.spacing.md),
-          Text('按类型', style: ts.textStyle.subtitle),
-          for (final mode in TimerMode.values) ...[
-            SizedBox(height: ts.spacing.md),
-            Row(
-              children: [
-                Text(
-                  modeLabel(mode),
-                  style: ts.textStyle.content.copyWith(
-                    color: ts.colors.onSurfaceMuted,
-                  ),
-                ),
-                SizedBox(width: ts.spacing.sm),
-                Expanded(
-                  child: Text(
-                    '${records.where((r) => r.mode == mode).map(recordIdentity).toSet().length} 次 · ${durationLabel(records.where((r) => r.mode == mode).fold<num>(0, (sum, r) => sum + r.seconds))}',
-                    style: ts.textStyle.caption,
-                    textAlign: TextAlign.right,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: ts.spacing.xs),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(ts.radius.full),
-              child: SizedBox(
-                height: ts.sizing.progressTrack,
-                child: Stack(
+              SizedBox(height: ts.spacing.md),
+              CommonDivider(),
+              SizedBox(height: ts.spacing.md),
+              MotionExpand(
+                expanded: records.isEmpty && checkins == 0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ColoredBox(
-                      color: ts.colors.border,
-                      child: const SizedBox.expand(),
+                    Text(
+                      selected.month ? '这一月还没有记录' : '这一周还没有记录',
+                      style: ts.textStyle.subtitle,
                     ),
-                    FractionallySizedBox(
-                      widthFactor:
-                          records
-                              .where((r) => r.mode == mode)
-                              .fold<num>(0, (sum, r) => sum + r.seconds) /
-                          total,
-                      child: ColoredBox(
-                        color: ts.colors.primary,
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
+                    SizedBox(height: ts.spacing.xs),
+                    Text('从底部“专注”或“打卡”开始记录。', style: ts.textStyle.caption),
+                    SizedBox(height: ts.spacing.md),
                   ],
                 ),
               ),
-            ),
-          ],
-        ],
+              if (selected.month)
+                CommonMonthCalendar(
+                  month: from.substring(0, 7),
+                  today: dayId(today),
+                  showHeader: false,
+                  customDayAppearance: true,
+                  dayShape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      ts.pack.id.endsWith('sundial')
+                          ? ts.radius.xs
+                          : ts.radius.full,
+                    ),
+                  ),
+                  label: '本月每日专注',
+                  disabledDates: {
+                    for (
+                      var day = selected.first;
+                      !day.isAfter(selected.last);
+                      day = day.add(const Duration(days: 1))
+                    )
+                      if (day.isAfter(today)) dayId(day),
+                  },
+                  onChanged: open,
+                  dayBuilder: (context, day) => _MonthDay(
+                    day: day,
+                    checkins: ref
+                        .watch(habitsProvider)
+                        .where((habit) => habit.dates.contains(day.date))
+                        .length,
+                    seconds: records
+                        .where((r) => r.date == day.date)
+                        .fold<num>(0, (sum, r) => sum + r.seconds),
+                  ),
+                )
+              else
+                _WeekChart(
+                  selection: selected,
+                  today: today,
+                  records: records,
+                  checkins: ref
+                      .watch(habitsProvider)
+                      .expand((habit) => habit.dates)
+                      .toList(),
+                  onSelected: open,
+                ),
+              MotionExpand(
+                expanded: total > 0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: ts.spacing.md),
+                    Text('按类型', style: ts.textStyle.subtitle),
+                    for (final mode in TimerMode.values) ...[
+                      SizedBox(height: ts.spacing.md),
+                      Row(
+                        children: [
+                          Text(
+                            modeLabel(mode),
+                            style: ts.textStyle.content.copyWith(
+                              color: ts.colors.onSurfaceMuted,
+                            ),
+                          ),
+                          SizedBox(width: ts.spacing.sm),
+                          Expanded(
+                            child: Text(
+                              '${records.where((r) => r.mode == mode).map(recordIdentity).toSet().length} 次 · ${durationLabel(records.where((r) => r.mode == mode).fold<num>(0, (sum, r) => sum + r.seconds))}',
+                              style: ts.textStyle.caption,
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: ts.spacing.xs),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(ts.radius.full),
+                        child: SizedBox(
+                          height: ts.sizing.progressTrack,
+                          child: Stack(
+                            children: [
+                              ColoredBox(
+                                color: ts.colors.border,
+                                child: const SizedBox.expand(),
+                              ),
+                              FractionallySizedBox(
+                                widthFactor: total == 0
+                                    ? 0
+                                    : records
+                                              .where((r) => r.mode == mode)
+                                              .fold<num>(
+                                                0,
+                                                (sum, r) => sum + r.seconds,
+                                              ) /
+                                          total,
+                                child: ColoredBox(
+                                  color: ts.colors.primary,
+                                  child: const SizedBox.expand(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

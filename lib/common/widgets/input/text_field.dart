@@ -1,3 +1,4 @@
+import '../../motion/content_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../state/local_value.dart';
@@ -65,7 +66,7 @@ class _CommonTextFieldState extends ConsumerState<CommonTextField> {
             labelText: null,
             labelStyle: ts.textStyle.caption,
             hintText: widget.hint,
-            errorText: widget.errorText,
+
             filled: true,
             fillColor: widget.showLabel
                 ? ts.colors.surface
@@ -103,6 +104,19 @@ class _CommonTextFieldState extends ConsumerState<CommonTextField> {
           SizedBox(height: ts.spacing.sm),
         ],
         field,
+        MotionExpand(
+          expanded: widget.errorText != null,
+          child: Padding(
+            padding: EdgeInsets.only(top: ts.spacing.xs),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                widget.errorText ?? '',
+                style: ts.textStyle.caption.copyWith(color: ts.colors.error),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
