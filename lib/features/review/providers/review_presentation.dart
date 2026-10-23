@@ -48,22 +48,25 @@ class ReviewSummary {
       records.fold<num>(0, (sum, record) => sum + record.seconds);
 }
 
+ReviewSummary reviewSummaryFor(
+  ReviewSelection selection,
+  Iterable<FocusRecordView> records,
+  Iterable<HabitViewData> habits,
+) {
+  final from = dayId(selection.first), through = dayId(selection.last);
+  bool contains(String date) =>
+      date.compareTo(from) >= 0 && date.compareTo(through) <= 0;
+  return ReviewSummary(
+    records: List.unmodifiable(records.where((r) => contains(r.date))),
+    checkins: habits.expand((h) => h.dates).where(contains).length,
+  );
+}
+
 final reviewSummaryProvider = Provider<ReviewSummary>(
-  (ref) {
-    final selection = ref.watch(reviewSelectionProvider);
-    final from = dayId(selection.first), through = dayId(selection.last);
-    bool contains(String date) =>
-        date.compareTo(from) >= 0 && date.compareTo(through) <= 0;
-    return ReviewSummary(
-      records: List.unmodifiable(
-        ref.watch(focusRecordsProvider).where((r) => contains(r.date)),
-      ),
-      checkins: ref
-          .watch(habitsProvider)
-          .expand((h) => h.dates)
-          .where(contains)
-          .length,
-    );
-  },
+  (ref) => reviewSummaryFor(
+    ref.watch(reviewSelectionProvider),
+    ref.watch(focusRecordsProvider),
+    ref.watch(habitsProvider),
+  ),
   dependencies: [reviewSelectionProvider, focusRecordsProvider, habitsProvider],
 );

@@ -10,6 +10,19 @@ class LapList extends StatelessWidget {
   final FocusViewData value;
   final bool compact;
 
+  static double minimumHeight(BuildContext context, {required bool compact}) {
+    final ts = TS.of(context), scaler = MediaQuery.textScalerOf(context);
+    final rowHeight =
+        (scaler.scale(ts.textStyle.numericContent.fontSize!) *
+                    (ts.textStyle.numericContent.height ?? 1) +
+                ts.spacing.sm * 2)
+            .clamp(ts.sizing.touch, double.infinity);
+    return rowHeight * (compact ? 2 : 3) +
+        ts.spacing.xs +
+        scaler.scale(ts.textStyle.caption.fontSize!) *
+            (ts.textStyle.caption.height ?? 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);

@@ -8,11 +8,12 @@ class AppSheetContent extends StatelessWidget {
   const AppSheetContent({
     super.key,
     required this.body,
-    required this.actions,
+    this.actions,
     this.expand = false,
     this.showDivider = false,
   });
-  final Widget body, actions;
+  final Widget body;
+  final Widget? actions;
   final bool expand, showDivider;
   @override
   Widget build(BuildContext context) {
@@ -28,11 +29,12 @@ class AppSheetContent extends StatelessWidget {
             child: body,
           ),
         ),
-        if (showDivider) const CommonDivider(),
-        Padding(
-          padding: EdgeInsets.fromLTRB(0, ts.spacing.smPlus, 0, 0),
-          child: actions,
-        ),
+        if (actions != null && showDivider) const CommonDivider(),
+        if (actions != null)
+          Padding(
+            padding: EdgeInsets.fromLTRB(0, ts.spacing.smPlus, 0, 0),
+            child: actions!,
+          ),
       ],
     );
   }

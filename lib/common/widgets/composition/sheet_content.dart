@@ -67,9 +67,10 @@ class CommonFlowSheetContent extends StatelessWidget {
     }
     final ts = TS.of(context);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
+        Flexible(
           child: SingleChildScrollView(
             padding: EdgeInsets.only(top: ts.spacing.sm),
             child: body,

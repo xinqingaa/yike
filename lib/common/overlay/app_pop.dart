@@ -87,7 +87,9 @@ abstract final class AppPop {
     required Widget Function(BuildContext context, AppSheetActions<T> actions)
     builder,
     bool showCloseButton = true,
-    SheetSizeConfig size = const SheetSizeConfig(),
+    SheetSizeConfig size = const SheetSizeConfig(
+      maxHeight: SheetDimension.fraction(1),
+    ),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) => PopupActivity.modal(

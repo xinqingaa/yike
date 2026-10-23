@@ -17,9 +17,7 @@ Future<bool?> openHabitEditor(BuildContext context, {HabitViewData? habit}) =>
       context,
       title: habit == null ? '新建习惯' : '编辑习惯',
       material: CommonSurfaceMaterial.glass,
-      size: SheetSizeConfig(
-        height: SheetDimension.fraction(TS.of(context).sizing.panelLarge),
-      ),
+      size: const SheetSizeConfig(maxHeight: SheetDimension.fraction(1)),
       builder: (context, handle) =>
           HabitEditor(habit: habit, onSaved: () => handle.complete(true)),
     );
@@ -50,8 +48,8 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
     final editor = ref.watch(_editor);
     final draft = editor.draft;
     return AppSheetContent(
-      expand: true,
       body: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           MotionExpand(

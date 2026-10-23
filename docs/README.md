@@ -33,10 +33,13 @@
 
 - [Flutter 独立迭代](decisions/2026-10-23-flutter-development.md)
 - [动效事件与重播](decisions/2026-10-23-motion-policy.md)
+- [Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md)
 
 决策记录说明日期、已决定的行为和原因；具体规格仍在所属产品/工程文档维护。
 
 ## 当前交接
+
+[Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md) 记录研究与用户接管后的最终修改范围；当前工作区已按该指令修订，用户要求不运行测试，尚无修订后验收结论。[前轮复审提案](reviews/2026-10-23-motion-audit-and-polish-proposal.md) 只保留研究背景，不作为当前实施规格。
 
 [动效与布局连续性实施记录](reviews/2026-10-23-motion-implementation.md) 记录六批代码接入、工程检查、iOS 原生过程和待测边界；[原实施计划](reviews/2026-10-23-motion-implementation-plan.md) 保留批准范围与验收矩阵。
 

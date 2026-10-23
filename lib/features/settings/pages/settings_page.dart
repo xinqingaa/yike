@@ -197,7 +197,6 @@ class YikeSettingsPage extends ConsumerWidget {
                         final saved = ref
                             .read(timingPreferencesProvider.notifier)
                             .update((p) => p.copyWith(interval: value));
-                        if (saved) handle.complete(value);
                         return saved;
                       },
                     ),
@@ -220,6 +219,7 @@ class YikeSettingsPage extends ConsumerWidget {
                   minimum: 60,
                   maximum: (item == 'focus' ? 180 : 60) * 60,
                   seconds: false,
+                  autoSave: true,
                   onConfirm: (value) => ref
                       .read(timingPreferencesProvider.notifier)
                       .update(
@@ -319,9 +319,11 @@ class _IntervalSheetState extends ConsumerState<_IntervalSheet> {
   @override
   Widget build(BuildContext context) => AppSheetContent(
     body: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         CommonWheelPicker(
           visibleRows: 3,
+          filled: true,
           columns: [
             CommonWheelColumn(
               id: 'interval',
@@ -336,6 +338,9 @@ class _IntervalSheetState extends ConsumerState<_IntervalSheet> {
           ],
           values: [ref.watch(_value)],
           onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
+          onSettled: (v) => ref
+              .read(_saveFailed.notifier)
+              .set(!widget.onSave(v.first as int)),
         ),
         MotionExpand(
           expanded: ref.watch(_saveFailed),
@@ -349,16 +354,6 @@ class _IntervalSheetState extends ConsumerState<_IntervalSheet> {
           ),
         ),
       ],
-    ),
-    actions: CommonButton(
-      label: '确认',
-      kind: CommonButtonKind.accent,
-      block: true,
-      onPressed: () {
-        if (!widget.onSave(ref.read(_value))) {
-          ref.read(_saveFailed.notifier).set(true);
-        }
-      },
     ),
   );
 }
@@ -403,6 +398,7 @@ class _PresetList extends ConsumerWidget {
     final ts = TS.of(context);
     return CommonFlowSheetContent(
       body: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < 4; i++)
@@ -431,16 +427,6 @@ class _PresetList extends ConsumerWidget {
           ),
         ],
       ),
-      actions: [
-        CommonButton(
-          label: '完成',
-          size: CommonControlSize.lg,
-          shape: CommonButtonShape.pill,
-          kind: CommonButtonKind.accent,
-          block: true,
-          onPressed: controller.closeAll,
-        ),
-      ],
     );
   }
 }
@@ -476,9 +462,8 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
     final saved = ref
         .read(timingPreferencesProvider.notifier)
         .set(prefs.copyWith(presets: next));
-    if (saved) {
-      widget.controller.pop();
-    } else {
+    if (saved && value == null) widget.controller.pop();
+    if (!saved) {
       ref.read(_error.notifier).set('尚未保存，请重试；关闭后可能丢失');
     }
   }
@@ -488,13 +473,21 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
     final ts = TS.of(context);
     return CommonFlowSheetContent(
       body: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           DurationWheels(
+            filled: true,
             value: ref.watch(_value),
+            onSettled: _save,
             onChanged: (v) {
               ref.read(_value.notifier).set(v);
               ref.read(_error.notifier).set(null);
             },
+          ),
+          CommonButton(
+            label: '清空此项',
+            kind: CommonButtonKind.quiet,
+            onPressed: () => _save(null),
           ),
           MotionExpand(
             expanded: ref.watch(_error) != null,
@@ -505,21 +498,6 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
           ),
         ],
       ),
-      actions: [
-        CommonButton(
-          label: '清空此项',
-          kind: CommonButtonKind.quiet,
-          onPressed: () => _save(null),
-        ),
-        CommonButton(
-          label: '保存',
-          size: CommonControlSize.lg,
-          shape: CommonButtonShape.pill,
-          kind: CommonButtonKind.accent,
-          block: true,
-          onPressed: () => _save(ref.read(_value)),
-        ),
-      ],
     );
   }
 }
@@ -569,9 +547,11 @@ class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
     final options = {5, 10, 60, 180, 300, 600, widget.initial}.toList()..sort();
     return CommonFlowSheetContent(
       body: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           CommonWheelPicker(
             visibleRows: 3,
+            filled: true,
             columns: [
               CommonWheelColumn(
                 id: 'threshold',
@@ -587,6 +567,12 @@ class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
             ],
             values: [ref.watch(_value)],
             onChanged: (v) => ref.read(_value.notifier).set(v.first as int),
+            onSettled: (v) {
+              final saved = ref
+                  .read(timingPreferencesProvider.notifier)
+                  .update((p) => p.copyWith(threshold: v.first as int));
+              ref.read(_saveFailed.notifier).set(!saved);
+            },
           ),
           MotionExpand(
             expanded: ref.watch(_saveFailed),
@@ -601,25 +587,6 @@ class _ThresholdOptionsState extends ConsumerState<_ThresholdOptions> {
           ),
         ],
       ),
-      actions: [
-        CommonButton(
-          label: '确认',
-          size: CommonControlSize.lg,
-          shape: CommonButtonShape.pill,
-          kind: CommonButtonKind.accent,
-          block: true,
-          onPressed: () {
-            final saved = ref
-                .read(timingPreferencesProvider.notifier)
-                .update((p) => p.copyWith(threshold: ref.read(_value)));
-            if (saved) {
-              widget.controller.closeAll();
-            } else {
-              ref.read(_saveFailed.notifier).set(true);
-            }
-          },
-        ),
-      ],
     );
   }
 }
@@ -639,8 +606,18 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
   @override
   Widget build(BuildContext context) => CommonFlowSheetContent(
     body: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         DurationWheels(
+          filled: true,
+          onSettled: (value) {
+            ref.read(_invalid.notifier).set(value < 1);
+            if (value < 1) return;
+            final saved = ref
+                .read(timingPreferencesProvider.notifier)
+                .update((p) => p.copyWith(threshold: value));
+            ref.read(_saveFailed.notifier).set(!saved);
+          },
           value: ref.watch(_value),
           onChanged: (value) {
             ref.read(_value.notifier).set(value);
@@ -671,29 +648,5 @@ class _ThresholdCustomState extends ConsumerState<_ThresholdCustom> {
         ),
       ],
     ),
-    actions: [
-      CommonButton(
-        label: '确认',
-        size: CommonControlSize.lg,
-        shape: CommonButtonShape.pill,
-        kind: CommonButtonKind.accent,
-        block: true,
-        onPressed: () {
-          final value = ref.read(_value);
-          if (value < 1) {
-            ref.read(_invalid.notifier).set(true);
-            return;
-          }
-          final saved = ref
-              .read(timingPreferencesProvider.notifier)
-              .update((p) => p.copyWith(threshold: value));
-          if (saved) {
-            widget.controller.closeAll();
-          } else {
-            ref.read(_saveFailed.notifier).set(true);
-          }
-        },
-      ),
-    ],
   );
 }

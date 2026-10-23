@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../common/widgets.dart';
@@ -40,9 +41,15 @@ class _HabitHeatmapPlotState extends State<HabitHeatmapPlot> {
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
-    final cellSize = ts.spacing.smPlus;
+    final labelHeight =
+        MediaQuery.textScalerOf(context).scale(ts.textStyle.micro.fontSize!) *
+        (ts.textStyle.micro.height ?? 1);
+    final cellSize = math.max(ts.spacing.smPlus, labelHeight);
     final stride = cellSize + ts.spacing.xs;
-    final headerHeight = ts.sizing.controlSm;
+    final headerHeight = math.max(
+      ts.sizing.controlSm,
+      labelHeight + ts.spacing.sm,
+    );
     final width = widget.weeks.length * stride;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,19 +153,22 @@ class _HabitHeatmapPlotState extends State<HabitHeatmapPlot> {
           key: ValueKey('habit-day-${cell.date}'),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(ts.radius.xs),
-            color: done
-                ? ts.colors.primary
-                : archived && !inactive
-                ? ts.colors.surfaceVariant
-                : Colors.transparent,
-            border: Border.all(
-              color: done
-                  ? ts.colors.primary
+            color: _heatColor(
+              ts,
+              done
+                  ? 0
                   : inactive
-                  ? ts.colors.border.withValues(alpha: ts.opacity.disabled)
-                  : ts.colors.border,
-              width: ts.border.widthHairline,
+                  ? 3
+                  : archived
+                  ? 2
+                  : 1,
             ),
+            border: MediaQuery.highContrastOf(context)
+                ? Border.all(
+                    color: done ? ts.colors.primary : ts.colors.outline,
+                    width: ts.border.widthHairline,
+                  )
+                : null,
           ),
         ),
       ),
@@ -184,22 +194,17 @@ class HabitHeatmapLegend extends StatelessWidget {
                 width: ts.spacing.smPlus,
                 height: ts.spacing.smPlus,
                 decoration: BoxDecoration(
-                  color: state == '完成'
-                      ? ts.colors.primary
-                      : state == '归档'
-                      ? ts.colors.surfaceVariant
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(ts.radius.xs),
-                  border: Border.all(
-                    color: state == '完成'
-                        ? ts.colors.primary
-                        : state == '创建前/未来'
-                        ? ts.colors.border.withValues(
-                            alpha: ts.opacity.disabled,
-                          )
-                        : ts.colors.border,
-                    width: ts.border.widthHairline,
+                  color: _heatColor(
+                    ts,
+                    ['完成', '未打卡', '归档', '创建前/未来'].indexOf(state),
                   ),
+                  borderRadius: BorderRadius.circular(ts.radius.xs),
+                  border: MediaQuery.highContrastOf(context)
+                      ? Border.all(
+                          color: ts.colors.outline,
+                          width: ts.border.widthHairline,
+                        )
+                      : null,
                 ),
               ),
               SizedBox(width: ts.spacing.xs),
@@ -210,3 +215,13 @@ class HabitHeatmapLegend extends StatelessWidget {
     );
   }
 }
+
+Color _heatColor(TS ts, int state) => switch (state) {
+  0 => Color.alphaBlend(
+    ts.colors.primary.withValues(alpha: .8),
+    ts.colors.surface,
+  ),
+  1 => ts.colors.primarySoft,
+  2 => ts.colors.surfaceVariant,
+  _ => ts.colors.onSurfaceMuted.withValues(alpha: .06),
+};

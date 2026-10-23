@@ -14,6 +14,7 @@ import '../../../common/widgets/yike/layout.dart';
 import '../../../theme/ts.dart';
 import '../widgets/day_detail_sheet.dart';
 import '../widgets/review_labels.dart';
+import '../widgets/period_picker.dart';
 
 class ReviewPage extends ConsumerStatefulWidget {
   const ReviewPage({super.key});
@@ -57,19 +58,23 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
           context,
           title: '每日记录',
           material: CommonSurfaceMaterial.glass,
-          builder: (context, _) => ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight:
-                  MediaQuery.sizeOf(context).height *
-                  TS.of(context).sizing.panelMedium,
-            ),
-            child: DayDetailSheet(
-              initial: date,
-              first: selected.first,
-              last: selected.last.isAfter(today) ? today : selected.last,
-            ),
+          builder: (context, _) => DayDetailSheet(
+            initial: date,
+            first: selected.first,
+            last: selected.last.isAfter(today) ? today : selected.last,
           ),
         );
+      } finally {
+        if (mounted) ref.read(_detailOpen.notifier).set(false);
+      }
+    }
+
+    Future<void> choosePeriod() async {
+      if (ref.read(_detailOpen)) return;
+      ref.read(_detailOpen.notifier).set(true);
+      try {
+        final next = await pickReviewPeriod(context, selected);
+        if (next != null && mounted) update(next);
       } finally {
         if (mounted) ref.read(_detailOpen.notifier).set(false);
       }
@@ -93,61 +98,73 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
           ],
         ),
         SizedBox(height: ts.spacing.md),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: SizedBox(
-            width: ts.sizing.controlMd * 2 + ts.spacing.lg + ts.spacing.xs,
-            child: YikeSelectionBar(
-              size: CommonPrimaryTabsSize.sm,
-              items: const [
-                CommonTabItem(value: 'week', label: '周'),
-                CommonTabItem(value: 'month', label: '月'),
-              ],
-              value: selected.month ? 'month' : 'week',
-              onSelected: (value) => update(
-                ReviewSelection(
-                  month: value == 'month',
-                  anchor: selected.lastViewedDate == null
-                      ? current
-                            ? today
-                            : selected.anchor
-                      : DateTime.parse(selected.lastViewedDate!),
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: ts.spacing.sm),
         Row(
           children: [
-            CommonIconButton(
-              name: CommonIconName.chevronLeft,
-              label: '上一期',
-              variant: CommonIconButtonVariant.text,
-              onPressed: () => shift(-1),
-            ),
-            Expanded(
-              child: MotionPage<(bool, String)>(
-                value: (selected.month, from),
-                direction: (before, after) => before.$1 != after.$1
-                    ? (after.$1 ? 1 : -1)
-                    : after.$2.compareTo(before.$2).toDouble().sign,
-                resize: false,
-                child: Text(
-                  selected.month
-                      ? '${selected.anchor.year} 年 ${selected.anchor.month} 月'
-                      : '${selected.first.month}月${selected.first.day}日 – ${selected.last.month == selected.first.month ? '' : '${selected.last.month}月'}${selected.last.day}日',
-                  textAlign: TextAlign.center,
-                  style: ts.textStyle.caption,
+            SizedBox(
+              width: ts.sizing.controlSm * 2 + ts.spacing.sm,
+              child: YikeSelectionBar(
+                size: CommonPrimaryTabsSize.sm,
+                items: const [
+                  CommonTabItem(value: 'week', label: '周'),
+                  CommonTabItem(value: 'month', label: '月'),
+                ],
+                value: selected.month ? 'month' : 'week',
+                onSelected: (value) => update(
+                  ReviewSelection(
+                    month: value == 'month',
+                    anchor: selected.lastViewedDate == null
+                        ? current
+                              ? today
+                              : selected.anchor
+                        : DateTime.parse(selected.lastViewedDate!),
+                  ),
                 ),
               ),
             ),
-            CommonIconButton(
-              name: CommonIconName.chevronRight,
-              label: '下一期',
-              disabled: current,
-              variant: CommonIconButtonVariant.text,
-              onPressed: () => shift(1),
+            SizedBox(width: ts.spacing.sm),
+            Expanded(
+              child: Row(
+                children: [
+                  CommonIconButton(
+                    name: CommonIconName.chevronLeft,
+                    label: '上一期',
+                    variant: CommonIconButtonVariant.text,
+                    onPressed: () => shift(-1),
+                  ),
+                  Expanded(
+                    child: MotionPage<(bool, String)>(
+                      value: (selected.month, from),
+                      direction: (before, after) => before.$1 != after.$1
+                          ? (after.$1 ? 1 : -1)
+                          : after.$2.compareTo(before.$2).toDouble().sign,
+                      resize: false,
+                      child: CommonPressableSurface(
+                        key: const ValueKey('review-period-picker'),
+                        onPressed: choosePeriod,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: ts.sizing.touch,
+                          ),
+                          child: Center(
+                            child: Text(
+                              reviewPeriodLabel(selected),
+                              textAlign: TextAlign.center,
+                              style: ts.textStyle.caption,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  CommonIconButton(
+                    name: CommonIconName.chevronRight,
+                    label: '下一期',
+                    disabled: current,
+                    variant: CommonIconButtonVariant.text,
+                    onPressed: () => shift(1),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

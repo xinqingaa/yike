@@ -32,6 +32,8 @@ class CommonWheelPicker extends StatefulWidget {
     required this.columns,
     required this.values,
     required this.onChanged,
+    this.onSettled,
+    this.filled = false,
     this.label,
     this.visibleRows = 5,
     this.disabled = false,
@@ -39,8 +41,10 @@ class CommonWheelPicker extends StatefulWidget {
   final List<CommonWheelColumn> columns;
   final List<Object> values;
   final ValueChanged<List<Object>>? onChanged;
+  final ValueChanged<List<Object>>? onSettled;
   final String? label;
   final int visibleRows;
+  final bool filled;
   final bool disabled;
 
   @override
@@ -49,6 +53,8 @@ class CommonWheelPicker extends StatefulWidget {
 
 class _CommonWheelPickerState extends State<CommonWheelPicker> {
   final Map<String, FixedExtentScrollController> _controllers = {};
+  final Set<String> _scrolling = {};
+  bool _dirty = false, _settleScheduled = false;
   bool get _enabled => !widget.disabled && widget.onChanged != null;
 
   int _index(int column) {
@@ -62,12 +68,46 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
     if (!_enabled) return;
     final values = [
       for (var i = 0; i < widget.columns.length; i++)
-        widget.columns[i].options[_index(i)].value,
+        widget
+            .columns[i]
+            .options[_controllers[widget.columns[i].id]?.hasClients == true
+                ? _controllers[widget.columns[i].id]!.selectedItem.clamp(
+                    0,
+                    widget.columns[i].options.length - 1,
+                  )
+                : _index(i)]
+            .value,
     ];
     final next = widget.columns[column].options[index].value;
-    if (values[column] == next) return;
+    if (column < widget.values.length && widget.values[column] == next) return;
     values[column] = next;
+    _dirty = true;
     widget.onChanged!(List.unmodifiable(values));
+    _scheduleSettled();
+  }
+
+  void _scheduleSettled() {
+    if (_settleScheduled) return;
+    _settleScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _settleScheduled = false;
+      if (!mounted || !_enabled || !_dirty || _scrolling.isNotEmpty) return;
+      _dirty = false;
+      widget.onSettled?.call(
+        List.unmodifiable([
+          for (var i = 0; i < widget.columns.length; i++)
+            widget
+                .columns[i]
+                .options[_controllers[widget.columns[i].id]!.hasClients
+                    ? _controllers[widget.columns[i].id]!.selectedItem.clamp(
+                        0,
+                        widget.columns[i].options.length - 1,
+                      )
+                    : _index(i)]
+                .value,
+        ]),
+      );
+    });
   }
 
   void _move(int column, int index) {
@@ -87,6 +127,7 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
   void didUpdateWidget(covariant CommonWheelPicker oldWidget) {
     super.didUpdateWidget(oldWidget);
     final ids = widget.columns.map((column) => column.id).toSet();
+    _scrolling.removeWhere((id) => !ids.contains(id));
     for (final id
         in _controllers.keys.where((id) => !ids.contains(id)).toList()) {
       _controllers.remove(id)!.dispose();
@@ -134,7 +175,7 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
         opacity: widget.disabled ? ts.opacity.disabled : ts.opacity.visible,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: widget.visibleRows == 3
+            color: widget.visibleRows == 3 && !widget.filled
                 ? Colors.transparent
                 : ts.colors.surface,
             borderRadius: BorderRadius.circular(ts.radius.lg),
@@ -186,7 +227,7 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
                   child: Container(
                     height: rowHeight,
                     decoration: BoxDecoration(
-                      color: widget.visibleRows == 3
+                      color: widget.visibleRows == 3 && !widget.filled
                           ? ts.colors.surface
                           : ts.colors.surfaceRecessed,
                       borderRadius: BorderRadius.circular(ts.radius.sm),
@@ -246,34 +287,48 @@ class _CommonWheelPickerState extends State<CommonWheelPicker> {
                   return Stack(
                     alignment: Alignment.center,
                     children: [
-                      ListWheelScrollView.useDelegate(
-                        controller: controller,
-                        itemExtent: rowHeight,
-                        physics: _enabled
-                            ? const FixedExtentScrollPhysics()
-                            : const NeverScrollableScrollPhysics(),
-                        onSelectedItemChanged: (item) => _changed(index, item),
-                        childDelegate: ListWheelChildBuilderDelegate(
-                          childCount: column.options.length,
-                          builder: (context, item) => GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: _enabled ? () => _move(index, item) : null,
-                            child: Center(
-                              child: SizedBox(
-                                width: fittedNumberWidth,
-                                child: Text(
-                                  column.options[item].label,
-                                  key: item == selected
-                                      ? ValueKey('wheel-number-${column.id}')
-                                      : null,
-                                  maxLines: 1,
-                                  textAlign: TextAlign.center,
-                                  style: scaled(
-                                    item == selected
-                                        ? selectedStyle
-                                        : otherStyle.copyWith(
-                                            color: ts.colors.onSurfaceMuted,
-                                          ),
+                      NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          if (notification.depth != 0) return false;
+                          if (notification is ScrollStartNotification) {
+                            _scrolling.add(column.id);
+                          }
+                          if (notification is ScrollEndNotification) {
+                            _scrolling.remove(column.id);
+                            _scheduleSettled();
+                          }
+                          return false;
+                        },
+                        child: ListWheelScrollView.useDelegate(
+                          controller: controller,
+                          itemExtent: rowHeight,
+                          physics: _enabled
+                              ? const FixedExtentScrollPhysics()
+                              : const NeverScrollableScrollPhysics(),
+                          onSelectedItemChanged: (item) =>
+                              _changed(index, item),
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            childCount: column.options.length,
+                            builder: (context, item) => GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: _enabled ? () => _move(index, item) : null,
+                              child: Center(
+                                child: SizedBox(
+                                  width: fittedNumberWidth,
+                                  child: Text(
+                                    column.options[item].label,
+                                    key: item == selected
+                                        ? ValueKey('wheel-number-${column.id}')
+                                        : null,
+                                    maxLines: 1,
+                                    textAlign: TextAlign.center,
+                                    style: scaled(
+                                      item == selected
+                                          ? selectedStyle
+                                          : otherStyle.copyWith(
+                                              color: ts.colors.onSurfaceMuted,
+                                            ),
+                                    ),
                                   ),
                                 ),
                               ),

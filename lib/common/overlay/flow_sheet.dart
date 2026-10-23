@@ -63,11 +63,7 @@ abstract final class FlowSheetPopup {
         style: PopupTheme.sheetStyle(context, material),
         size:
             size ??
-            SheetSizeConfig(
-              height: SheetDimension.pixel(
-                ts.sizing.controlLg * 6 + ts.spacing.lg * 2,
-              ),
-            ),
+            const SheetSizeConfig(maxHeight: SheetDimension.fraction(1)),
         drag: drag,
         animation: PopupAnimationConfig(
           type: PopupAnimationType.slideUp,
