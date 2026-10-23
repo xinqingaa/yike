@@ -4,8 +4,6 @@ import '../../../app/reset_data.dart';
 import '../../../common/time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:unified_popups/unified_popups.dart'
-    show FlowSheetPage, FlowSheetController;
 import '../../../common/state/local_value.dart';
 import '../../../common/overlay/app_pop.dart';
 import '../../../common/widgets.dart';
@@ -179,19 +177,18 @@ class YikeSettingsPage extends ConsumerWidget {
               ],
               onNavigate: (group, item) async {
                 if (item == 'presets') {
-                  openPresetSettings(context);
+                  openPresetSettings();
                   return;
                 }
                 if (item == 'threshold') {
-                  openThresholdSettings(context, prefs.threshold);
+                  openThresholdSettings(prefs.threshold);
                   return;
                 }
                 if (item == 'interval') {
                   await AppPop.sheet<int>(
-                    context,
                     title: '长休间隔',
                     material: CommonSurfaceMaterial.glass,
-                    builder: (context, handle) => _IntervalSheet(
+                    child: _IntervalSheet(
                       initial: prefs.interval,
                       onSave: (value) {
                         final saved = ref
@@ -209,7 +206,6 @@ class YikeSettingsPage extends ConsumerWidget {
                     ? prefs.shortMinutes
                     : prefs.longMinutes;
                 await pickYikeDuration(
-                  context,
                   title: item == 'focus'
                       ? '专注时长'
                       : item == 'short'
@@ -270,31 +266,37 @@ class YikeSettingsPage extends ConsumerWidget {
   }
 
   Future<void> _reset(BuildContext context, WidgetRef ref) async {
-    final result = await AppPop.sheet<bool>(
-      context,
+    final ts = TS.of(context);
+    final sheet = AppSheet<bool>();
+    final result = await sheet.show(
       title: '重置所有数据？',
       material: CommonSurfaceMaterial.glass,
-      builder: (context, handle) => AppSheetContent(
-        body: Text(
-          '清除当前会话、历史和用户习惯，恢复默认配置与四个预置习惯。此操作无法撤销。',
-          style: TS.of(context).textStyle.content,
-        ),
-        actions: CommonDecisionActions(
-          actions: [
-            CommonButton(
-              label: '取消',
-              kind: CommonButtonKind.secondary,
-              onPressed: handle.dismiss,
-            ),
-            CommonButton(
-              label: '确认重置',
-              kind: CommonButtonKind.outlined,
-              destructive: true,
-              shape: CommonButtonShape.pill,
-              onPressed: () => handle.complete(true),
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '清除当前会话、历史和用户习惯，恢复默认配置与四个预置习惯。此操作无法撤销。',
+            style: ts.textStyle.content,
+          ),
+          SizedBox(height: ts.spacing.md),
+          CommonDecisionActions(
+            actions: [
+              CommonButton(
+                label: '取消',
+                kind: CommonButtonKind.secondary,
+                onPressed: sheet.dismiss,
+              ),
+              CommonButton(
+                label: '确认重置',
+                kind: CommonButtonKind.outlined,
+                destructive: true,
+                shape: CommonButtonShape.pill,
+                onPressed: () => sheet.complete(true),
+              ),
+            ],
+          ),
+        ],
       ),
     );
     if (result != true || !context.mounted) return;
@@ -374,10 +376,9 @@ class _SettingsFlowPageState extends State<_SettingsFlowPage> {
   );
 }
 
-void openPresetSettings(BuildContext context) {
+void openPresetSettings() {
   final controller = FlowSheetController<void>();
   AppPop.flowSheet<void>(
-    context,
     controller: controller,
     title: '常用倒计时',
     pageTitles: const {'preset-edit': '编辑常用倒计时'},
@@ -502,7 +503,7 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
   }
 }
 
-void openThresholdSettings(BuildContext context, int initial) {
+void openThresholdSettings(int initial) {
   final controller = FlowSheetController<void>();
   void custom() => controller.push(
     _SettingsFlowPage(
@@ -512,7 +513,6 @@ void openThresholdSettings(BuildContext context, int initial) {
     ),
   );
   AppPop.flowSheet<void>(
-    context,
     controller: controller,
     title: '记录确认阈值',
     pageTitles: const {'threshold-custom': '自定义时长'},

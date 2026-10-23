@@ -65,11 +65,13 @@
 | `dropMenu`                               | 有限选项锚定菜单        |
 | `actionSheet`                            | Sheet 内的受控动作列表   |
 
-业务代码只调 `AppPop`，不直接调 `Pop`。需要样式的 AppPop 方法显式接收调用处 `BuildContext`，并统一转换 Theme、Token 与材质。
+业务代码只调 `AppPop` 或 `AppSheet`，不直接调 `Pop`。公开方法不接收调用处 `BuildContext`；封装用已挂载导航器上的主题解析 Token 与材质。页面把正文做成 `child`。需要从按钮带回结果时，先建 `AppSheet<T>`，用 `sheet.show(child: ...)` 打开，用 `sheet.complete` 或 `sheet.dismiss` 结束。只展示、靠标题栏关闭的面板用 `AppPop.sheet(child: ...)`。
 
-`CommonGlassSurface` 组合使用 unified_popups 的 LiquidGlass；明确轮廓，提供清透和实色降级。`AppPop.actionSheet` 是 Sheet 内的动作列表组合。`app_pop.dart` 只维护公开调用边界，内部实现按 `toast.dart`、`confirm.dart`、`sheet.dart`、`flow_sheet.dart`、`loading.dart`、`menu.dart` 分工；`popup_theme.dart` 负责材质与外壳，`sheet_header.dart` 负责紧凑头部，`sheet_actions.dart` 封装结果句柄。
+`CommonGlassSurface` 组合使用 unified_popups 的 LiquidGlass；明确轮廓，提供清透和实色降级。`AppPop.actionSheet` 是 Sheet 内的动作列表组合。`app_pop.dart` 只维护公开调用边界，内部实现按 `toast.dart`、`confirm.dart`、`sheet.dart`、`flow_sheet.dart`、`loading.dart`、`menu.dart` 分工；`popup_theme.dart` 负责材质与外壳，`sheet_header.dart` 负责紧凑头部。库的 builder 与 `PopupHandle` 留在这一层。
 
-`SheetStyle` 统一提供左右 md 留白，正文不得再次添加同一层左右 Padding。`AppSheetContent`（从 AppPop 导出）提供滚动正文与固定操作区，可按需启用分隔线；`CommonFlowSheetContent` 在同一外壳内提供步骤与固定页脚，默认不绘制分隔线。
+`SheetStyle` 统一提供左右 md 留白，正文不得再次添加同一层左右 Padding。`AppSheetContent`（从 AppPop 导出）是可选的滚动正文与固定操作区，可按需启用分隔线；普通短内容直接用 `Column`。`CommonFlowSheetContent` 在同一外壳内提供步骤与固定页脚，默认不绘制分隔线。
+
+Sheet 默认 `SheetSizeConfig()`，高度随内容，不超过屏幕。写入 `maxHeight` 或 `height` 会把面板撑到该比例；`SheetDimension.fraction(1)` 是接近全屏，只加在需要固定高面板的那一次调用上。
 
 公共组件不保留旧构造参数或历史别名；feature 必须直接迁移到当前 API。
 

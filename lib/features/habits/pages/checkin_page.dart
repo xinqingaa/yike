@@ -61,7 +61,7 @@ class CheckinPage extends ConsumerWidget {
                 name: CommonIconName.plus,
                 label: '新建习惯',
                 variant: CommonIconButtonVariant.text,
-                onPressed: () => openHabitEditor(context),
+                onPressed: () => openHabitEditor(),
               ),
             ],
           ),
@@ -114,18 +114,19 @@ class CheckinPage extends ConsumerWidget {
 
   void _showArchived(BuildContext context, WidgetRef ref) {
     final navigator = Navigator.of(context);
-    AppPop.sheet<void>(
-      context,
+    final sheet = AppSheet<void>();
+    sheet.show(
       title: '已归档习惯',
       material: CommonSurfaceMaterial.glass,
-      builder: (context, handle) => Consumer(
+      child: Consumer(
         builder: (context, ref, _) {
+          final ts = TS.of(context);
           final habits = ref
               .watch(habitsProvider)
               .where((h) => h.archived)
               .toList();
           if (habits.isEmpty) {
-            return Text('没有已归档习惯', style: TS.of(context).textStyle.content);
+            return Text('没有已归档习惯', style: ts.textStyle.content);
           }
           return CommonDataList(
             itemCount: habits.length,
@@ -138,7 +139,7 @@ class CheckinPage extends ConsumerWidget {
               navigation: true,
               leading: HabitGlyph(icon: habits[index].icon),
               onNavigate: () async {
-                await handle.dismiss();
+                await sheet.dismiss();
                 if (navigator.mounted) {
                   navigator.pushNamed(
                     AppRoutes.habitDetail,

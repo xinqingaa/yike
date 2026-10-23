@@ -55,10 +55,10 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
       update(selected.copyWith(lastViewedDate: date));
       try {
         await AppPop.sheet<void>(
-          context,
           title: '每日记录',
           material: CommonSurfaceMaterial.glass,
-          builder: (context, _) => DayDetailSheet(
+          size: const SheetSizeConfig(maxHeight: SheetDimension.fraction(1)),
+          child: DayDetailSheet(
             initial: date,
             first: selected.first,
             last: selected.last.isAfter(today) ? today : selected.last,
@@ -73,7 +73,7 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
       if (ref.read(_detailOpen)) return;
       ref.read(_detailOpen.notifier).set(true);
       try {
-        final next = await pickReviewPeriod(context, selected);
+        final next = await pickReviewPeriod(selected);
         if (next != null && mounted) update(next);
       } finally {
         if (mounted) ref.read(_detailOpen.notifier).set(false);

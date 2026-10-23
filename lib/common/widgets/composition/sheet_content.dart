@@ -66,54 +66,72 @@ class CommonFlowSheetContent extends StatelessWidget {
       throw ArgumentError('Flow step is outside its declared range.');
     }
     final ts = TS.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Flexible(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(top: ts.spacing.sm),
-            child: body,
-          ),
-        ),
-        if (progress != null)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: ts.spacing.xsPlus),
-            child: Semantics(
-              label: '第${step + 1}步，共$stepCount步',
-              child: ExcludeSemantics(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (var i = 0; i < stepCount; i++)
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: ts.spacing.xsPlus / 2,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fill = constraints.hasTightHeight;
+        final padding = EdgeInsets.only(top: ts.spacing.sm);
+        return Column(
+          mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Flexible(
+              fit: fill ? FlexFit.tight : FlexFit.loose,
+              child: fill
+                  ? SingleChildScrollView(padding: padding, child: body)
+                  : CustomScrollView(
+                      shrinkWrap: true,
+                      primary: false,
+                      slivers: [
+                        SliverPadding(
+                          padding: padding,
+                          sliver: SliverToBoxAdapter(child: body),
                         ),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(ts.radius.full),
-                            color: i == step
-                                ? ts.colors.primary
-                                : ts.colors.surfaceVariant,
+                      ],
+                    ),
+            ),
+            if (progress != null)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: ts.spacing.xsPlus),
+                child: Semantics(
+                  label: '第${step + 1}步，共$stepCount步',
+                  child: ExcludeSemantics(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var i = 0; i < stepCount; i++)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: ts.spacing.xsPlus / 2,
+                            ),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(
+                                  ts.radius.full,
+                                ),
+                                color: i == step
+                                    ? ts.colors.primary
+                                    : ts.colors.surfaceVariant,
+                              ),
+                              child: SizedBox(
+                                height: ts.sizing.stepDot,
+                                width:
+                                    ts.sizing.stepDot * (i == step ? 2.5 : 1),
+                              ),
+                            ),
                           ),
-                          child: SizedBox(
-                            height: ts.sizing.stepDot,
-                            width: ts.sizing.stepDot * (i == step ? 2.5 : 1),
-                          ),
-                        ),
-                      ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        if (actions.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(top: ts.spacing.smPlus),
-            child: CommonDecisionActions(actions: actions),
-          ),
-      ],
+            if (actions.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: ts.spacing.smPlus),
+                child: CommonDecisionActions(actions: actions),
+              ),
+          ],
+        );
+      },
     );
   }
 }

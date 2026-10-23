@@ -62,7 +62,6 @@ class _UnsavedStatusState extends ConsumerState<UnsavedStatus> {
     _shown.value = true;
     final container = ProviderScope.containerOf(context);
     final opened = AppPop.status(
-      context,
       content: UncontrolledProviderScope(
         container: container,
         child: _UnsavedBar(

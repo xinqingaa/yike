@@ -5,12 +5,8 @@ import '../../theme/ts.dart';
 import 'popup_activity.dart';
 
 abstract final class LoadingPopup {
-  static Future<void> show(
-    BuildContext context, {
-    String? message,
-    Future<void>? until,
-  }) async {
-    final ts = TS.of(context);
+  static Future<void> show({String? message, Future<void>? until}) async {
+    final ts = TS.of(popupHostContext());
     final style = LoadingStyle(
       backgroundColor: ts.colors.surface,
       borderRadius: ts.radius.md,
@@ -52,8 +48,7 @@ abstract final class LoadingPopup {
 
   static Future<void> hideLoading() => Pop.hideLoading();
 
-  static Future<T> runLoading<T>(
-    BuildContext context, {
+  static Future<T> runLoading<T>({
     String message = '加载中',
     required Future<T> task,
   }) async {
@@ -61,10 +56,7 @@ abstract final class LoadingPopup {
       (_) {},
       onError: (Object _, StackTrace _) {},
     );
-    PopupActivity.modal(
-      context,
-      () => show(context, message: message, until: settled),
-    );
+    PopupActivity.modal(() => show(message: message, until: settled));
     return task;
   }
 }

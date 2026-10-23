@@ -109,7 +109,6 @@ class HabitCheckinCard extends ConsumerWidget {
                             );
                         if (ticket == null) return;
                         AppPop.toast(
-                          context,
                           '「${habit.name}」${checked ? '已取消打卡' : '今天已打卡'}${ref.read(localDataProvider).writeError == null ? '' : '（尚未保存）'}',
                           actionLabel: '撤销',
                           replacementKey: 'habit-checkin',

@@ -7,11 +7,13 @@ import 'package:unified_popups/unified_popups.dart';
 
 import 'package:yike/common/overlay/app_pop.dart';
 import 'package:yike/common/widgets.dart';
+import 'package:yike/router/navigator_key.dart';
 import 'package:yike/theme/ts.dart';
 
 Widget shell(WidgetBuilder builder) => ProviderScope(
   child: MaterialApp(
     theme: TS(brightness: Brightness.light).toThemeData(),
+    navigatorKey: appNavigatorKey,
     navigatorObservers: [Pop.routeObserver],
     builder: Pop.hostBuilder,
     home: Scaffold(body: Builder(builder: builder)),
@@ -24,12 +26,8 @@ void main() {
     await tester.pumpWidget(
       shell(
         (context) => TextButton(
-          onPressed: () => AppPop.toast(
-            context,
-            '已归档',
-            actionLabel: '撤销',
-            onAction: () => calls++,
-          ),
+          onPressed: () =>
+              AppPop.toast('已归档', actionLabel: '撤销', onAction: () => calls++),
           child: const Text('提示'),
         ),
       ),
@@ -54,11 +52,7 @@ void main() {
         (context) => TextButton(
           onPressed: () async {
             try {
-              await AppPop.runLoading(
-                context,
-                message: '处理中',
-                task: task.future,
-              );
+              await AppPop.runLoading(message: '处理中', task: task.future);
             } catch (error) {
               failure = error;
             }
@@ -90,7 +84,6 @@ void main() {
         (context) => TextButton(
           onPressed: () async {
             result = await AppPop.flowSheet<String>(
-              context,
               controller: controller,
               initialPage: _FlowTestPage(controller: controller, step: 0),
               title: '流程',
@@ -179,7 +172,6 @@ void main() {
         (context) => TextButton(
           onPressed: () async {
             result = await AppPop.confirm(
-              context,
               title: '删除记录',
               content: '确认删除？',
               danger: true,
@@ -208,7 +200,6 @@ void main() {
         (context) => TextButton(
           onPressed: () async {
             result = await AppPop.actionSheet<String>(
-              context,
               title: '选择操作',
               actions: const [AppSheetAction(value: 'archive', label: '归档')],
             );

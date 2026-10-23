@@ -5,24 +5,25 @@ import '../../theme/ts.dart';
 import '../widgets/action/icon.dart';
 import '../widgets/action/icon_button.dart';
 import '../widgets/display/glass_surface.dart';
+import 'popup_activity.dart';
 import 'popup_theme.dart';
 import 'sheet_header.dart';
 
 abstract final class FlowSheetPopup {
-  static Future<R?> show<R>(
-    BuildContext context, {
+  static Future<R?> show<R>({
     required FlowSheetController<R> controller,
     required FlowSheetPage initialPage,
     String? title,
     bool showCloseButton = true,
     Widget? headerStart,
     Map<String, String> pageTitles = const {},
-    SheetSizeConfig? size,
+    SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(
       mode: SheetDragDismissMode.handleOnly,
     ),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) async {
+    final context = popupHostContext();
     final ts = TS.of(context);
     final themes = InheritedTheme.capture(from: context, to: null);
     late PopupOpenResult<R> popup;
@@ -61,9 +62,7 @@ abstract final class FlowSheetPopup {
           showCloseButton: false,
         ),
         style: PopupTheme.sheetStyle(context, material),
-        size:
-            size ??
-            const SheetSizeConfig(maxHeight: SheetDimension.fraction(1)),
+        size: size,
         drag: drag,
         animation: PopupAnimationConfig(
           type: PopupAnimationType.slideUp,

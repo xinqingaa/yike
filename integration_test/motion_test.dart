@@ -123,18 +123,14 @@ void main() {
           await pumpPresentation(tester);
           expect(find.byKey(const ValueKey('unsaved-status')), findsOneWidget);
           await capture(tester, '$name-unsaved-dark');
-          AppSheetActions<void>? modal;
-          final close = AppPop.sheet<void>(
-            tester.element(find.byType(YikeHomePage)),
+          final modal = AppSheet<void>();
+          final close = modal.show(
             title: '保存状态检查',
-            builder: (_, actions) {
-              modal = actions;
-              return const Text('当前操作优先，未保存提示暂挂起');
-            },
+            child: const Text('当前操作优先，未保存提示暂挂起'),
           );
           await pumpPresentation(tester);
           expect(find.byKey(const ValueKey('unsaved-status')), findsNothing);
-          unawaited(modal!.dismiss());
+          unawaited(modal.dismiss());
           await pumpPresentation(tester);
           await close;
           expect(find.byKey(const ValueKey('unsaved-status')), findsOneWidget);

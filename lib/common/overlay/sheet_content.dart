@@ -18,24 +18,38 @@ class AppSheetContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
-    return Column(
-      mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Flexible(
-          fit: expand ? FlexFit.tight : FlexFit.loose,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(0, ts.spacing.sm, 0, ts.spacing.md),
-            child: body,
-          ),
-        ),
-        if (actions != null && showDivider) const CommonDivider(),
-        if (actions != null)
-          Padding(
-            padding: EdgeInsets.fromLTRB(0, ts.spacing.smPlus, 0, 0),
-            child: actions!,
-          ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fill = expand || constraints.hasTightHeight;
+        final padding = EdgeInsets.fromLTRB(0, ts.spacing.sm, 0, ts.spacing.md);
+        return Column(
+          mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Flexible(
+              fit: fill ? FlexFit.tight : FlexFit.loose,
+              child: fill
+                  ? SingleChildScrollView(padding: padding, child: body)
+                  : CustomScrollView(
+                      shrinkWrap: true,
+                      primary: false,
+                      slivers: [
+                        SliverPadding(
+                          padding: padding,
+                          sliver: SliverToBoxAdapter(child: body),
+                        ),
+                      ],
+                    ),
+            ),
+            if (actions != null && showDivider) const CommonDivider(),
+            if (actions != null)
+              Padding(
+                padding: EdgeInsets.fromLTRB(0, ts.spacing.smPlus, 0, 0),
+                child: actions!,
+              ),
+          ],
+        );
+      },
     );
   }
 }

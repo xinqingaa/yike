@@ -35,7 +35,6 @@ class LocalDataBoundary extends ConsumerWidget {
                     kind: CommonButtonKind.quiet,
                     onPressed: () async {
                       final yes = await AppPop.confirm(
-                        context,
                         title: '重置所有数据？',
                         content: '原本机数据将被清除，恢复默认配置与四个初始习惯。此操作无法撤销。',
                         confirmText: '确认重置',

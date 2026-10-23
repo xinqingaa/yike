@@ -16,7 +16,7 @@ class AppStatusPopup {
     }
   }
 
-  static AppStatusPopup? show(BuildContext context, Widget content) {
+  static AppStatusPopup? show(Widget content) {
     final opened = Pop.custom<void>(
       CustomPopupConfig<void>(
         behavior: const PopupBehaviorConfig(

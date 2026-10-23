@@ -14,15 +14,13 @@ String reviewPeriodLabel(ReviewSelection selection) => selection.month
     ? '${selection.first.year} 年 ${selection.first.month} 月'
     : '${selection.first.month}月${selection.first.day}日 – ${selection.last.month == selection.first.month ? '' : '${selection.last.month}月'}${selection.last.day}日';
 
-Future<ReviewSelection?> pickReviewPeriod(
-  BuildContext context,
-  ReviewSelection selection,
-) => AppPop.sheet<ReviewSelection>(
-  context,
-  title: '选择${selection.month ? '月份' : '周次'}',
-  builder: (context, actions) =>
-      _PeriodPicker(selection: selection, onSelected: actions.complete),
-);
+Future<ReviewSelection?> pickReviewPeriod(ReviewSelection selection) {
+  final sheet = AppSheet<ReviewSelection>();
+  return sheet.show(
+    title: '选择${selection.month ? '月份' : '周次'}',
+    child: _PeriodPicker(selection: selection, onSelected: sheet.complete),
+  );
+}
 
 class _PeriodPicker extends ConsumerStatefulWidget {
   const _PeriodPicker({required this.selection, required this.onSelected});

@@ -4,23 +4,21 @@ import '../../local_data/local_data.dart';
 import '../providers/habit_editor_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:unified_popups/unified_popups.dart'
-    show SheetSizeConfig, SheetDimension;
 import '../../../common/overlay/app_pop.dart';
 import '../../../common/widgets.dart';
 import '../../../common/widgets/yike/layout.dart';
 import '../../../theme/ts.dart';
 import '../widgets/habit_icon.dart';
 
-Future<bool?> openHabitEditor(BuildContext context, {HabitViewData? habit}) =>
-    AppPop.sheet<bool>(
-      context,
-      title: habit == null ? '新建习惯' : '编辑习惯',
-      material: CommonSurfaceMaterial.glass,
-      size: const SheetSizeConfig(maxHeight: SheetDimension.fraction(1)),
-      builder: (context, handle) =>
-          HabitEditor(habit: habit, onSaved: () => handle.complete(true)),
-    );
+Future<bool?> openHabitEditor({HabitViewData? habit}) {
+  final sheet = AppSheet<bool>();
+  return sheet.show(
+    title: habit == null ? '新建习惯' : '编辑习惯',
+    material: CommonSurfaceMaterial.glass,
+    size: const SheetSizeConfig(maxHeight: SheetDimension.fraction(1)),
+    child: HabitEditor(habit: habit, onSaved: () => sheet.complete(true)),
+  );
+}
 
 class HabitEditor extends ConsumerStatefulWidget {
   const HabitEditor({super.key, this.habit, required this.onSaved});

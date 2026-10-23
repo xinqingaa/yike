@@ -3,23 +3,40 @@ import 'package:unified_popups/unified_popups.dart';
 
 import '../../theme/ts.dart';
 import '../widgets/display/glass_surface.dart';
+import 'popup_activity.dart';
 import 'popup_theme.dart';
 import 'sheet_header.dart';
-import 'sheet_actions.dart';
+
+/// Binds a sheet handle inside the facade so a prebuilt child can finish it.
+final class SheetCompletion<T> {
+  PopupHandle<T>? _handle;
+
+  void attach(PopupHandle<T> handle) => _handle = handle;
+
+  Future<void> complete([T? value]) {
+    final handle = _handle;
+    if (handle == null) return Future<void>.value();
+    return handle.complete(value);
+  }
+
+  Future<void> dismiss() {
+    final handle = _handle;
+    if (handle == null) return Future<void>.value();
+    return handle.dismiss();
+  }
+}
 
 abstract final class SheetPopup {
-  static Future<T?> show<T>(
-    BuildContext context, {
+  static Future<T?> show<T>({
     String? title,
-    required Widget Function(BuildContext context, AppSheetActions<T> actions)
-    builder,
+    required Widget child,
     bool showCloseButton = true,
-    SheetSizeConfig size = const SheetSizeConfig(
-      maxHeight: SheetDimension.fraction(1),
-    ),
+    SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
+    void Function(PopupHandle<T> handle)? attach,
   }) async {
+    final context = popupHostContext();
     final ts = TS.of(context);
     final themes = InheritedTheme.capture(from: context, to: null);
     late PopupOpenResult<T> popup;
@@ -51,18 +68,15 @@ abstract final class SheetPopup {
               : ts.motion.durationSheet,
           slideOffset: 1,
         ),
-        builder: (_, handle) => themes.wrap(
-          Material(
-            type: MaterialType.transparency,
-            child: Builder(
-              builder: (context) => builder(context, AppSheetActions(handle)),
-            ),
-          ),
+        builder: (_, _) => themes.wrap(
+          Material(type: MaterialType.transparency, child: child),
         ),
       ),
     );
+    final handle = popup.handleOrNull;
+    if (handle != null) attach?.call(handle);
     final result = await popup.result;
-    await popup.handleOrNull?.dismissed;
+    await handle?.dismissed;
     return result;
   }
 }

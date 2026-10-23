@@ -3,19 +3,20 @@ import 'package:unified_popups/unified_popups.dart';
 
 import '../../theme/ts.dart';
 import '../widgets/display/glass_surface.dart';
+import 'popup_activity.dart';
 import 'popup_theme.dart';
 import 'sheet.dart';
 import 'sheet_actions.dart';
 
 abstract final class MenuPopup {
-  static Future<T?> dropMenu<T>(
-    BuildContext context, {
+  static Future<T?> dropMenu<T>({
     required PopupAnchorController anchor,
     required DropMenu<T> menu,
     ValueChanged<T>? onSelected,
     MenuPlacement placement = MenuPlacement.auto,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) {
+    final context = popupHostContext();
     final ts = TS.of(context);
     return Pop.dropMenu<T>(
       DropMenuConfig<T>(
@@ -48,35 +49,41 @@ abstract final class MenuPopup {
     ).result;
   }
 
-  static Future<T?> actionSheet<T>(
-    BuildContext context, {
+  static Future<T?> actionSheet<T>({
     String? title,
     required List<AppSheetAction<T>> actions,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
-  }) => SheetPopup.show<T>(
-    context,
-    title: title,
-    material: material,
-    builder: (context, handle) {
-      final ts = TS.of(context);
-      return ListView.separated(
-        shrinkWrap: true,
-        itemCount: actions.length,
-        separatorBuilder: (_, _) => Divider(color: ts.colors.divider),
-        itemBuilder: (context, index) {
-          final action = actions[index];
-          return ListTile(
-            title: Text(
-              action.label,
-              style: ts.textStyle.content.copyWith(
-                color: action.danger ? ts.colors.error : ts.colors.onSurface,
-              ),
-            ),
-            enabled: !action.disabled,
-            onTap: () => handle.complete(action.value),
+  }) {
+    final completion = SheetCompletion<T>();
+    return SheetPopup.show<T>(
+      title: title,
+      material: material,
+      attach: completion.attach,
+      child: Builder(
+        builder: (context) {
+          final ts = TS.of(context);
+          return ListView.separated(
+            shrinkWrap: true,
+            itemCount: actions.length,
+            separatorBuilder: (_, _) => Divider(color: ts.colors.divider),
+            itemBuilder: (context, index) {
+              final action = actions[index];
+              return ListTile(
+                title: Text(
+                  action.label,
+                  style: ts.textStyle.content.copyWith(
+                    color: action.danger
+                        ? ts.colors.error
+                        : ts.colors.onSurface,
+                  ),
+                ),
+                enabled: !action.disabled,
+                onTap: () => completion.complete(action.value),
+              );
+            },
           );
         },
-      );
-    },
-  );
+      ),
+    );
+  }
 }

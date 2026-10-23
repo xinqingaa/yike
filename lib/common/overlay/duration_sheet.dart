@@ -6,8 +6,7 @@ import '../overlay/app_pop.dart';
 import '../widgets.dart';
 import '../../theme/ts.dart';
 
-Future<int?> pickYikeDuration(
-  BuildContext context, {
+Future<int?> pickYikeDuration({
   required String title,
   required int initial,
   int minimum = 1,
@@ -16,24 +15,26 @@ Future<int?> pickYikeDuration(
   String confirm = '确认',
   bool autoSave = false,
   bool Function(int)? onConfirm,
-}) => AppPop.sheet<int>(
-  context,
-  title: title,
-  material: CommonSurfaceMaterial.glass,
-  builder: (context, handle) => DurationSheetBody(
-    initial: initial,
-    minimum: minimum,
-    maximum: maximum,
-    seconds: seconds,
-    confirm: confirm,
-    autoSave: autoSave,
-    onSave: (value) {
-      if (!(onConfirm?.call(value) ?? true)) return false;
-      if (!autoSave) handle.complete(value);
-      return true;
-    },
-  ),
-);
+}) {
+  final sheet = AppSheet<int>();
+  return sheet.show(
+    title: title,
+    material: CommonSurfaceMaterial.glass,
+    child: DurationSheetBody(
+      initial: initial,
+      minimum: minimum,
+      maximum: maximum,
+      seconds: seconds,
+      confirm: confirm,
+      autoSave: autoSave,
+      onSave: (value) {
+        if (!(onConfirm?.call(value) ?? true)) return false;
+        if (!autoSave) sheet.complete(value);
+        return true;
+      },
+    ),
+  );
+}
 
 class DurationSheetBody extends ConsumerStatefulWidget {
   const DurationSheetBody({

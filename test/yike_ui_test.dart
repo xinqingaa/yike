@@ -168,7 +168,7 @@ void main() {
     await pumpPresentation(tester);
     await tester.tap(find.text('正计时'));
     await pumpPresentation(tester);
-    expect(find.text('切换计时模式？'), findsOneWidget);
+    expect(find.text('切换计时模式'), findsOneWidget);
     await tester.tap(find.byTooltip('关闭'));
     await pumpPresentation(tester);
     expect(find.text('继续'), findsOneWidget);
@@ -189,7 +189,7 @@ void main() {
     await tester.tap(find.text('倒计时'));
     await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.countdown);
-    expect(find.text('自定义时长'), findsOneWidget);
+    expect(find.text('自定义'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

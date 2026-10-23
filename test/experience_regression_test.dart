@@ -44,7 +44,7 @@ void main() {
             await tester.binding.handlePopRoute();
         }
         await pumpPresentation(tester);
-        expect(find.text('切换计时模式？'), findsNothing);
+        expect(find.text('切换计时模式'), findsNothing);
         expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
         expect(app.read(focusViewProvider).status, TimerStatus.running);
         expect(app.read(focusViewProvider).seconds, 1480);
@@ -66,7 +66,7 @@ void main() {
         await tester.tap(find.text('倒计时'), warnIfMissed: false);
         await pumpPresentation(tester);
         expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
-        expect(find.text('切换计时模式？'), findsOneWidget);
+        expect(find.text('切换计时模式'), findsOneWidget);
         await tester.tap(find.text(action));
         await pumpPresentation(tester);
         expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);

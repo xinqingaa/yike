@@ -120,37 +120,24 @@ void main() {
       await pumpPresentation(tester);
       final status = find.byKey(const ValueKey('unsaved-status'));
       final element = tester.element(status);
-      final context = appNavigatorKey.currentContext!;
-      AppSheetActions<void>? outer, inner;
+      final outer = AppSheet<void>();
+      final inner = AppSheet<void>();
       final controller = TextEditingController(text: '仍可输入');
       addTearDown(controller.dispose);
-      final closed = AppPop.sheet<void>(
-        context,
+      final closed = outer.show(
         title: '第一层',
-        builder: (_, actions) {
-          outer = actions;
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: controller),
-              TextButton(
-                onPressed: () {
-                  unawaited(
-                    AppPop.sheet<void>(
-                      context,
-                      title: '第二层',
-                      builder: (_, actions) {
-                        inner = actions;
-                        return const Text('嵌套内容');
-                      },
-                    ),
-                  );
-                },
-                child: const Text('再打开'),
-              ),
-            ],
-          );
-        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: controller),
+            TextButton(
+              onPressed: () {
+                unawaited(inner.show(title: '第二层', child: const Text('嵌套内容')));
+              },
+              child: const Text('再打开'),
+            ),
+          ],
+        ),
       );
       await pumpPresentation(tester);
       expect((app.read(popupActivityProvider) > 0), isTrue);
@@ -163,12 +150,12 @@ void main() {
       await tester.tap(find.text('再打开'));
       await pumpPresentation(tester);
       expect(app.read(popupActivityProvider), 2);
-      unawaited(inner!.dismiss());
+      unawaited(inner.dismiss());
       await pumpPresentation(tester);
       expect(app.read(popupActivityProvider), 1);
       expect(status, findsNothing);
       expect(controller.text, '草稿未丢失');
-      unawaited(outer!.dismiss());
+      unawaited(outer.dismiss());
       await tester.pump();
       expect((app.read(popupActivityProvider) > 0), isTrue);
       await pumpPresentation(tester);

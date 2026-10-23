@@ -6,9 +6,8 @@ import '../features/settings/pages/settings_page.dart';
 import '../features/habits/pages/habit_detail_page.dart';
 import 'routes.dart';
 
+export 'navigator_key.dart';
 export 'routes.dart';
-
-final appNavigatorKey = GlobalKey<NavigatorState>();
 
 final Map<String, WidgetBuilder> appRoutes = {
   AppRoutes.bootstrap: (_) => const BootstrapPage(),

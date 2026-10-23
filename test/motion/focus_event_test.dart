@@ -110,22 +110,13 @@ void main() {
       await pumpPresentation(tester);
       actions.start();
       await tester.pump();
-      AppSheetActions<void>? sheet;
+      final sheet = AppSheet<void>();
       if (hidden == 'tab') app.read(rootTabProvider.notifier).set(1);
       if (hidden == 'route') {
         appNavigatorKey.currentState!.pushNamed(AppRoutes.settings);
       }
       if (hidden == 'modal') {
-        unawaited(
-          AppPop.sheet<void>(
-            appNavigatorKey.currentContext!,
-            title: '操作',
-            builder: (_, actions) {
-              sheet = actions;
-              return const Text('当前操作');
-            },
-          ),
-        );
+        unawaited(sheet.show(title: '操作', child: const Text('当前操作')));
       }
       if (hidden == 'background') {
         tester.binding.handleAppLifecycleStateChanged(
@@ -141,7 +132,7 @@ void main() {
       expect(app.read(focusRecordsProvider), hasLength(1));
       if (hidden == 'tab') app.read(rootTabProvider.notifier).set(0);
       if (hidden == 'route') appNavigatorKey.currentState!.pop();
-      if (hidden == 'modal') unawaited(sheet!.dismiss());
+      if (hidden == 'modal') unawaited(sheet.dismiss());
       if (hidden == 'background') {
         tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
         tester.binding.handleAppLifecycleStateChanged(

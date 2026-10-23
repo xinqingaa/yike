@@ -12,26 +12,34 @@ import 'sheet.dart';
 import 'sheet_actions.dart';
 import 'toast.dart';
 
+export 'package:unified_popups/unified_popups.dart'
+    show
+        DropMenu,
+        DropMenuItem,
+        FlowSheetController,
+        FlowSheetPage,
+        MenuPlacement,
+        PopupAnchor,
+        PopupAnchorController,
+        SheetDimension,
+        SheetDragConfig,
+        SheetSizeConfig;
 export 'sheet_actions.dart';
 export 'status_popup.dart' show AppStatusPopup;
 export 'sheet_content.dart';
 
-/// Application popup boundary; SDK handles and presentation stay in overlay.
+/// Application popup boundary. Pages pass a child; SDK handles stay here.
 abstract final class AppPop {
-  static AppStatusPopup? status(
-    BuildContext context, {
-    required Widget content,
-  }) => AppStatusPopup.show(context, content);
+  static AppStatusPopup? status({required Widget content}) =>
+      AppStatusPopup.show(content);
 
   static void toast(
-    BuildContext context,
     String message, {
     String? actionLabel,
     VoidCallback? onAction,
     double bottomInset = 0,
     String? replacementKey,
   }) => ToastPopup.show(
-    context,
     message,
     actionLabel: actionLabel,
     onAction: onAction,
@@ -41,27 +49,20 @@ abstract final class AppPop {
 
   static Future<void> clearToasts() => ToastPopup.clearToasts();
 
-  static void loading(
-    BuildContext context, {
-    String? message,
-    Future<void>? until,
-  }) {
+  static void loading({String? message, Future<void>? until}) {
     PopupActivity.modal(
-      context,
-      () => LoadingPopup.show(context, message: message, until: until),
+      () => LoadingPopup.show(message: message, until: until),
     );
   }
 
   static Future<void> hideLoading() => LoadingPopup.hideLoading();
 
-  static Future<T> runLoading<T>(
-    BuildContext context, {
+  static Future<T> runLoading<T>({
     String message = '加载中',
     required Future<T> task,
-  }) => LoadingPopup.runLoading<T>(context, message: message, task: task);
+  }) => LoadingPopup.runLoading<T>(message: message, task: task);
 
-  static Future<bool> confirm(
-    BuildContext context, {
+  static Future<bool> confirm({
     required String title,
     String content = '',
     String confirmText = '确定',
@@ -69,9 +70,7 @@ abstract final class AppPop {
     bool danger = false,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) => PopupActivity.modal(
-    context,
     () => ConfirmPopup.show(
-      context,
       title: title,
       content: content,
       confirmText: confirmText,
@@ -81,47 +80,56 @@ abstract final class AppPop {
     ),
   );
 
-  static Future<T?> sheet<T>(
-    BuildContext context, {
+  static Future<T?> sheet<T>({
     String? title,
-    required Widget Function(BuildContext context, AppSheetActions<T> actions)
-    builder,
+    required Widget child,
     bool showCloseButton = true,
-    SheetSizeConfig size = const SheetSizeConfig(
-      maxHeight: SheetDimension.fraction(1),
-    ),
+    SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
+  }) => _openSheet<T>(
+    title: title,
+    child: child,
+    showCloseButton: showCloseButton,
+    size: size,
+    drag: drag,
+    material: material,
+  );
+
+  static Future<T?> _openSheet<T>({
+    String? title,
+    required Widget child,
+    bool showCloseButton = true,
+    SheetSizeConfig size = const SheetSizeConfig(),
+    SheetDragConfig drag = const SheetDragConfig(),
+    CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
+    void Function(PopupHandle<T> handle)? attach,
   }) => PopupActivity.modal(
-    context,
     () => SheetPopup.show<T>(
-      context,
       title: title,
-      builder: builder,
+      child: child,
       showCloseButton: showCloseButton,
       size: size,
       drag: drag,
       material: material,
+      attach: attach,
     ),
   );
 
-  static Future<R?> flowSheet<R>(
-    BuildContext context, {
+  static Future<R?> flowSheet<R>({
     required FlowSheetController<R> controller,
     required FlowSheetPage initialPage,
     String? title,
     bool showCloseButton = true,
     Widget? headerStart,
     Map<String, String> pageTitles = const {},
-    SheetSizeConfig? size,
+    SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(
       mode: SheetDragDismissMode.handleOnly,
     ),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) => PopupActivity.modal(
-    context,
     () => FlowSheetPopup.show<R>(
-      context,
       controller: controller,
       initialPage: initialPage,
       title: title,
@@ -134,17 +142,14 @@ abstract final class AppPop {
     ),
   );
 
-  static Future<T?> dropMenu<T>(
-    BuildContext context, {
+  static Future<T?> dropMenu<T>({
     required PopupAnchorController anchor,
     required DropMenu<T> menu,
     ValueChanged<T>? onSelected,
     MenuPlacement placement = MenuPlacement.auto,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) => PopupActivity.modal(
-    context,
     () => MenuPopup.dropMenu<T>(
-      context,
       anchor: anchor,
       menu: menu,
       onSelected: onSelected,
@@ -153,18 +158,41 @@ abstract final class AppPop {
     ),
   );
 
-  static Future<T?> actionSheet<T>(
-    BuildContext context, {
+  static Future<T?> actionSheet<T>({
     String? title,
     required List<AppSheetAction<T>> actions,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) => PopupActivity.modal(
-    context,
     () => MenuPopup.actionSheet<T>(
-      context,
       title: title,
       actions: actions,
       material: material,
     ),
+  );
+}
+
+/// Sheet the caller can finish from a button inside [show]'s child.
+final class AppSheet<T> {
+  final _completion = SheetCompletion<T>();
+
+  Future<void> complete([T? value]) => _completion.complete(value);
+
+  Future<void> dismiss() => _completion.dismiss();
+
+  Future<T?> show({
+    String? title,
+    required Widget child,
+    bool showCloseButton = true,
+    SheetSizeConfig size = const SheetSizeConfig(),
+    SheetDragConfig drag = const SheetDragConfig(),
+    CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
+  }) => AppPop._openSheet<T>(
+    title: title,
+    child: child,
+    showCloseButton: showCloseButton,
+    size: size,
+    drag: drag,
+    material: material,
+    attach: _completion.attach,
   );
 }

@@ -4,11 +4,11 @@ import 'package:unified_popups/unified_popups.dart';
 import '../../theme/ts.dart';
 import '../widgets/action/button.dart';
 import '../widgets/display/glass_surface.dart';
+import 'popup_activity.dart';
 import 'popup_theme.dart';
 
 abstract final class ConfirmPopup {
-  static Future<bool> show(
-    BuildContext context, {
+  static Future<bool> show({
     required String title,
     String content = '',
     String confirmText = '确定',
@@ -16,6 +16,7 @@ abstract final class ConfirmPopup {
     bool danger = false,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) async {
+    final context = popupHostContext();
     final ts = TS.of(context);
     final themes = InheritedTheme.capture(from: context, to: null);
     final radius = BorderRadius.circular(ts.radius.xl);

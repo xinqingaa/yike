@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unified_popups/unified_popups.dart';
 import 'package:yike/common/widgets.dart';
+import 'package:yike/router/navigator_key.dart';
 import 'package:yike/theme/app_metrics.dart';
 import 'package:yike/theme/ts.dart';
 
@@ -11,6 +12,7 @@ Widget shell(Widget Function(BuildContext) body, {double textScale = 1}) =>
     AppViewport(
       builder: (_, metrics) => ProviderScope(
         child: MaterialApp(
+          navigatorKey: appNavigatorKey,
           theme: TS(
             brightness: Brightness.light,
             metrics: metrics,

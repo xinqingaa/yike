@@ -68,7 +68,6 @@ class HabitDetailPage extends ConsumerWidget {
         Navigator.of(context).pop();
       } else {
         final confirm = await AppPop.confirm(
-          context,
           title: '删除这个习惯？',
           content: '「${habit.name}」及全部打卡记录会被删除，此操作无法撤销。',
           confirmText: '确认删除',
@@ -90,9 +89,7 @@ class HabitDetailPage extends ConsumerWidget {
         showAction: habit != null,
         actionText: '编辑',
         actionLabel: '编辑习惯',
-        onAction: habit == null
-            ? null
-            : () => openHabitEditor(context, habit: habit),
+        onAction: habit == null ? null : () => openHabitEditor(habit: habit),
       ),
       body: YikePageWidth(
         child: habit == null

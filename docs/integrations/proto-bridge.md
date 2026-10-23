@@ -73,8 +73,8 @@ Producer Contract 决定职责、状态、布局、Token 槽和可观察行为�
 - Button 公开六种动作、rounded/pill 和 solid/glass；loading 保留文字并阻止重复触发，disabled 才降低整体透明度。
 - 字段标签独立放在官方输入表面上方。Checkbox、RadioGroup、Switch 的实例色槽必须由上下文 Theme Token 解析，不能传硬编码颜色；Switch 支持标签前后位置。
 - DataList 使用 ListView；ScrollableDataList 统一管理刷新、加载、异常和控制器释放。GroupedList 是外层滚动中的 Row 单元组合，不创建嵌套滚动。
-- 所有弹层经 AppPop 调用远程 unified_popups；需要样式的方法接收调用处 BuildContext。库拥有 Overlay、关闭、焦点、键盘、拖拽、路由与生命周期。ActionSheet 复用 Sheet。
-- Sheet 的 content/medium/expanded 由库的 `SheetSizeConfig` 表达；medium/expanded 使用 `ts.sizing.panelMedium` / `panelLarge` 的 fraction。档位由调用者选择，拖动关闭由库管理，不复制 Web 的档位切换手势。
+- 所有弹层经 AppPop 调用远程 unified_popups。页面传 `child`，不传 `BuildContext`；样式由封装从已挂载导航器读取。库拥有 Overlay、关闭、焦点、键盘、拖拽、路由与生命周期。ActionSheet 复用 Sheet。
+- Sheet 默认不写尺寸，按内容收起。需要固定高度时，该次调用传入 `SheetSizeConfig` 的 `maxHeight` 或 `height`。拖动关闭由库管理，不复制 Web 的档位切换手势。
 - FlowSheet 内部页面使用 CommonFlowSheetContent：滚动主体、固定步骤指示和决策区。头部返回调用库控制器，关闭结束整张 Sheet，不把返回等同于提交。决策区通过 CommonDecisionActions 保持一颗主要动作或左次要右主要。
 - GlassSurface 组合库内 LiquidGlass，边缘由其 Painter 绘制，背景由 BackdropFilter 模糊；高对比或显式减少透明度时使用实色。
 - 滚轮是独立一至三列的原生 ListWheelScrollView，不做业务时长换算。Stepper 的键盘与按钮统一使用有限值、step 与 min/max 规则。

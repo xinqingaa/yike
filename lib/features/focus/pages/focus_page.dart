@@ -103,39 +103,45 @@ class _FocusPageState extends ConsumerState<FocusPage>
     final current = ref.read(focusViewProvider);
     if (next == current.mode) return;
     if (!current.ready) {
-      final result = await AppPop.sheet<String>(
-        context,
-        title: '切换计时模式？',
+      final ts = TS.of(context);
+      final sheet = AppSheet<String>();
+      final result = await sheet.show(
+        title: '切换计时模式',
         material: CommonSurfaceMaterial.glass,
-        builder: (context, handle) => AppSheetContent(
-          body: Text(
-            current.resting
-                ? '结束当前休息后进入${_modeLabel(next)}，休息不计入专注。'
-                : current.finished
-                ? '当前阶段已完成。进入${_modeLabel(next)}后，已保存的记录会保留；放弃只离开当前阶段。'
-                : '即将进入${_modeLabel(next)}。结束会记录本次有效专注；放弃不生成本次记录。',
-            style: TS.of(context).textStyle.content,
-          ),
-          actions: Row(
-            children: [
-              Expanded(
-                child: CommonButton(
-                  label: '放弃',
-                  kind: CommonButtonKind.outlined,
-                  destructive: true,
-                  onPressed: () => handle.complete('discard'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              current.resting
+                  ? '结束当前休息后进入${_modeLabel(next)}，休息不计入专注。'
+                  : current.finished
+                  ? '当前阶段已完成。进入${_modeLabel(next)}后，已保存的记录会保留；放弃只离开当前阶段。'
+                  : '即将进入${_modeLabel(next)}。结束会记录本次有效专注；放弃不生成本次记录。',
+              style: ts.textStyle.content,
+            ),
+            SizedBox(height: ts.spacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: CommonButton(
+                    label: '放弃',
+                    kind: CommonButtonKind.outlined,
+                    destructive: true,
+                    onPressed: () => sheet.complete('discard'),
+                  ),
                 ),
-              ),
-              SizedBox(width: TS.of(context).spacing.smPlus),
-              Expanded(
-                child: CommonButton(
-                  label: '结束',
-                  kind: CommonButtonKind.accent,
-                  onPressed: () => handle.complete('record'),
+                SizedBox(width: ts.spacing.smPlus),
+                Expanded(
+                  child: CommonButton(
+                    label: '结束',
+                    kind: CommonButtonKind.accent,
+                    onPressed: () => sheet.complete('record'),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       );
       if (!mounted || result == null) return;
@@ -156,7 +162,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
         : value.target - value.seconds;
     final threshold = ref.read(timingPreferencesProvider).threshold;
     final accepted = await AppPop.confirm(
-      context,
       title: '记录这次短时专注？',
       content:
           '本次专注 ${durationLabel(elapsed)}，少于设置的 ${durationLabel(threshold)}确认阈值。仍然记录吗？',
@@ -179,73 +184,74 @@ class _FocusPageState extends ConsumerState<FocusPage>
   }
 
   Future<void> _abandon() async {
-    final result = await AppPop.sheet<bool>(
-      context,
+    final ts = TS.of(context);
+    final sheet = AppSheet<bool>();
+    final result = await sheet.show(
       title: '放弃这次专注？',
       material: CommonSurfaceMaterial.glass,
-      builder: (context, handle) => AppSheetContent(
-        body: Text(
-          '本次专注不会生成新记录。倒计时已完成部分会保留。',
-          style: TS.of(context).textStyle.content,
-        ),
-        actions: CommonDecisionActions(
-          actions: [
-            CommonButton(
-              label: '继续保留',
-              kind: CommonButtonKind.secondary,
-              onPressed: handle.dismiss,
-            ),
-            CommonButton(
-              label: '确认放弃',
-              kind: CommonButtonKind.outlined,
-              destructive: true,
-              shape: CommonButtonShape.pill,
-              onPressed: () => handle.complete(true),
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('本次专注不会生成新记录。倒计时已完成部分会保留。', style: ts.textStyle.content),
+          SizedBox(height: ts.spacing.md),
+          CommonDecisionActions(
+            actions: [
+              CommonButton(
+                label: '继续保留',
+                kind: CommonButtonKind.secondary,
+                onPressed: sheet.dismiss,
+              ),
+              CommonButton(
+                label: '确认放弃',
+                kind: CommonButtonKind.outlined,
+                destructive: true,
+                shape: CommonButtonShape.pill,
+                onPressed: () => sheet.complete(true),
+              ),
+            ],
+          ),
+        ],
       ),
     );
     if (result == true && mounted) _reset();
   }
 
   Future<void> _recovery() async {
-    final result = await AppPop.sheet<String>(
-      context,
+    final ts = TS.of(context);
+    final resting = ref.read(focusViewProvider).resting;
+    final sheet = AppSheet<String>();
+    final result = await sheet.show(
       title: '计时已暂停',
       material: CommonSurfaceMaterial.glass,
-      builder: (context, handle) => AppSheetContent(
-        body: Text(
-          '已恢复到最后保存的进度，关闭期间没有计时。',
-          style: TS.of(context).textStyle.content,
-        ),
-        actions: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('已恢复到最后保存的进度，关闭期间没有计时。', style: ts.textStyle.content),
+          SizedBox(height: ts.spacing.md),
+          CommonButton(
+            label: '继续计时',
+            size: CommonControlSize.lg,
+            shape: CommonButtonShape.pill,
+            kind: CommonButtonKind.accent,
+            onPressed: () => sheet.complete('resume'),
+          ),
+          SizedBox(height: ts.spacing.smPlus),
+          CommonButton(
+            label: resting ? '跳过休息' : '结束并记录',
+            size: CommonControlSize.lg,
+            shape: CommonButtonShape.pill,
+            kind: CommonButtonKind.secondary,
+            onPressed: () => sheet.complete('finish'),
+          ),
+          if (!resting)
             CommonButton(
-              label: '继续计时',
-              size: CommonControlSize.lg,
-              shape: CommonButtonShape.pill,
-              kind: CommonButtonKind.accent,
-              onPressed: () => handle.complete('resume'),
+              label: '放弃本次',
+              kind: CommonButtonKind.quiet,
+              onPressed: () => sheet.complete('discard'),
             ),
-            SizedBox(height: TS.of(context).spacing.smPlus),
-            CommonButton(
-              label: ref.read(focusViewProvider).resting ? '跳过休息' : '结束并记录',
-              size: CommonControlSize.lg,
-              shape: CommonButtonShape.pill,
-              kind: CommonButtonKind.secondary,
-              onPressed: () => handle.complete('finish'),
-            ),
-            if (!ref.read(focusViewProvider).resting)
-              CommonButton(
-                label: '放弃本次',
-                kind: CommonButtonKind.quiet,
-                onPressed: () => handle.complete('discard'),
-              ),
-          ],
-        ),
+        ],
       ),
     );
     if (!mounted) return;
@@ -444,7 +450,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
                 onSelected: _actions.selectCountdown,
                 onCustom: () async {
                   final duration = await pickYikeDuration(
-                    context,
                     title: '倒计时时长',
                     initial: value.seconds,
                     confirm: '确认时长',

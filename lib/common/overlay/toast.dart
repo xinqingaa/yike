@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:unified_popups/unified_popups.dart';
 
 import '../../theme/ts.dart';
+import 'popup_activity.dart';
 
 abstract final class ToastPopup {
   static void show(
-    BuildContext context,
     String message, {
     String? actionLabel,
     VoidCallback? onAction,
@@ -13,7 +13,7 @@ abstract final class ToastPopup {
     String? replacementKey,
   }) {
     assert((actionLabel == null) == (onAction == null));
-    final ts = TS.of(context);
+    final ts = TS.of(popupHostContext());
     final style = ToastStyle(
       padding: EdgeInsets.symmetric(
         horizontal: ts.spacing.md,
