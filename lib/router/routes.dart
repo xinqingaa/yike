@@ -7,10 +7,22 @@ abstract final class AppRoutes {
   static const home = '/home';
   static const settings = '/settings';
   static const habitDetail = '/habit';
+  static const statistics = '/statistics';
 }
 
 /// Optional initial panel within the full settings page.
 class SettingsRouteArguments {
   const SettingsRouteArguments({this.openCountdownPresets = false});
   final bool openCountdownPresets;
+}
+
+class StatisticsRouteArguments {
+  const StatisticsRouteArguments({
+    required this.anchor,
+    this.month = false,
+    this.mode,
+  });
+  final DateTime anchor;
+  final bool month;
+  final String? mode;
 }

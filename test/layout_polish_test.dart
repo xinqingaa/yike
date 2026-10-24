@@ -7,7 +7,6 @@ import 'package:yike/common/widgets.dart';
 import 'package:yike/features/focus/focus.dart';
 import 'package:yike/features/settings/pages/settings_page.dart';
 import 'package:yike/features/focus/widgets/countdown_choices.dart';
-import 'package:yike/features/focus/widgets/lap_list.dart';
 import 'package:yike/features/habits/habits.dart';
 import 'package:yike/features/review/review.dart';
 import 'package:yike/theme/ts.dart';
@@ -193,27 +192,20 @@ void main() {
   testWidgets(
     'lap table aligns time edges and baselines across unequal durations',
     (tester) async {
-      await tester.pumpWidget(
-        shell(
-          (_) => Center(
-            child: SizedBox(
-              width: 272,
-              child: LapList(
-                compact: false,
-                value: FocusViewData(
-                  mode: TimerMode.stopwatch,
-                  status: TimerStatus.paused,
-                  seconds: 4030,
-                  laps: [for (var i = 1; i < 13; i++) i * 300],
-                ),
-              ),
-            ),
-          ),
+      await pumpYike(
+        tester,
+        focus: FocusViewData(
+          mode: TimerMode.stopwatch,
+          status: TimerStatus.paused,
+          seconds: 3598,
+          laps: [for (var i = 1; i <= 12; i++) i * 240],
         ),
       );
-      final lap = find.byKey(const ValueKey('lap-duration-13'));
-      final total = find.byKey(const ValueKey('lap-total-13'));
-      final previous = find.byKey(const ValueKey('lap-total-12'));
+      await tester.tap(find.byKey(const ValueKey('stopwatch-laps-entry')));
+      await pumpPresentation(tester);
+      final lap = find.byKey(const ValueKey('lap-duration-12'));
+      final total = find.byKey(const ValueKey('lap-total-12'));
+      final previous = find.byKey(const ValueKey('lap-total-11'));
       expect(tester.getRect(total).right, tester.getRect(previous).right);
       double baseline(Finder finder) {
         final box = tester.renderObject<RenderBox>(finder);
@@ -229,11 +221,11 @@ void main() {
 
       expect(baseline(lap), closeTo(baseline(total), .01));
       expect(
-        baseline(find.byKey(const ValueKey('lap-label-13'))),
+        baseline(find.byKey(const ValueKey('lap-label-12'))),
         closeTo(baseline(total), .01),
       );
-      expect(find.text('暂停 · 13'), findsOneWidget);
-      final viewport = find.byKey(const ValueKey('lap-scroll'));
+      expect(find.text('已暂停'), findsWidgets);
+      final viewport = find.byKey(const ValueKey('lap-panel-list'));
       final top = tester.getTopLeft(viewport);
       await tester.drag(viewport, const Offset(0, -800));
       await pumpPresentation(tester);
@@ -260,10 +252,13 @@ void main() {
         await pumpPresentation(tester);
         await tester.tap(find.text('开始计时'));
         await pumpPresentation(tester);
-        final cancel = find.widgetWithText(CommonButton, '取消计时');
+        expect(find.widgetWithText(CommonButton, '取消计时'), findsOneWidget);
+        await tester.tap(find.byKey(const ValueKey('stopwatch-laps-entry')));
+        await pumpPresentation(tester);
+        final cancel = find.widgetWithText(CommonButton, '取消计时').last;
         expect(
           tester.getRect(cancel).bottom,
-          lessThanOrEqualTo(tester.getRect(find.byType(CommonBottomNav)).top),
+          lessThanOrEqualTo(tester.view.physicalSize.height - 34),
         );
         expect(tester.takeException(), isNull);
       },
@@ -284,7 +279,8 @@ void main() {
                 as ShapeDecoration;
         expect(feedback().color!.a, 0);
         final gesture = await tester.startGesture(tester.getCenter(day));
-        await pumpPresentation(tester);
+        await tester.pump(const Duration(milliseconds: 120));
+        await tester.pump();
         expect(
           feedback().color,
           ts.colors.primary.withValues(alpha: ts.opacity.pressed),
@@ -292,11 +288,17 @@ void main() {
         expect(feedback().shape, isA<RoundedRectangleBorder>());
         await gesture.up();
         await pumpPresentation(tester);
+        await tester.ensureVisible(find.text('查看当日记录'));
+        await tester.tap(find.text('查看当日记录'));
+        await pumpPresentation(tester);
         expect(find.text('每日记录'), findsOneWidget);
         await tester.tap(find.byTooltip('关闭'));
         await pumpPresentation(tester);
         expect(feedback().color!.a, 0);
         await tester.tap(day);
+        await pumpPresentation(tester);
+        await tester.ensureVisible(find.text('查看当日记录'));
+        await tester.tap(find.text('查看当日记录'));
         await pumpPresentation(tester);
         expect(find.text('每日记录'), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -318,6 +320,9 @@ void main() {
         Tristate.none,
       );
       await tester.tap(day);
+      await pumpPresentation(tester);
+      await tester.ensureVisible(find.text('查看当日记录'));
+      await tester.tap(find.text('查看当日记录'));
       await pumpPresentation(tester);
       await tester.tap(find.byKey(const ValueKey('day-previous')));
       await pumpPresentation(tester);
@@ -357,6 +362,9 @@ void main() {
       final day = find.byKey(const ValueKey('review-day-2026-10-16'));
       await tester.ensureVisible(day);
       await tester.tap(day);
+      await pumpPresentation(tester);
+      await tester.ensureVisible(find.text('查看当日记录'));
+      await tester.tap(find.text('查看当日记录'));
       await pumpPresentation(tester);
       final time = find.byKey(const ValueKey('day-record-time-0'));
       final mode = find.byKey(const ValueKey('day-record-mode-0'));

@@ -128,3 +128,13 @@ MotionPage 用于周期和日期明细的水平翻页，裁切新旧内容，不
 AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay；应用边界拥有 AppStatusPopup 的寿命，feature 不持有底层句柄。AppPop 的模态打开和实际 dismissed 深度用于状态浮层优先级及背景一次性反馈的抑制。
 
 模态深度由应用 ProviderScope 中的 popupActivityProvider 管理，不使用静态全局状态；未保存提示的展开选择也由实例 Provider 管理。
+
+## 第三、四阶段扩展
+
+`AppSheet.show` / `AppPop.sheet` 增加 direction，记圈调用 right、全高、100% 屏宽（不设置额外 maxWidth）；右侧调用自带安全区、头部与固定操作区，共享封装负责滑动、遮罩、返回、真实 dismissed 及模态深度。其它原有底部调用保持默认。
+
+`AppDataCard` 在 overlay 内封装 Pop.menu 和私有句柄；feature 通过 DataCardTarget 提供锚点、内容与操作。数据卡是非模态查看层，透明穿透滚动，用 TapRegion 处理外点关闭，页面在滚动/选择变化时关闭；路由、Tab 不可见与后台同样关闭。锚点摆放与避边由统一库处理，不另建几何算法。宽度用本地 dataCardWidth，默认 260，并支持缩放/插值。
+
+`CommonPressableSurface` 支持可选 onLongPress；短按与长按均使用现有主题反馈。`CommonMonthCalendar.dayInteractionBuilder` 将日期视觉与 FocusNode 一起交给调用方，在同一个 CommonPressableSurface 上处理点击与长按，避免嵌套命中区域；方向键与默认日期选择行为保持，不增加选中事实。CommonYearGrid 共用年度日期排布与横向滚动，习惯详情和最近一年专注都使用它。CommonHeatmapBlock 绘制无边框实色格；创建前、未来和周对齐占位用最浅色，调用方决定是否响应。
+
+日期查看统一使用 DataCardTarget，在同一 CommonPressableSurface 上将 onPressed/onLongPress 接到同一个 show；每日记录 Sheet 仅由专注日期卡中的明确入口打开；返回优先关闭当前 Menu，关闭后再返回来源页面。热力图默认与查看状态均使用无边框色块，键盘焦点仍沿用公共按压组件的可访问性反馈。

@@ -95,6 +95,16 @@ class FeedbackService {
     }
   }
 
+  /// Read-only inspection can follow the master gate or an existing scope.
+  void select({String? scope}) {
+    if (!foreground ||
+        !_haptics ||
+        (scope != null && !(_scopes[scope]?.haptics ?? false))) {
+      return;
+    }
+    unawaited(_safely(() => hapticPlayer.play(HapticCue.selection)));
+  }
+
   /// Settings audition uses only the master sound gate and never vibrates.
   void previewFinish({required String theme}) {
     if (_disposed || !_foreground || !_sound) return;

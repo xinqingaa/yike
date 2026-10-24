@@ -8,6 +8,7 @@ import '../storage/providers.dart';
 import '../storage/app_prefs.dart';
 import '../storage/preference_writer.dart';
 import 'app_colors.dart';
+import 'app_chart_colors.dart';
 import 'app_text_styles.dart';
 import 'app_tokens.dart';
 import 'app_metrics.dart';
@@ -100,6 +101,24 @@ final themePackProvider = NotifierProvider<ThemePackNotifier, AppThemePack>(
 
 /// ThemeExtension owned by the nearest Material Theme, never a global singleton.
 class TS extends ThemeExtension<TS> {
+  /// Opaque heatmap steps, lightest to strongest: outside, archived, empty.
+  Color _heatmapInk(double light, double dark) => Color.alphaBlend(
+    colors.onSurface.withValues(
+      alpha: brightness == Brightness.dark ? dark : light,
+    ),
+    colors.background,
+  );
+
+  /// Before creation, future days, and week-alignment padding.
+  Color get heatmapOutside => _heatmapInk(.12, .14);
+
+  /// Archived days that were not completed.
+  Color get heatmapArchived => _heatmapInk(.17, .20);
+
+  /// In-range days with no completion or no focus time.
+  Color get heatmapEmpty => _heatmapInk(.22, .28);
+
+  List<Color> get chartTypeColors => AppChartColors.resolve(brightness);
   TS({
     required this.brightness,
     this.pack = AppThemePack.base,

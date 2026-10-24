@@ -31,6 +31,7 @@ abstract final class SheetPopup {
     String? title,
     required Widget child,
     bool showCloseButton = true,
+    SheetDirection direction = SheetDirection.bottom,
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
@@ -42,27 +43,39 @@ abstract final class SheetPopup {
     late PopupOpenResult<T> popup;
     popup = Pop.sheet<T>(
       SheetConfig<T>(
+        direction: direction,
+        useSafeArea: direction == SheetDirection.bottom,
         size: size,
         drag: drag,
-        header: SheetHeaderConfig(
-          padding: EdgeInsets.only(bottom: ts.spacing.sm),
-          titleWidget: themes.wrap(
-            Material(
-              type: MaterialType.transparency,
-              child: AppSheetHeader(
-                title: title ?? '',
-                close: showCloseButton
-                    ? () => popup.handleOrNull?.dismiss()
-                    : null,
-              ),
-            ),
-          ),
-          showCloseButton: false,
-        ),
-        style: PopupTheme.sheetStyle(context, material),
+        header:
+            direction == SheetDirection.bottom ||
+                title != null ||
+                showCloseButton
+            ? SheetHeaderConfig(
+                padding: EdgeInsets.only(bottom: ts.spacing.sm),
+                titleWidget: themes.wrap(
+                  Material(
+                    type: MaterialType.transparency,
+                    child: AppSheetHeader(
+                      title: title ?? '',
+                      close: showCloseButton
+                          ? () => popup.handleOrNull?.dismiss()
+                          : null,
+                    ),
+                  ),
+                ),
+                showCloseButton: false,
+              )
+            : const SheetHeaderConfig(),
+        style: PopupTheme.sheetStyle(context, material, direction: direction),
         barrier: PopupBarrierConfig(color: ts.colors.scrim),
         animation: PopupAnimationConfig(
-          type: PopupAnimationType.slideUp,
+          type: switch (direction) {
+            SheetDirection.right => PopupAnimationType.slideRight,
+            SheetDirection.left => PopupAnimationType.slideLeft,
+            SheetDirection.top => PopupAnimationType.slideDown,
+            SheetDirection.bottom => PopupAnimationType.slideUp,
+          },
           duration: MediaQuery.disableAnimationsOf(context)
               ? Duration.zero
               : ts.motion.durationSheet,

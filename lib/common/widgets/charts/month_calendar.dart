@@ -38,8 +38,11 @@ class CommonMonthCalendar extends StatefulWidget {
     this.customDayAppearance = false,
     this.dayBuilder,
     this.dayShape,
+    this.dayInteractionBuilder,
     this.label = '选择日期',
   });
+  final Widget Function(BuildContext, CommonCalendarDay, FocusNode, Widget)?
+  dayInteractionBuilder;
   final String month;
   final String? value;
   final String? today;
@@ -119,7 +122,8 @@ class _CommonMonthCalendarState extends State<CommonMonthCalendar> {
         : available.firstOrNull;
     for (final date in days) {
       _nodes.putIfAbsent(date, () => FocusNode()).skipTraversal =
-          date != focusDate || widget.onChanged == null;
+          date != focusDate ||
+          (widget.onChanged == null && widget.dayInteractionBuilder == null);
     }
     final offset = first.weekday - DateTime.monday;
     final count = ((offset + days.length) / 7).ceil() * 7;
@@ -203,7 +207,8 @@ class _CommonMonthCalendarState extends State<CommonMonthCalendar> {
   Widget _day(BuildContext context, String date) {
     final ts = TS.of(context);
     final disabled =
-        widget.disabledDates.contains(date) || widget.onChanged == null;
+        widget.disabledDates.contains(date) ||
+        (widget.onChanged == null && widget.dayInteractionBuilder == null);
     final state = CommonCalendarDay(
       date: date,
       selected: date == widget.value,
@@ -223,13 +228,39 @@ class _CommonMonthCalendarState extends State<CommonMonthCalendar> {
           ),
         );
     final node = _nodes[date]!;
+    final visual = ConstrainedBox(
+      constraints: BoxConstraints(minHeight: ts.sizing.touch),
+      child: widget.customDayAppearance
+          ? child
+          : Padding(
+              padding: EdgeInsets.all(ts.spacing.xs),
+              child: CustomPaint(
+                painter: _CalendarDayPainter(
+                  selected: state.selected,
+                  today: state.today,
+                  fill: ts.colors.primary,
+                  stroke: ts.border.widthHairline,
+                ),
+                child: SizedBox(height: ts.sizing.controlMd, child: child),
+              ),
+            ),
+    );
+    final action =
+        widget.dayInteractionBuilder?.call(context, state, node, visual) ??
+        CommonPressableSurface(
+          focusNode: node,
+          onPressed: disabled ? null : () => widget.onChanged!(date),
+          shape:
+              widget.dayShape ??
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(ts.radius.full),
+              ),
+          child: visual,
+        );
     return Semantics(
-      button: true,
+      label: widget.dayLabels[date] ?? date,
       selected: widget.value == null ? null : state.selected,
       enabled: !disabled,
-      label: widget.dayLabels[date] ?? date,
-      excludeSemantics: true,
-      onTap: disabled ? null : () => widget.onChanged!(date),
       child: CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
@@ -247,35 +278,7 @@ class _CommonMonthCalendarState extends State<CommonMonthCalendar> {
         },
         child: Opacity(
           opacity: disabled ? ts.opacity.disabled : ts.opacity.visible,
-          child: CommonPressableSurface(
-            focusNode: node,
-            onPressed: disabled ? null : () => widget.onChanged!(date),
-            shape:
-                widget.dayShape ??
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(ts.radius.full),
-                ),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: ts.sizing.touch),
-              child: widget.customDayAppearance
-                  ? child
-                  : Padding(
-                      padding: EdgeInsets.all(ts.spacing.xs),
-                      child: CustomPaint(
-                        painter: _CalendarDayPainter(
-                          selected: state.selected,
-                          today: state.today,
-                          fill: ts.colors.primary,
-                          stroke: ts.border.widthHairline,
-                        ),
-                        child: SizedBox(
-                          height: ts.sizing.controlMd,
-                          child: child,
-                        ),
-                      ),
-                    ),
-            ),
-          ),
+          child: action,
         ),
       ),
     );

@@ -89,7 +89,7 @@ flutter test integration_test/experience_test.dart -d <device-id> --no-uninstall
 
 ## 布局精修回归
 
-`test/layout_polish_test.dart` 检查滚轮数字自身居中及大字体缩放、FlowSheet 可选进度不留空位、倒计时等宽选项和取消语义、计圈基线与滚动、日期按压与无选择语义、手机安全区内操作、每日详情长列表与固定翻日。
+`test/layout_polish_test.dart` 检查滚轮数字自身居中及大字体缩放、FlowSheet 可选进度不留空位、倒计时等宽选项和取消语义、右侧记圈数字基线、列表滚动与单入口、日期按压与无选择语义、手机安全区内操作、每日详情长列表与固定翻日。
 
 ```bash
 flutter test integration_test/layout_polish_test.dart -d <移动设备 ID>
@@ -115,3 +115,9 @@ flutter test integration_test/motion_profile_test.dart -d <真机 ID> --profile 
 ```
 
 原生过程脚本使用内存存储，每主题/动态效果偏好采集七张过程画面，日志前缀为 `YIKE_MOTION_SCREENSHOT=`。原生截图与过程断言分开评价；本轮范围见 [实施记录](../reviews/2026-10-23-motion-implementation.md)。profile 脚本要求 profile 模式与设备名称，记录刷新率、125 帧热身、样本量、UI/raster p50/p90/p99 及超预算帧。连续表盘、主题切换、计圈与导航独立采样；相同设备和场景比较前后，不将采样入口本身写成性能已通过。
+
+## 记圈、回顾与统计回归
+
+长期测试：`test/features/review/review_statistics_test.dart` 验证跨日去重/本期最长/开始小时、同期及短月、当前目标参考与趋势窗口；`test/stage34_ui_test.dart` 验证三主题圈控制/完成保留、飞行并发/零圈拒绝/减少动态效果、筛选与返回、筛选时图形位置稳定、日期点击/长按均查看同一 Menu，卡内入口再进入 Sheet、专注卡时长与次数同行、统计二级 Tab 与图表滚动保留、类型环点击联动、统计习惯完成格查看与详情卡一致、无边框铺满色块、数据卡滚动关闭、窄屏大字体。`test/feedback_service_test.dart` 检查查看触感的总开关、可选习惯 scope 和前后台门控。
+
+临时手动预览与原生脚本的使用、内存数据及真实反馈边界见 [第三阶段](../plan/stage3-laps.md#临时验收入口与步骤)，当前检查结果见 [第四阶段](../plan/stage4-review-stats.md#临时验收与检查结果)。这些材料只在用户双设备验收通过后清理。仍有 17 处历史截图断链和 3 项既有设置测试失败，不将本轮完成写成全量门禁通过。

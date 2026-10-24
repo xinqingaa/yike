@@ -22,8 +22,10 @@ export 'package:unified_popups/unified_popups.dart'
         PopupAnchor,
         PopupAnchorController,
         SheetDimension,
+        SheetDirection,
         SheetDragConfig,
         SheetSizeConfig;
+export 'data_card.dart';
 export 'sheet_actions.dart';
 export 'status_popup.dart' show AppStatusPopup;
 export 'sheet_content.dart';
@@ -84,6 +86,7 @@ abstract final class AppPop {
     String? title,
     required Widget child,
     bool showCloseButton = true,
+    SheetDirection direction = SheetDirection.bottom,
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
@@ -91,6 +94,7 @@ abstract final class AppPop {
     title: title,
     child: child,
     showCloseButton: showCloseButton,
+    direction: direction,
     size: size,
     drag: drag,
     material: material,
@@ -100,6 +104,7 @@ abstract final class AppPop {
     String? title,
     required Widget child,
     bool showCloseButton = true,
+    SheetDirection direction = SheetDirection.bottom,
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
@@ -109,6 +114,7 @@ abstract final class AppPop {
       title: title,
       child: child,
       showCloseButton: showCloseButton,
+      direction: direction,
       size: size,
       drag: drag,
       material: material,
@@ -183,6 +189,7 @@ final class AppSheet<T> {
     String? title,
     required Widget child,
     bool showCloseButton = true,
+    SheetDirection direction = SheetDirection.bottom,
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
@@ -190,6 +197,7 @@ final class AppSheet<T> {
     title: title,
     child: child,
     showCloseButton: showCloseButton,
+    direction: direction,
     size: size,
     drag: drag,
     material: material,

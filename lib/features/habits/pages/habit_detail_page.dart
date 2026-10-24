@@ -243,8 +243,19 @@ class HabitDetailPage extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(dayId(first), style: ts.textStyle.micro),
-                            Text(todayKey, style: ts.textStyle.micro),
+                            Expanded(
+                              child: Text(
+                                dayId(first),
+                                style: ts.textStyle.micro,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                todayKey,
+                                style: ts.textStyle.micro,
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
                           ],
                         ),
                         SizedBox(height: ts.spacing.sm),

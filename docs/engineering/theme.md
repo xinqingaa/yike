@@ -52,3 +52,5 @@ Flutter 的正文、标签与标题使用 Target 的紧凑文字档位上限，�
 ## Flutter 自有扩展
 
 新增本地能力先复用现有 TS 设计量；新的跨组件颜色/尺寸按语义增加类型化本地主题属性，并在浅深模式和插值中验证。几何比例、幅度和节拍可进入本地 YikeGeometry/YikeMotion。生成文件与 proto-bridge 清单只在显式同步中更新，普通组件调整不要求先修改外部平台。
+
+类型环与图例使用本地 `AppChartColors`，通过 `ts.chartTypeColors` 读取三种类型颜色；三主题共用，按浅深模式提供颜色。该配色是 Flutter 产品扩展，不改写生成主题包。

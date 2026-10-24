@@ -8,6 +8,7 @@ import '../../../theme/ts.dart';
 import 'calendar_dates.dart';
 
 export 'calendar_dates.dart' show CommonHeatmapDay, CommonHeatmapCell;
+export 'year_grid.dart' show CommonHeatmapBlock, CommonYearGrid;
 
 typedef CommonHeatmapPlotBuilder =
     Widget Function(

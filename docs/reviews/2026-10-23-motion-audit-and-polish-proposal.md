@@ -25,7 +25,7 @@
 | 水位 | 128 / 228 | 114 / 228 | 120 / 212 |
 | 日影 | 128 / 278 | 114 / 278 | 120 / 262 |
 
-相关源码：`focus_page.dart:425` 的尺寸分支、`:477` 的间距分支；[LapList](../../lib/features/focus/widgets/lap_list.dart) 第 81 行固定两/三行高度。[CountdownChoices](../../lib/features/focus/widgets/countdown_choices.dart) 明确使用两列快捷项和独立的自定义行，增加了预留高度。
+相关源码：`focus_page.dart:425` 的尺寸分支、`:477` 的间距分支；[LapList](../../lib/features/focus/widgets/lap_panel.dart) 第 81 行固定两/三行高度。[CountdownChoices](../../lib/features/focus/widgets/countdown_choices.dart) 明确使用两列快捷项和独立的自定义行，增加了预留高度。
 
 建议先建立公共专注布局壳，再调整动效。不能继续为某一个模式单独减小表盘来解决辅助区拥挤。
 

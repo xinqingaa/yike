@@ -10,12 +10,13 @@ class CommonPressableSurface extends ConsumerStatefulWidget {
     super.key,
     required this.child,
     required this.onPressed,
+    this.onLongPress,
     this.shape,
     this.focusNode,
     this.selected,
   });
   final Widget child;
-  final VoidCallback? onPressed;
+  final VoidCallback? onPressed, onLongPress;
   final OutlinedBorder? shape;
   final FocusNode? focusNode;
   final bool? selected;
@@ -33,7 +34,7 @@ class _CommonPressableSurfaceState
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
-    final enabled = widget.onPressed != null;
+    final enabled = widget.onPressed != null || widget.onLongPress != null;
     final pressed = ref.watch(_pressed) && enabled;
     final focused =
         ref.watch(_focusVisible) &&
@@ -67,6 +68,7 @@ class _CommonPressableSurfaceState
             focusNode: widget.focusNode,
             canRequestFocus: enabled,
             onTap: widget.onPressed,
+            onLongPress: widget.onLongPress,
             customBorder: shape,
             overlayColor: const WidgetStatePropertyAll(Colors.transparent),
             onHighlightChanged: (value) =>

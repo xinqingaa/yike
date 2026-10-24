@@ -8,16 +8,36 @@ class FocusPanelLayout extends StatelessWidget {
   const FocusPanelLayout({
     super.key,
     required this.minimumUtilityHeight,
+    this.compactUtility = false,
     required this.dialBuilder,
     required this.utilityBuilder,
     required this.actions,
     required this.storageKey,
   });
   final double Function(double width) minimumUtilityHeight;
+  final bool compactUtility;
   final Widget Function(double width) dialBuilder;
   final Widget Function(double width) utilityBuilder;
   final Widget actions;
   final PageStorageKey<String> storageKey;
+
+  /// Keeps the established dial anchor aligned across the three modes.
+  static double minimumAccessoryHeight(
+    BuildContext context, {
+    required bool compact,
+  }) {
+    final ts = TS.of(context), scaler = MediaQuery.textScalerOf(context);
+    final row = math.max(
+      ts.sizing.touch,
+      scaler.scale(ts.textStyle.numericContent.fontSize!) *
+              (ts.textStyle.numericContent.height ?? 1) +
+          ts.spacing.sm * 2,
+    );
+    return row * (compact ? 2 : 3) +
+        ts.spacing.xs +
+        scaler.scale(ts.textStyle.caption.fontSize!) *
+            (ts.textStyle.caption.height ?? 1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +56,18 @@ class FocusPanelLayout extends StatelessWidget {
           textHeight * 2 + ts.spacing.xs * 2,
         );
         final actionsHeight = actionRow * 2 + gap;
-        final fixed =
+        final dialFixed =
             top + minimumUtilityHeight(width) + actionsHeight + gap * 3;
+        final utilityHeight = compactUtility
+            ? ts.sizing.touch
+            : minimumUtilityHeight(width);
+        final fixed = top + utilityHeight + actionsHeight + gap * 3;
         final preferred = math.min(ts.sizing.plot, width);
         final dialWidth = math.max(
           math.min(preferred, ts.sizing.touch * 4),
           math.min(
             preferred,
-            (constraints.maxHeight - fixed) / ts.artworkAspectRatio,
+            (constraints.maxHeight - dialFixed) / ts.artworkAspectRatio,
           ),
         );
         final height = math.max(
@@ -62,10 +86,17 @@ class FocusPanelLayout extends StatelessWidget {
                   SizedBox(height: top),
                   Center(child: dialBuilder(dialWidth)),
                   SizedBox(height: gap),
-                  Expanded(child: utilityBuilder(width)),
+                  if (compactUtility)
+                    SizedBox(
+                      height: utilityHeight,
+                      child: utilityBuilder(width),
+                    )
+                  else
+                    Expanded(child: utilityBuilder(width)),
                   SizedBox(height: gap),
                   SizedBox(height: actionsHeight, child: actions),
                   SizedBox(height: gap),
+                  if (compactUtility) const Spacer(),
                 ],
               ),
             ),

@@ -18,18 +18,34 @@ abstract final class PopupTheme {
 
   static SheetStyle sheetStyle(
     BuildContext context,
-    CommonSurfaceMaterial material,
-  ) {
+    CommonSurfaceMaterial material, {
+    SheetDirection direction = SheetDirection.bottom,
+  }) {
     final ts = TS.of(context);
     return SheetStyle(
       backgroundColor: ts.colors.surface,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(ts.radius.xl)),
-      padding: EdgeInsets.fromLTRB(
-        ts.spacing.md,
-        ts.spacing.sm,
-        ts.spacing.md,
-        ts.spacing.md,
-      ),
+      borderRadius: switch (direction) {
+        SheetDirection.right => BorderRadius.horizontal(
+          left: Radius.circular(ts.radius.xl),
+        ),
+        SheetDirection.left => BorderRadius.horizontal(
+          right: Radius.circular(ts.radius.xl),
+        ),
+        SheetDirection.top => BorderRadius.vertical(
+          bottom: Radius.circular(ts.radius.xl),
+        ),
+        SheetDirection.bottom => BorderRadius.vertical(
+          top: Radius.circular(ts.radius.xl),
+        ),
+      },
+      padding: direction == SheetDirection.right
+          ? EdgeInsets.zero
+          : EdgeInsets.fromLTRB(
+              ts.spacing.md,
+              ts.spacing.sm,
+              ts.spacing.md,
+              ts.spacing.md,
+            ),
       boxShadow: [ts.elevation.overlay],
       surface: surface(context, material),
     );

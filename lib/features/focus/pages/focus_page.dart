@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import '../../../common/motion/content_transition.dart';
 import '../models/focus_view.dart';
 import '../widgets/countdown_utility.dart';
-import '../widgets/lap_list.dart';
+import '../widgets/lap_panel.dart';
 import '../widgets/focus_panel_layout.dart';
 import '../providers/focus_presentation.dart';
 import '../providers/focus_dial_presentation.dart';
@@ -15,6 +15,7 @@ import '../../../common/widgets.dart';
 import '../widgets/focus_dial.dart';
 import '../../../router/routes.dart';
 import '../../../theme/ts.dart';
+import '../../../theme/yike_geometry.dart';
 import '../widgets/dial_adjuster.dart';
 
 class FocusPage extends ConsumerStatefulWidget {
@@ -296,6 +297,42 @@ class _FocusPageState extends ConsumerState<FocusPage>
     }
   }
 
+  bool _lapPanelOpen = false;
+  Future<void> _openLaps() async {
+    if (_lapPanelOpen) return;
+    _actions.calibrate();
+    final session = ref.read(focusDataProvider).session;
+    if (session == null || session.mode != TimerMode.stopwatch) return;
+    _lapPanelOpen = true;
+    final sheet = AppSheet<void>();
+    try {
+      await sheet.show(
+        direction: SheetDirection.right,
+        showCloseButton: false,
+        size: SheetSizeConfig(
+          width: const SheetDimension.fraction(YikeGeometry.lapPanelWidth),
+          height: const SheetDimension.fraction(1),
+        ),
+        drag: const SheetDragConfig(showHandle: false),
+        material: CommonSurfaceMaterial.glass,
+        child: LapPanel(
+          sessionId: session.id,
+          close: sheet.dismiss,
+          onFinish: () async {
+            if (ref.read(focusViewProvider).finished) {
+              await _primary();
+            } else {
+              await _finish();
+            }
+          },
+          onCancel: _abandon,
+        ),
+      );
+    } finally {
+      _lapPanelOpen = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
@@ -427,6 +464,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
         : '第 ${value.round} 轮专注';
     final compact = MediaQuery.sizeOf(context).height < 700;
     return FocusPanelLayout(
+      compactUtility: value.mode == TimerMode.stopwatch,
       storageKey: PageStorageKey('focus-${value.mode.name}-scroll'),
       minimumUtilityHeight: (width) => math.max(
         CountdownUtility.heightFor(
@@ -434,7 +472,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
           width,
           prefs.presets.whereType<int>().toList(),
         ),
-        LapList.minimumHeight(context, compact: compact),
+        FocusPanelLayout.minimumAccessoryHeight(context, compact: compact),
       ),
       dialBuilder: (width) =>
           FocusDial(width: width, mode: value.mode, adjustment: _dial),
@@ -470,16 +508,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   },
                 ),
               )
-            : value.mode == TimerMode.stopwatch && !value.ready
-            ? LapList(
-                key: ValueKey(
-                  ref.watch(
-                    focusDataProvider.select((data) => data.session?.id),
-                  ),
-                ),
-                value: value,
-                compact: compact,
-              )
+            : value.mode == TimerMode.stopwatch
+            ? value.ready
+                  ? const SizedBox.shrink()
+                  : Center(
+                      child: CommonButton(
+                        key: const ValueKey('stopwatch-laps-entry'),
+                        label: '计圈记录 · ${value.laps.length} 圈 ›',
+                        kind: CommonButtonKind.quiet,
+                        onPressed: _openLaps,
+                      ),
+                    )
             : Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -539,17 +578,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (value.mode == TimerMode.stopwatch &&
-                        value.status == TimerStatus.running) ...[
-                      CommonButton(
-                        label: '计圈',
-                        size: CommonControlSize.lg,
-                        kind: CommonButtonKind.secondary,
-                        shape: CommonButtonShape.pill,
-                        onPressed: _actions.lap,
-                      ),
-                      SizedBox(width: ts.spacing.sm),
-                    ],
                     Flexible(
                       child: SizedBox(
                         width: ts.sizing.actionMinInline,
@@ -595,7 +623,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
             )
           : const SizedBox.shrink();
     }
-    if (value.finished && value.mode == TimerMode.stopwatch) {
+    if (value.mode == TimerMode.stopwatch && value.finished) {
       return const SizedBox.shrink();
     }
     if (value.finished && value.mode == TimerMode.countdown) {
@@ -617,7 +645,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (value.paused)
+        if (value.paused || value.mode == TimerMode.stopwatch)
           Flexible(
             child: CommonButton(
               label: '结束并记录',

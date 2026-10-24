@@ -368,11 +368,23 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byKey(const ValueKey('lap-scroll')), findsOneWidget);
-      await tester.ensureVisible(find.text('暂停'));
-      await tester.tap(find.text('暂停'));
+      expect(find.byKey(const ValueKey('lap-scroll')), findsNothing);
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('stopwatch-laps-entry')),
+      );
+      await tester.tap(find.byKey(const ValueKey('stopwatch-laps-entry')));
       await pumpPresentation(tester);
-      expect(find.text('继续'), findsOneWidget);
+      expect(find.byKey(const ValueKey('lap-panel-list')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const ValueKey('lap-panel-pause')));
+      await tester.tap(find.byKey(const ValueKey('lap-panel-pause')));
+      await pumpPresentation(tester);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('lap-panel-pause')),
+          matching: find.text('继续'),
+        ),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   }

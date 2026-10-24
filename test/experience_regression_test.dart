@@ -148,6 +148,9 @@ void main() {
         final sourceOffset = sourceScroll.position.pixels;
         await tester.tap(find.byKey(const ValueKey('review-day-2026-10-16')));
         await pumpPresentation(tester);
+        await tester.ensureVisible(find.text('查看当日记录'));
+        await tester.tap(find.text('查看当日记录'));
+        await pumpPresentation(tester);
         expect(find.text('这一天没有记录'), findsOneWidget);
         expect(sourceScroll.position.pixels, sourceOffset);
         final dayText = tester.getRect(find.text('10月16日 周五'));
@@ -165,8 +168,10 @@ void main() {
         expect(find.text('这一周还没有记录').hitTestable(), findsNothing);
         expect(find.semantics.byLabel(RegExp('这一周还没有记录')), findsNothing);
         expect(find.text('1次'), findsOneWidget);
-        expect(find.text('按类型').hitTestable(), findsNothing);
-        expect(find.semantics.byLabel(RegExp('按类型')), findsNothing);
+        expect(
+          find.text('按类型'),
+          findsOneWidget,
+        ); // Zero type rows remain available for filtering.
         await tester.ensureVisible(find.text('月'));
         await tester.tap(find.text('月'));
         await pumpPresentation(tester);
@@ -175,26 +180,36 @@ void main() {
       },
     );
 
-    testWidgets('$theme year grid shows readable outlined days near today', (
-      tester,
-    ) async {
-      await pumpYike(tester, theme: theme);
-      await navigateTab(tester, '打卡');
-      await tester.tap(find.byKey(const ValueKey('habit-detail-habit-water')));
-      await pumpPresentation(tester);
-      final cell = find.byKey(const ValueKey('habit-day-2026-10-16'));
-      final decoration =
-          tester.widget<DecoratedBox>(cell).decoration as BoxDecoration;
-      expect(decoration.shape, BoxShape.rectangle);
-      expect(decoration.border, isNotNull);
-      expect(decoration.color, Colors.transparent);
-      expect(tester.getSize(cell).width, greaterThanOrEqualTo(12));
-      final viewport = tester.getRect(
-        find.byKey(const ValueKey('habit-year-scroll')),
-      );
-      expect(viewport.contains(tester.getCenter(cell)), isTrue);
-      expect(tester.takeException(), isNull);
-    });
+    testWidgets(
+      '$theme year grid shows readable borderless blocks near today',
+      (tester) async {
+        await pumpYike(tester, theme: theme);
+        await navigateTab(tester, '打卡');
+        await tester.tap(
+          find.byKey(const ValueKey('habit-detail-habit-water')),
+        );
+        await pumpPresentation(tester);
+        final cell = find.byKey(const ValueKey('habit-day-2026-10-16'));
+        final decoration =
+            tester.widget<DecoratedBox>(cell).decoration as BoxDecoration;
+        expect(decoration.shape, BoxShape.rectangle);
+        expect(decoration.border, isNull);
+        final ts = TS.of(tester.element(cell));
+        expect(decoration.color, ts.heatmapEmpty);
+        final before = find.byKey(const ValueKey('habit-day-2026-10-15'));
+        await tester.ensureVisible(before);
+        final beforeDecoration =
+            tester.widget<DecoratedBox>(before).decoration as BoxDecoration;
+        expect(beforeDecoration.color, ts.heatmapOutside);
+        expect(beforeDecoration.border, isNull);
+        expect(tester.getSize(cell).width, greaterThanOrEqualTo(12));
+        final viewport = tester.getRect(
+          find.byKey(const ValueKey('habit-year-scroll')),
+        );
+        expect(viewport.contains(tester.getCenter(cell)), isTrue);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   for (final count in [1, 2, 3]) {
@@ -346,8 +361,8 @@ void main() {
       await pumpPresentation(tester);
       final ts = TS.of(tester.element(find.bySemanticsLabel('最近365天完成 1 次')));
       expect(decoration('2026-10-14').color, ts.colors.primary);
-      expect(decoration('2026-10-15').color, ts.colors.surfaceVariant);
-      expect(decoration('2026-10-13').color, Colors.transparent);
+      expect(decoration('2026-10-15').color, ts.heatmapArchived);
+      expect(decoration('2026-10-13').color, ts.heatmapEmpty);
       expect(tester.takeException(), isNull);
     },
   );

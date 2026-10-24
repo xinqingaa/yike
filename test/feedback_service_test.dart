@@ -32,6 +32,46 @@ class _Haptics implements HapticPlayer {
 
 void main() {
   test(
+    'inspection selection follows master, optional habit scope and foreground without sound',
+    () async {
+      final sounds = _Sounds(), haptics = _Haptics();
+      final service = FeedbackService(
+        soundPlayer: sounds,
+        hapticPlayer: haptics,
+      );
+      service.setForeground(true);
+      service.configure(
+        sound: true,
+        haptics: true,
+        scopes: const {'habits': FeedbackOptions(haptics: false)},
+      );
+      service.select();
+      service.select(scope: 'habits');
+      expect(haptics.calls, [HapticCue.selection]);
+      expect(sounds.calls, isEmpty);
+      service.configure(
+        sound: true,
+        haptics: false,
+        scopes: const {'habits': FeedbackOptions()},
+      );
+      service.select();
+      service.select(scope: 'habits');
+      expect(haptics.calls, hasLength(1));
+      service.configure(
+        sound: true,
+        haptics: true,
+        scopes: const {'habits': FeedbackOptions()},
+      );
+      service.select(scope: 'habits');
+      expect(haptics.calls, hasLength(2));
+      service.setForeground(false);
+      service.select();
+      expect(haptics.calls, hasLength(2));
+      await service.dispose();
+    },
+  );
+
+  test(
     'settings audition plays theme finish without local gates or haptics; master and lifecycle still gate it',
     () async {
       final sounds = _Sounds(), haptics = _Haptics();

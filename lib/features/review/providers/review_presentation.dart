@@ -2,32 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/time.dart';
 import '../../focus/focus.dart';
 import '../../habits/habits.dart';
-
-class ReviewSelection {
-  const ReviewSelection({
-    required this.anchor,
-    this.month = false,
-    this.lastViewedDate,
-  });
-  final DateTime anchor;
-  final bool month;
-  final String? lastViewedDate;
-  DateTime get first =>
-      month ? DateTime.utc(anchor.year, anchor.month) : weekStart(anchor);
-  DateTime get last => month
-      ? DateTime.utc(anchor.year, anchor.month + 1, 0)
-      : first.add(const Duration(days: 6));
-  ReviewSelection copyWith({
-    DateTime? anchor,
-    bool? month,
-    String? lastViewedDate,
-    bool clear = false,
-  }) => ReviewSelection(
-    anchor: anchor ?? this.anchor,
-    month: month ?? this.month,
-    lastViewedDate: clear ? null : lastViewedDate ?? this.lastViewedDate,
-  );
-}
+import '../models/review_period.dart';
+export '../models/review_period.dart';
 
 class ReviewPresentation extends Notifier<ReviewSelection> {
   @override
@@ -41,8 +17,12 @@ final reviewSelectionProvider =
     );
 
 class ReviewSummary {
-  const ReviewSummary({required this.records, required this.checkins});
-  final List<FocusRecordView> records;
+  const ReviewSummary({
+    required this.records,
+    required this.checkins,
+    required this.allRecords,
+  });
+  final List<FocusRecordView> records, allRecords;
   final int checkins;
   num get seconds =>
       records.fold<num>(0, (sum, record) => sum + record.seconds);
@@ -57,7 +37,14 @@ ReviewSummary reviewSummaryFor(
   bool contains(String date) =>
       date.compareTo(from) >= 0 && date.compareTo(through) <= 0;
   return ReviewSummary(
-    records: List.unmodifiable(records.where((r) => contains(r.date))),
+    allRecords: List.unmodifiable(records.where((r) => contains(r.date))),
+    records: List.unmodifiable(
+      records.where(
+        (r) =>
+            contains(r.date) &&
+            (selection.mode == null || r.mode == selection.mode),
+      ),
+    ),
     checkins: habits.expand((h) => h.dates).where(contains).length,
   );
 }

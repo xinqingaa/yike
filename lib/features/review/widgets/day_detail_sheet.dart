@@ -8,7 +8,6 @@ import '../../../common/widgets.dart';
 import '../../../theme/ts.dart';
 import '../../focus/focus.dart';
 import '../../habits/habits.dart';
-import '../providers/review_presentation.dart';
 import 'review_labels.dart';
 
 class DayDetailSheet extends ConsumerStatefulWidget {
@@ -17,9 +16,13 @@ class DayDetailSheet extends ConsumerStatefulWidget {
     required this.initial,
     required this.first,
     required this.last,
+    this.mode,
+    this.onDateChanged,
   });
   final String initial;
   final DateTime first, last;
+  final TimerMode? mode;
+  final ValueChanged<String>? onDateChanged;
 
   @override
   ConsumerState<DayDetailSheet> createState() => _DayDetailSheetState();
@@ -34,7 +37,14 @@ class _DayDetailSheetState extends ConsumerState<DayDetailSheet> {
     final parsed = dayOnly(DateTime.parse(date));
     final ts = TS.of(context);
     final records =
-        ref.watch(focusRecordsProvider).where((r) => r.date == date).toList()
+        ref
+            .watch(focusRecordsProvider)
+            .where(
+              (r) =>
+                  r.date == date &&
+                  (widget.mode == null || r.mode == widget.mode),
+            )
+            .toList()
           ..sort((a, b) => a.time.compareTo(b.time));
     final habits = ref
         .watch(habitsProvider)
@@ -48,13 +58,12 @@ class _DayDetailSheetState extends ConsumerState<DayDetailSheet> {
       }
       final next = dayId(nextDay);
       ref.read(_date.notifier).set(next);
-      final view = ref.read(reviewSelectionProvider);
-      ref
-          .read(reviewSelectionProvider.notifier)
-          .select(view.copyWith(lastViewedDate: next));
+      widget.onDateChanged?.call(next);
     }
 
     final items = <Widget>[
+      if (widget.mode != null)
+        Text('仅${modeLabel(widget.mode!)}', style: ts.textStyle.caption),
       Padding(
         padding: EdgeInsets.symmetric(vertical: ts.spacing.sm),
         child: Text(
