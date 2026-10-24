@@ -6,6 +6,7 @@ import '../../../common/overlay/app_pop.dart';
 import '../../../common/widgets.dart';
 import '../../../theme/ts.dart';
 import '../../focus/focus.dart';
+import '../logic/focus_duration_level.dart';
 import '../providers/review_presentation.dart';
 import 'day_data_card.dart';
 
@@ -96,7 +97,7 @@ class ReviewWeekChart extends StatelessWidget {
                                   ),
                                   SizedBox(height: ts.spacing.xs),
                                   Text(
-                                    '周${const ['一', '二', '三', '四', '五', '六', '日'][i]}',
+                                    '周${weekdayLabels[i]}',
                                     style: ts.textStyle.caption.copyWith(
                                       color: dayId(date) == dayId(today)
                                           ? ts.colors.primary
@@ -260,13 +261,7 @@ class ReviewMonthDay extends StatelessWidget {
     final ts = TS.of(context);
     final mechanical = ts.pack.id.endsWith('mechanical'),
         water = ts.pack.id.endsWith('water');
-    final level = seconds == 0
-        ? 0
-        : seconds <= 1800
-        ? 1
-        : seconds <= 5400
-        ? 2
-        : 3;
+    final level = focusDurationLevel(seconds);
     final glyph = mechanical
         ? [
             CommonIconName.yikeMechanicalCalendar,

@@ -187,37 +187,37 @@ void main() {
     },
   );
 
-  testWidgets('heatmap distinguishes missing days and readonly never selects', (
-    tester,
-  ) async {
-    String? selected;
+  testWidgets('heatmap shell renders the supplied year grid', (tester) async {
     const days = [
       CommonHeatmapDay(date: '2026-07-01', value: 0),
       CommonHeatmapDay(date: '2026-07-03', value: 3),
     ];
-    Widget body(bool readonly) => shell(
-      (context) => CommonHeatmap(
-        days: days,
-        readonly: readonly,
-        onChanged: (date) => selected = date,
+    await tester.pumpWidget(
+      shell(
+        (context) => CommonHeatmap(
+          days: days,
+          label: '最近记录',
+          plotBuilder: (context, weeks, maximum) => CommonYearGrid(
+            weeks: weeks,
+            cellBuilder: (context, cell, size) => CommonHeatmapBlock(
+              size: size,
+              cellKey: ValueKey(cell.date),
+              color: cell.value == null
+                  ? const Color(0xFF111111)
+                  : const Color(0xFFEEEEEE),
+            ),
+          ),
+        ),
       ),
     );
-    await tester.pumpWidget(body(false));
-    final chart = find
-        .descendant(
-          of: find.byType(CommonHeatmap),
-          matching: find.byType(CustomPaint),
-        )
-        .first;
-    final origin = tester.getTopLeft(chart);
-    await tester.tapAt(origin + const Offset(10, 90));
-    expect(selected, '2026-07-01');
-    selected = null;
-    await tester.tapAt(origin + const Offset(10, 114));
-    expect(selected, isNull);
-    await tester.pumpWidget(body(true));
-    await tester.tapAt(tester.getTopLeft(chart) + const Offset(10, 90));
-    expect(selected, isNull);
+    expect(find.text('最近记录'), findsOneWidget);
+    expect(find.text('少'), findsNothing);
+    Color colorOf(String date) =>
+        (tester.widget<DecoratedBox>(find.byKey(ValueKey(date))).decoration
+                as BoxDecoration)
+            .color!;
+    expect(colorOf('2026-07-01'), const Color(0xFFEEEEEE));
+    expect(colorOf('2026-07-02'), const Color(0xFF111111));
   });
 
   testWidgets('group events carry both stable group and item identities', (

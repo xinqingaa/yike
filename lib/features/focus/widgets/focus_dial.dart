@@ -63,19 +63,25 @@ class _FocusDialState extends ConsumerState<FocusDial> {
   @override
   Widget build(BuildContext context) {
     final presentation = ref.watch(focusDialPresentationProvider(widget.mode));
-    final data = ref.watch(focusDataProvider);
+    final mode = ref.watch(focusDataProvider.select((d) => d.mode));
+    final countdownMaximum = ref.watch(
+      focusDataProvider.select((d) => d.countdownMaximum),
+    );
+    final dialAdjusted = ref.watch(
+      focusDataProvider.select((d) => d.dialAdjusted),
+    );
     final now = ref.watch(clockProvider);
     final enabled =
         presentation.view.ready &&
         widget.mode != TimerMode.stopwatch &&
-        data.mode == widget.mode;
+        mode == widget.mode;
     return SizedBox(
       width: widget.width,
       child: DialAdjuster(
         mode: widget.mode,
         seconds: presentation.view.seconds,
         maximum: widget.mode == TimerMode.countdown
-            ? data.countdownMaximum
+            ? countdownMaximum
             : maxFocusSeconds,
         scale: presentation.view.scaleSeconds,
         enabled: enabled,
@@ -94,7 +100,7 @@ class _FocusDialState extends ConsumerState<FocusDial> {
           completions: _completion,
           now: now,
           draft: draft,
-          hint: enabled && !data.dialAdjusted,
+          hint: enabled && !dialAdjusted,
         ),
       ),
     );

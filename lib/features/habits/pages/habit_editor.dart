@@ -51,7 +51,9 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           MotionExpand(
-            expanded: ref.watch(localDataProvider).writeError != null,
+            expanded:
+                ref.watch(localDataProvider.select((s) => s.writeError)) !=
+                null,
             child: Text(
               '尚未保存，请重试保存；关闭后可能丢失',
               style: ts.textStyle.caption.copyWith(color: ts.colors.error),

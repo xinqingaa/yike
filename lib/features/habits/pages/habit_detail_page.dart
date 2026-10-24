@@ -217,9 +217,8 @@ class HabitDetailPage extends ConsumerWidget {
                   Text('完成记录', style: ts.textStyle.subtitle),
                   SizedBox(height: ts.spacing.md),
                   CommonHeatmap(
-                    label: '最近365天完成 $yearCount 次',
+                    label: '最近一年完成 $yearCount 次',
                     showLabel: false,
-                    readonly: true,
                     days: [
                       for (var i = 0; i < 365; i++)
                         CommonHeatmapDay(

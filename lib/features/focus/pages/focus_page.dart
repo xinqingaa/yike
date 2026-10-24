@@ -28,9 +28,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
     with TickerProviderStateMixin {
   late TabController _tabs;
   final _dial = DialAdjustmentController();
-  void _dialStateChanged() {
-    if (mounted) setState(() {});
-  }
 
   final _switching = localValueProvider(false);
   final _recordPromptOpen = localValueProvider(false);
@@ -77,7 +74,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   @override
   void dispose() {
-    _dial.removeListener(_dialStateChanged);
     _dial.dispose();
     _tabs.dispose();
     super.dispose();
@@ -86,7 +82,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
   @override
   void initState() {
     super.initState();
-    _dial.addListener(_dialStateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && ref.read(focusViewProvider).recovered) {
         _recovery();
@@ -382,7 +377,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${today.month}月${today.day}日星期${const ['一', '二', '三', '四', '五', '六', '日'][today.weekday - 1]}',
+                            dateWeekLabel(dayId(today)),
                             style: ts.textStyle.caption,
                           ),
                           Text(
@@ -438,6 +433,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
   Widget _panel(FocusViewData value) {
     final ts = TS.of(context);
     final prefs = ref.watch(timingPreferencesProvider);
+    final selectedPreset = value.mode == TimerMode.countdown
+        ? ref.watch(
+            focusDataProvider.select((data) {
+              final slot = data.countdownPreset;
+              return data.preferences.presets
+                  .take(slot)
+                  .whereType<int>()
+                  .length;
+            }),
+          )
+        : 0;
     final label = value.finished
         ? value.resting
               ? '准备下一轮'
@@ -485,14 +491,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   preferences: prefs,
                   availableWidth: width,
                   onRecovery: _recovery,
-                  selectedIndex: (() {
-                    final data = ref.watch(focusDataProvider);
-                    final slot = data.countdownPreset;
-                    return data.preferences.presets
-                        .take(slot)
-                        .whereType<int>()
-                        .length;
-                  })(),
+                  selectedIndex: selectedPreset,
                   onSelected: (seconds) {
                     _dial.finish();
                     _actions.selectCountdownPreset(seconds);
@@ -581,14 +580,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
                     Flexible(
                       child: SizedBox(
                         width: ts.sizing.actionMinInline,
-                        child: CommonButton(
-                          key: const ValueKey('focus-primary'),
-                          label: label,
-                          kind: CommonButtonKind.accent,
-                          size: CommonControlSize.lg,
-                          shape: CommonButtonShape.pill,
-                          block: true,
-                          onPressed: _dial.value ? null : _primary,
+                        child: ListenableBuilder(
+                          listenable: _dial,
+                          builder: (context, _) => CommonButton(
+                            key: const ValueKey('focus-primary'),
+                            label: label,
+                            kind: CommonButtonKind.accent,
+                            size: CommonControlSize.lg,
+                            shape: CommonButtonShape.pill,
+                            block: true,
+                            onPressed: _dial.value ? null : _primary,
+                          ),
                         ),
                       ),
                     ),
@@ -604,11 +606,15 @@ class _FocusPageState extends ConsumerState<FocusPage>
     );
   }
 
-  Widget _dim(Widget child) => AnimatedOpacity(
-    opacity: _dial.value ? .35 : 1,
-    duration: MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : TS.of(context).motion.durationFast,
+  Widget _dim(Widget child) => ListenableBuilder(
+    listenable: _dial,
+    builder: (context, child) => AnimatedOpacity(
+      opacity: _dial.value ? .35 : 1,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : TS.of(context).motion.durationFast,
+      child: child,
+    ),
     child: child,
   );
 

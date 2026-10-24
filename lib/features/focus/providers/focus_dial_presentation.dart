@@ -10,6 +10,17 @@ class FocusDialPresentation {
   const FocusDialPresentation(this.session, this.view);
   final FocusSession? session;
   final FocusViewData view;
+
+  /// Sub-second elapsed and anchor stay on the session for the dial ticker.
+  /// Listeners rebuild when the visible second, status, laps, or identity change.
+  @override
+  bool operator ==(Object other) =>
+      other is FocusDialPresentation &&
+      session?.id == other.session?.id &&
+      view == other.view;
+
+  @override
+  int get hashCode => Object.hash(session?.id, view);
 }
 
 final focusDialPresentationProvider =

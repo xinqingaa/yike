@@ -33,7 +33,7 @@ final Map<String, WidgetBuilder> appRoutes = {
                   ? null
                   : TimerMode.values.byName(args.mode!),
             )
-          : ReviewSelection(anchor: DateTime.now()),
+          : null,
     );
   },
   AppRoutes.habitDetail: (_) => const HabitDetailPage(),

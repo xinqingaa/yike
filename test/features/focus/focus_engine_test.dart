@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yike/features/focus/focus_models.dart';
+import 'package:yike/features/focus/providers/focus_dial_presentation.dart';
 
 void main() {
   final start = DateTime(2026, 10, 16, 12);
@@ -12,6 +13,30 @@ void main() {
     FocusData(mode: mode, countdown: target, preferences: prefs),
     start,
     'session-a',
+  );
+
+  test(
+    'dial presentation stays equal while the visible second is unchanged',
+    () {
+      final started = running(TimerMode.stopwatch);
+      final later = FocusEngine.advance(
+        started,
+        start.add(const Duration(milliseconds: 250)),
+      );
+      expect(later.view, started.view);
+      expect(
+        FocusDialPresentation(later.session, later.view),
+        FocusDialPresentation(started.session, started.view),
+      );
+      final nextSecond = FocusEngine.advance(
+        started,
+        start.add(const Duration(seconds: 1)),
+      );
+      expect(
+        FocusDialPresentation(nextSecond.session, nextSecond.view),
+        isNot(FocusDialPresentation(started.session, started.view)),
+      );
+    },
   );
 
   test(

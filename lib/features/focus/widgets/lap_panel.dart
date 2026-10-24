@@ -164,11 +164,13 @@ class _LapPanelState extends ConsumerState<LapPanel>
   Widget build(BuildContext context) {
     final ts = TS.of(context);
     _bounce.duration = ts.motion.durationFast;
-    final session = ref.watch(focusDataProvider.select((d) => d.session));
+    final alive = ref.watch(
+      focusDataProvider.select((d) => d.session?.id == widget.sessionId),
+    );
     final value = ref
         .watch(focusDialPresentationProvider(TimerMode.stopwatch))
         .view;
-    if (session?.id != widget.sessionId) {
+    if (!alive) {
       _closeIfGone();
       return const SizedBox.shrink();
     }

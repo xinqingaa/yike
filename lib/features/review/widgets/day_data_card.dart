@@ -10,11 +10,6 @@ import '../../habits/habits.dart';
 import '../logic/review_statistics.dart';
 import 'review_labels.dart';
 
-String dateWeekLabel(String date) {
-  final day = DateTime.parse(date);
-  return '${day.month}月${day.day}日 周${const ['一', '二', '三', '四', '五', '六', '日'][day.weekday - 1]}';
-}
-
 class ReviewDayTarget extends ConsumerWidget {
   const ReviewDayTarget({
     super.key,
@@ -103,7 +98,7 @@ class DayDataCard extends ConsumerWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: ts.spacing.xs),
             child: Text(
-              '专注 ${metrics.sessions}次 $duration',
+              '专注 $duration · ${metrics.sessions}次',
               style: ts.textStyle.content,
             ),
           ),

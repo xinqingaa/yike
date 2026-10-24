@@ -5,6 +5,7 @@ import '../../../common/widgets/charts/year_grid.dart';
 import '../../../common/time.dart';
 import '../../../theme/ts.dart';
 import '../../focus/focus_models.dart';
+import '../logic/focus_duration_level.dart';
 import 'day_data_card.dart';
 
 class FocusYearPlot extends StatelessWidget {
@@ -47,7 +48,10 @@ class FocusYearPlot extends StatelessWidget {
             onScroll: card.close,
             cellBuilder: (context, cell, size) {
               if (cell.value == null) {
-                return CommonHeatmapBlock(size: size, color: ts.heatmapOutside);
+                return CommonHeatmapBlock(
+                  size: size,
+                  color: _focusDayColor(ts, 0),
+                );
               }
               return ReviewDayTarget(
                 date: cell.date,
@@ -86,7 +90,7 @@ class FocusYearPlot extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text('少', style: ts.textStyle.micro),
-            for (final value in [0.0, 1800.0, 5400.0, 5401.0])
+            for (final value in focusDurationLegendSeconds)
               Padding(
                 padding: EdgeInsets.only(left: ts.spacing.xs),
                 child: CommonHeatmapBlock(
@@ -104,13 +108,7 @@ class FocusYearPlot extends StatelessWidget {
 }
 
 Color _focusDayColor(TS ts, double seconds) {
-  final level = seconds == 0
-      ? 0
-      : seconds <= 1800
-      ? 1
-      : seconds <= 5400
-      ? 2
-      : 3;
+  final level = focusDurationLevel(seconds);
   // One hue, equal steps. Zero is the lightest; the top stays short of solid primary.
   return Color.lerp(
     ts.colors.background,

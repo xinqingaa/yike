@@ -67,7 +67,7 @@ class _DayDetailSheetState extends ConsumerState<DayDetailSheet> {
       Padding(
         padding: EdgeInsets.symmetric(vertical: ts.spacing.sm),
         child: Text(
-          '${parsed.month}月${parsed.day}日 周${const ['一', '二', '三', '四', '五', '六', '日'][parsed.weekday - 1]}',
+          dateWeekLabel(date),
           key: const ValueKey('day-detail-date'),
           style: ts.textStyle.subtitle,
         ),

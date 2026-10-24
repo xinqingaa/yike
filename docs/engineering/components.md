@@ -44,7 +44,7 @@
 | `CommonWheelPicker` | 1–3 列独立滚轮；数字自身在列内居中、单位紧邻右侧，窄列等比缩放，外部状态可更新 |
 | `CommonRingProgress` / `CommonMetric` / `CommonTag` | 自绘环形进度、指标数值与只读标签 |
 | `CommonMiniBars` | 自绘柱状趋势；保留原始读数语义，长序列横向滚动 |
-| `CommonHeatmap` | 自绘日期热力图；缺失与零值不同，受控选择，可替换只读图层 |
+| `CommonHeatmap` | 把日期整理成周，并承载标签、语义和调用方提供的年格 |
 | `CommonMonthCalendar` | 显式 month/today、UTC 日期、禁用日与自定义日单元；不读取系统日期 |
 | `CommonListCell` / `CommonGroupedList` | Row 样式列表单元与稳定分组；使用外层滚动 |
 | `CommonBrandMark` | 品牌资源/Widget 槽位，缺资源时名称兜底 |
@@ -135,6 +135,6 @@ AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay
 
 `AppDataCard` 在 overlay 内封装 Pop.menu 和私有句柄；feature 通过 DataCardTarget 提供锚点、内容与操作。数据卡是非模态查看层，透明穿透滚动，用 TapRegion 处理外点关闭，页面在滚动/选择变化时关闭；路由、Tab 不可见与后台同样关闭。锚点摆放与避边由统一库处理，不另建几何算法。宽度用本地 dataCardWidth，默认 260，并支持缩放/插值。
 
-`CommonPressableSurface` 支持可选 onLongPress；短按与长按均使用现有主题反馈。`CommonMonthCalendar.dayInteractionBuilder` 将日期视觉与 FocusNode 一起交给调用方，在同一个 CommonPressableSurface 上处理点击与长按，避免嵌套命中区域；方向键与默认日期选择行为保持，不增加选中事实。CommonYearGrid 共用年度日期排布与横向滚动，习惯详情和最近一年专注都使用它。CommonHeatmapBlock 绘制无边框实色格；创建前、未来和周对齐占位用最浅色，调用方决定是否响应。
+`CommonPressableSurface` 支持可选 onLongPress；短按与长按均使用现有主题反馈。`CommonMonthCalendar.dayInteractionBuilder` 将日期视觉与 FocusNode 一起交给调用方，在同一个 CommonPressableSurface 上处理点击与长按，避免嵌套命中区域；方向键与默认日期选择行为保持，不增加选中事实。CommonYearGrid 共用年度日期排布与横向滚动，习惯详情和最近一年专注都使用它。CommonHeatmap 只提供周数据、标签和语义，不再自绘描边格子。CommonHeatmapBlock 绘制无边框实色格。习惯年格的创建前、未来和周对齐占位用 heatmapOutside；专注年格的周对齐占位与零时长同一档主色。调用方决定格子是否响应。
 
 日期查看统一使用 DataCardTarget，在同一 CommonPressableSurface 上将 onPressed/onLongPress 接到同一个 show；每日记录 Sheet 仅由专注日期卡中的明确入口打开；返回优先关闭当前 Menu，关闭后再返回来源页面。热力图默认与查看状态均使用无边框色块，键盘焦点仍沿用公共按压组件的可访问性反馈。

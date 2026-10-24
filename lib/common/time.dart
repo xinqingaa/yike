@@ -1,6 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'clock.dart';
 
+const weekdayLabels = ['一', '二', '三', '四', '五', '六', '日'];
+
+String weekdayLabel(DateTime date) => weekdayLabels[date.weekday - 1];
+
+String dateWeekLabel(String date) {
+  final day = DateTime.parse(date);
+  return '${day.month}月${day.day}日 周${weekdayLabel(day)}';
+}
+
 String dayId(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 DateTime dayOnly(DateTime date) =>

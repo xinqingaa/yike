@@ -16,7 +16,7 @@
 | `/` | `BootstrapPage` | 默认入口；首帧展示品牌页后替换到 `/home`，减少动态效果时直接展示根页面 |
 | `/home` | `YikeHomePage` | 专注、打卡、回顾三个根 Tab；没有额外路由参数 |
 | `/settings` | `YikeSettingsPage` | 从专注打开，返回原根页面；可选 `SettingsRouteArguments(openCountdownPresets: true)` 首帧后自动展开常用项面板 |
-| `/statistics` | `StatisticsPage` | `StatisticsRouteArguments` 传入 anchor/month/mode；页面独立保留选择，返回不覆盖回顾 |
+| `/statistics` | `StatisticsPage` | `StatisticsRouteArguments` 传入 anchor/month/mode；缺省参数时锚点取应用时钟的今天，不读系统日历。页面独立保留选择，返回不覆盖回顾 |
 | `/habit` | `HabitDetailPage` | `RouteSettings.arguments` 为习惯 ID（`String`）；缺失或已删除时展示不存在状态 |
 
 `AppStartup` 在进入默认路由前初始化 AppPrefs，失败时提供重试；页面切换和返回前台不会重新初始化。启动准备与 Bootstrap 的具体视觉偏差见 [已知缺口](../known-gaps.md)。

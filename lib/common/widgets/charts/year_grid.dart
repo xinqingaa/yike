@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../common/time.dart';
 import '../../../theme/ts.dart';
 import 'calendar_dates.dart';
 
@@ -82,7 +83,7 @@ class _CommonYearGridState extends State<CommonYearGrid> {
           child: Column(
             children: [
               SizedBox(height: header),
-              for (final day in ['一', '二', '三', '四', '五', '六', '日'])
+              for (final day in weekdayLabels)
                 SizedBox(
                   height: stride,
                   child: Align(

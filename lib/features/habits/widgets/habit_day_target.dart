@@ -86,10 +86,7 @@ class HabitDayCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${day.month}月${day.day}日 周${const ['一', '二', '三', '四', '五', '六', '日'][day.weekday - 1]}',
-          style: ts.textStyle.subtitle,
-        ),
+        Text(dateWeekLabel(dayId(day)), style: ts.textStyle.subtitle),
         SizedBox(height: ts.spacing.sm),
         Text('$status${done ? time : ''}', style: ts.textStyle.content),
         if (before && !done) ...[

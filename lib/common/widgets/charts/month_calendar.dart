@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../common/time.dart';
 import '../../../theme/ts.dart';
 import '../action/icon.dart';
 import '../action/icon_button.dart';
@@ -168,7 +169,7 @@ class _CommonMonthCalendarState extends State<CommonMonthCalendar> {
           ],
           Row(
             children: [
-              for (final day in const ['一', '二', '三', '四', '五', '六', '日'])
+              for (final day in weekdayLabels)
                 Expanded(
                   child: SizedBox(
                     height: ts.sizing.controlSm,

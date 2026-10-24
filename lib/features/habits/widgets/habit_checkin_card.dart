@@ -150,7 +150,7 @@ class _WeekDay extends StatelessWidget {
         current = id == dayId(today),
         before = id.compareTo(habit.created) < 0,
         future = date.isAfter(today);
-    final label = const ['一', '二', '三', '四', '五', '六', '日'][date.weekday - 1];
+    final label = weekdayLabel(date);
     return Semantics(
       label:
           '$id，周$label，${current ? '今天，' : ''}${done

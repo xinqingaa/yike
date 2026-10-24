@@ -25,8 +25,8 @@ String _delta(num value, {bool days = false}) => value == 0
     : '${value > 0 ? '+' : '−'}${days ? '${value.abs().toInt()}天' : overviewDuration(value.abs())}';
 
 class StatisticsPage extends ConsumerStatefulWidget {
-  const StatisticsPage({super.key, required this.initial});
-  final ReviewSelection initial;
+  const StatisticsPage({super.key, this.initial});
+  final ReviewSelection? initial;
   @override
   ConsumerState<StatisticsPage> createState() => _StatisticsPageState();
 }
@@ -66,7 +66,9 @@ class _StatisticsPageState extends ConsumerState<StatisticsPage>
     }
   }
 
-  late final _selection = localValueProvider(widget.initial);
+  late final _selection = localValueProvider(
+    widget.initial ?? ReviewSelection(anchor: ref.read(todayProvider)),
+  );
   final _card = AppDataCard();
   TrendWindow? _window;
   @override

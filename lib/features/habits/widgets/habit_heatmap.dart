@@ -112,7 +112,12 @@ class HabitHeatmapLegend extends StatelessWidget {
             children: [
               CommonHeatmapBlock(
                 size: ts.spacing.smPlus,
-                color: _heatColor(ts, states.indexOf(state)),
+                color: habitDayColor(
+                  ts,
+                  done: state == '完成',
+                  inactive: state == '创建前/未来',
+                  archived: state == '归档',
+                ),
               ),
               SizedBox(width: ts.spacing.xs),
               Text(state, style: ts.textStyle.micro),
@@ -122,10 +127,3 @@ class HabitHeatmapLegend extends StatelessWidget {
     );
   }
 }
-
-Color _heatColor(TS ts, int state) => switch (state) {
-  0 => ts.colors.primary,
-  1 => ts.heatmapEmpty,
-  2 => ts.heatmapArchived,
-  _ => ts.heatmapOutside,
-};
