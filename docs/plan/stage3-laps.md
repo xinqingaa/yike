@@ -1,6 +1,6 @@
 # 第三阶段：记圈
 
-状态：已实现，等待用户 Android / iOS 真机验收；用户于 2026-10-24 确认与第四阶段合并实施；阶段 5、6 不启动。返回 [计划索引](README.md)。
+状态：已实施，用户于 2026-10-24 验收通过。返回 [计划索引](README.md)。本页保留最终范围，不保留临时验收与交接过程。阶段 5、6 不启动。
 
 ## 已确认布局与交互
 
@@ -25,34 +25,5 @@
 - [x] 专注页入口与右侧 Sheet、全部圈操作、会话结束与完成态。
 - [x] 圈统计、并列、列表位置与新圈入口。
 - [x] 三主题挂件、按钮区抛物线、并发/中断/减少动态效果。
-- [x] 必要长期回归测试、集中检查、临时双设备验收入口。
-- [ ] 用户验收通过后清理临时材料，回写规范与缺口。
-
-## 临时验收入口与步骤
-
-本轮临时文件在用户验收通过后清理：
-
-- [手动预览入口](../../tool/stage34_preview.dart)：内存 AppPrefs 与样例历史、8 圈暂停会话，不读写正式 MMKV；声音和震动使用生产服务。退出丢弃样例改动，不能代替正常入口的设备体验。
-- [原生 UI 检查脚本](../../integration_test/stage34_acceptance_test.dart)：相同内存样例和真实反馈，按三主题浏览面板浅深、回顾、数据卡、明细、统计与习惯；截图路径输出前缀 `YIKE_STAGE34_SCREENSHOT=`，运行时复制保存，设备临时目录可能随后失效。
-- 本轮专用截图暂存在 `build/stage34/`（首轮）、`build/stage34-refinement/`（前轮修订）与 `build/stage34-correction/`（统一数据卡与无边框修正），不作为长期规范图片链接；长期回归保留于 `test/stage34_ui_test.dart`、`test/features/review/review_statistics_test.dart` 和原反馈/相关行为测试。
-
-```bash
-# 在仓库根运行；device-id 从 flutter devices 获取
-flutter run -t tool/stage34_preview.dart -d <device-id>
-# 可选：水位、深色、强制减少动态效果；系统减少动态效果同样生效
-flutter run -t tool/stage34_preview.dart -d <device-id> --dart-define=YIKE_STAGE34_THEME=water --dart-define=YIKE_STAGE34_DARK=true --dart-define=YIKE_STAGE34_REDUCE=true
-# 自动 UI 场景，不卸载
-flutter test integration_test/stage34_acceptance_test.dart -d <device-id> --no-uninstall
-# 正常应用最终设备体验
-flutter run -t lib/main.dart -d <device-id>
-```
-
-建议 Android / iOS 各验收：
-
-1. 主页面直接暂停/继续，检查结束并记录/取消可用且没有直接计圈按钮；再打开“计圈记录 · N 圈 ›”，继续后等待至少 1 秒计圈；看按钮区到右缘挂件的飞行是否自然，计数/列表应立即变化。暂停不新增圈，暂停时不能计圈，恢复同一当前圈。
-2. 翻看旧圈再计圈，旧内容位置应保留，用“新增 N 圈”回顶。试关闭、遮罩、右拖、返回；重开保留圈，不补飞行。开启系统减少动态效果后不飞入。
-3. 取消确认中选择保留，检查原面板和圈仍在；运行或暂停时结束并记录，短时确认可返回。正常入口运行至 59:59 时保留圈与完成态，点“完成”才清除，记录不重复。
-4. 按 [第四阶段验收步骤](stage4-review-stats.md#临时验收与检查结果) 检查回顾、统计与习惯查看。切三主题/浅深，并留意大字号、读屏。
-5. 用正常入口在两设备确认声音/震动的真实感受、总开关和打卡局部门控；模拟器截图与调用断言不证明听感或震感。
-
-用户确认通过后，删除本轮预览入口、原生临时脚本、`build/stage34/`、`build/stage34-refinement/`、`build/stage34-correction/`、本节临时步骤及重复交接内容，保留实现、正式规则、决策与必要回归测试。
+- [x] 必要长期回归测试与集中检查。
+- [x] 用户验收通过；临时预览、原生验收脚本、专用截图与交接说明已清理。
