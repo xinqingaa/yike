@@ -1,6 +1,6 @@
 # 技术方案
 
-状态：第一阶段已实施待用户验收；后续阶段仍为方案稿。返回 [计划索引](README.md)。架构边界沿用 [工程架构](../engineering/architecture.md)，存储规则沿用 [本地存储](../engineering/storage.md)。
+状态：第一阶段已实施并获用户验收；[第二阶段执行计划](stage2-execution.md) 的参数与边界已确认，等待用户启动，后续阶段仍为方案稿。返回 [计划索引](README.md)。架构边界沿用 [工程架构](../engineering/architecture.md)，存储规则沿用 [本地存储](../engineering/storage.md)。
 
 ## 依赖
 
@@ -28,7 +28,8 @@ lib/common/feedback/
 lib/features/focus/
   logic/focus_beats.dart    纯函数：根据会话的有效时间与偏好，计算两次采样之间越过了哪些节拍边界
   providers/focus_feedback.dart  监听会话转换与时钟脉冲，发出节拍和完成反馈
-  providers/dial_adjust.dart     本次时长（只在内存中），提交和清除
+  logic/dial_adjustment.dart     第二阶段拟新增：映射、吸附、边界与反馈档位纯规则
+  providers/focus_presentation.dart  本次时长命令，复用 FocusData 唯一事实源
   widgets/dial_adjuster.dart     手势、惯性、吸附与回弹，包裹 FocusDial
   widgets/lap_badge.dart         侧边挂件与抛物线飞入
   widgets/lap_sheet.dart         右侧记圈面板
