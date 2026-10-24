@@ -129,6 +129,16 @@ AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay
 
 模态深度由应用 ProviderScope 中的 popupActivityProvider 管理，不使用静态全局状态；未保存提示的展开选择也由实例 Provider 管理。
 
+### 第五阶段状态条目标（已确认，尚未实现）
+
+使用单个应用级常驻展示宿主组合最多三行计时状态；任何 AppPop 模态打开时隐藏并禁止交互，最后一层真实退场后恢复，不改变计时。unified_popups 2.2.1 的 `PopupHandle.pause/resume` 及 Host `Offstage/IgnorePointer` 支持挂起时保留内部状态，本地 `AppStatusPopup.suspend` 已封装该语义。
+
+宿主可以保活，但完成条不能常驻：可见行自然完成后拉满 / 标记、短停留并自动退场；新行、行增减、外壳高度、页面避让及模式转场须同步过渡。库 pause / resume 不包含这些动画，应在本地呈现层先完成受控淡出再挂起，交互在隐藏意图产生时立即关闭；恢复从最新运行 / 暂停集合呈现，不补播已错过的完成。持续时长与中断规则统一见 [动效规格](../product/motion.md#第五阶段站内状态条已确认目标尚未实现)，不能用重复开关弹层替代连续过渡。
+
+新增计时调用不能直接复用 `AppStatusPopup.show` 当前固定的 `yike-unsaved` key；须先扩展受控身份，区分未保存与计时宿主，SDK 句柄仍留 overlay。状态条只用玻璃、进度、行点击与一个暂停 / 继续，不创建三个独立 Toast。应用边界统一协调顶部避让和未保存提示，feature 不拼独立 Overlay 或接管表单生命周期。
+
+本模式计圈面板仍允许计时反馈，通用设置 / 编辑 / 确认层不允许；这与“所有模态期间状态条隐藏”是两条不同规则，模态深度不能独自承担反馈来源选择。详见 [第五阶段](../plan/stage5-notifications.md)。
+
 ## 第三、四阶段扩展
 
 `AppSheet.show` / `AppPop.sheet` 增加 direction，记圈调用 right、全高、100% 屏宽（不设置额外 maxWidth）；右侧调用自带安全区、头部与固定操作区，共享封装负责滑动、遮罩、返回、真实 dismissed 及模态深度。其它原有底部调用保持默认。

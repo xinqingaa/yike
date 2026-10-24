@@ -34,13 +34,14 @@
 - [Flutter 独立迭代](decisions/2026-10-23-flutter-development.md)
 - [动效事件与重播](decisions/2026-10-23-motion-policy.md)
 - [秒级时长与统一有效范围](decisions/2026-10-24-duration-rules.md)
+- [三模式并行与前后台提醒](decisions/2026-10-24-parallel-timers-notifications.md)
 - [Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md)
 
 决策记录说明日期、已决定的行为和原因；具体规格仍在所属产品/工程文档维护。
 
 - [记圈与回顾统计联合实施](decisions/2026-10-24-laps-review.md)
 
-[六阶段计划](plan/README.md) 记录实施范围：第一至四阶段已完成并获用户验收。第一、二阶段验收后的常用项、设置入口与试听已合入；第三、四阶段的临时验收脚本、专用截图与交接说明已清理。阶段 5、6 未启动。
+[六阶段计划](plan/README.md) 记录实施范围：第一至四阶段已完成并获用户验收。第一、二阶段验收后的常用项、设置入口与试听已合入；第三、四阶段的临时验收脚本、专用截图与交接说明已清理。第五阶段已核对代码和弹框库，产品组合全部确认、计划定稿、代码未实施；第六阶段未启动。
 
 [Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md) 记录研究与用户接管后的最终修改范围；当前工作区已按该指令修订，用户要求不运行测试，尚无修订后验收结论。[前轮复审提案](reviews/2026-10-23-motion-audit-and-polish-proposal.md) 只保留研究背景，不作为当前实施规格。
 
