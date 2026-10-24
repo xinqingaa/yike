@@ -1,5 +1,9 @@
 PODS:
+  - audio_session (0.0.1):
+    - Flutter
   - Flutter (1.0.0)
+  - flutter_soloud (0.0.1):
+    - Flutter
   - integration_test (0.0.1):
     - Flutter
   - MMKV (2.4.3):
@@ -11,7 +15,9 @@ PODS:
   - MMKVCore (2.4.3)
 
 DEPENDENCIES:
+  - audio_session (from `.symlinks/plugins/audio_session/ios`)
   - Flutter (from `Flutter`)
+  - flutter_soloud (from `.symlinks/plugins/flutter_soloud/ios`)
   - integration_test (from `.symlinks/plugins/integration_test/ios`)
   - mmkv_ios (from `.symlinks/plugins/mmkv_ios/darwin`)
 
@@ -21,15 +27,21 @@ SPEC REPOS:
     - MMKVCore
 
 EXTERNAL SOURCES:
+  audio_session:
+    :path: ".symlinks/plugins/audio_session/ios"
   Flutter:
     :path: Flutter
+  flutter_soloud:
+    :path: ".symlinks/plugins/flutter_soloud/ios"
   integration_test:
     :path: ".symlinks/plugins/integration_test/ios"
   mmkv_ios:
     :path: ".symlinks/plugins/mmkv_ios/darwin"
 
 SPEC CHECKSUMS:
+  audio_session: 9bb7f6c970f21241b19f5a3658097ae459681ba0
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_soloud: a49c4dfe436fd99e47f4777fa270c557f6190054
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
   MMKV: 2d6d4dd9205ea86bf9d5f3cf5fe6796d880d4710
   mmkv_ios: e4ae22537eedc60d1d4b541a01df7cd923835067

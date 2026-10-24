@@ -4,6 +4,7 @@ import '../common/overlay/app_pop.dart';
 import '../common/widgets.dart';
 import '../features/local_data/local_data.dart';
 import 'unsaved_status.dart';
+import 'feedback_boundary.dart';
 import '../theme/ts.dart';
 import 'reset_data.dart';
 
@@ -50,6 +51,6 @@ class LocalDataBoundary extends ConsumerWidget {
         ),
       );
     }
-    return UnsavedStatus(child: child);
+    return FeedbackBoundary(child: UnsavedStatus(child: child));
   }
 }

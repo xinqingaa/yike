@@ -14,7 +14,7 @@
 
 存储接口使用 `PrefsEntry<T>` 绑定键与 Codec，键由 `PrefsKey` 枚举限定在白名单；`AppPrefs.read/write` 调用 Codec 完成类型转换。String、bool、int、double 和版本化 JSON 均经 Codec 保存为字符串。业务 Codec、模型和校验仍在所属 feature；storage 不导入 feature。
 
-初始化错误使用 `PrefsOpenException` 区分存储不可用与文件损坏。读取不存在的键返回 null；键存在但无法解码、底层异常、保存和删除失败均抛出含键与操作的 `PrefsException`，不把错误当作首次使用。`VersionedJsonPrefsCodec` 使用 `{schemaVersion, data}` 对象封装。当前仅接受 schemaVersion 1，未知版本阻断，不自动清除或覆盖原数据。无需兼容旧实例与快照；未来有实际升级需求再添加迁移。打开已有 MMKV 文件前检查完整性，异常时拒绝打开，避免默认恢复策略丢弃数据。
+初始化错误使用 `PrefsOpenException` 区分存储不可用与文件损坏。读取不存在的键返回 null；键存在但无法解码、底层异常、保存和删除失败均抛出含键与操作的 `PrefsException`，不把错误当作首次使用。`VersionedJsonPrefsCodec` 使用 `{schemaVersion, data}` 对象封装。当前仅接受 schemaVersion 1，未知版本阻断，不自动清除或覆盖原数据。除第一阶段新增反馈偏好允许缺字段默认值以外，不提供其它旧实例或快照迁移；未来有实际升级需求再添加迁移。打开已有 MMKV 文件前检查完整性，异常时拒绝打开，避免默认恢复策略丢弃数据。
 
 不要为未提交表单、测试 fixture 或截图专用状态创建生产存储。需要新 key 时先改本文白名单，再改 `AppPrefs`。
 
@@ -33,3 +33,11 @@ JSON 的 schemaVersion 与业务实体身份都必须验证。真正需要发布
 ## 诊断与验证
 
 日志只记录操作、键、版本与错误类别，不输出习惯名称、完整快照或用户记录。FakeAppPrefs 用于类型/故障注入；原生 MMKV 重开与进程重启使用隔离实例，禁止破坏生产 yike 数据。测试替身不能证明磁盘可靠性，验证入口见 [测试](testing.md#原生存储验证)。
+
+## 第一阶段反馈偏好
+
+业务快照 schemaVersion 1 的 TimingPreferences 保留 `sound` 和 `haptics` 为总开关，新增完整 `feedback` 对象，包含 `pomodoro`、`stopwatch`、`countdown`、`habits` 四个来源。三个计时来源各包含 sound / haptics / secondTick（bool）、beatMinutes（0 / 1 / 5 / 10 / 15）；打卡只包含 sound / haptics。
+
+读旧快照（feedback 字段缺失）时，将 sound / haptics 复制到四个来源；旧 beatMinutes（缺省 5）迁到番茄、正计时；旧 secondTick（缺省 true）迁到倒计时。番茄和正计时新增 secondTick=false，倒计时新增 beatMinutes=0；总开关及原来实际生效的选择不被重置。新的 feedback 对象一旦存在就要求四组字段完整、类型及取值合法，null 或部分损坏仍阻断读取并保留文件，不回退默认。保留的旧字段如存在也须合法。
+
+写入总是写完整 feedback 对象，不再写顶层 secondTick / beatMinutes，不增加存储 key，不改变版本号、会话身份或暂停恢复策略。关闭总开关不修改各来源值；测试须覆盖旧 fixture、坏值拒绝、独立配置及重开保持。

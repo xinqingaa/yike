@@ -62,6 +62,14 @@ xcrun simctl io <udid> screenshot <path>
 
 ## iOS 依赖
 
+第一阶段 flutter_soloud 4.1.7 的 iOS 原生构建需要 PATH 中能找到 CMake（包内 CocoaPods 脚本调用 `cmake`）。缺少工具时先确认本机安装方案，不修改 SDK 或强制覆盖依赖。2026-10-24 本机因 Homebrew 与 Command Line Tools 不兼容，经用户确认使用官方 CMake 4.4.4 macOS 通用包。换设备时按 [README 运行](../../README.md#运行) 下载、校验并解压到用户目录，再把 PATH 写入该设备的 shell 配置。已能在 PATH 中找到 CMake 的机器不必改用此路径：
+
+```bash
+export PATH="$HOME/.local/opt/cmake-4.4.4-macos-universal/CMake.app/Contents/bin:$PATH"
+```
+
+Android 构建使用 Android SDK 自带的 CMake 3.22.1，不读取这条 PATH。运行入口见 [README](../../README.md#运行)。
+
 工程通过 CocoaPods 接入原生依赖，`pubspec.yaml` 显式关闭 Swift Package Manager。iOS 部署目标为 15.0，与当前 Xcode 支持的最低部署版本一致。依赖要求以该文件及锁文件为准，不把历史工具链问题写成固定版本禁令。`Pods/`、`.symlinks/` 与 `build/` 为生成目录，不提交。
 
 测试宿主遵守 [状态管理规范](architecture.md#状态管理)。单独挂载 Consumer 组件时由宿主提供 ProviderScope；启动入口自行建立根作用域，偏好与主题作用域覆盖须覆盖实际依赖。

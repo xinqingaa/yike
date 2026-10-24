@@ -2,6 +2,9 @@ import '../../../common/motion/content_transition.dart';
 import '../../focus/focus.dart';
 import '../../../app/reset_data.dart';
 import '../../../common/time.dart';
+import '../../../common/feedback/feedback_cue.dart';
+import '../../../common/feedback/feedback_options.dart';
+import '../../../common/feedback/feedback_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/state/local_value.dart';
@@ -116,6 +119,28 @@ class YikeSettingsPage extends ConsumerWidget {
             CommonGroupedList(
               groups: [
                 CommonListGroup(
+                  id: 'feedback',
+                  title: '记录与反馈',
+                  items: [
+                    CommonListItem(
+                      id: 'sound',
+                      title: '声音总开关',
+                      switchValue: prefs.sound,
+                    ),
+                    CommonListItem(
+                      id: 'haptics',
+                      title: '触感总开关',
+                      switchValue: prefs.haptics,
+                    ),
+                    CommonListItem(
+                      id: 'threshold',
+                      title: '短时记录确认阈值',
+                      value: durationLabel(prefs.threshold),
+                      navigation: true,
+                    ),
+                  ],
+                ),
+                CommonListGroup(
                   id: 'pomodoro',
                   title: '番茄钟',
                   items: [
@@ -143,7 +168,13 @@ class YikeSettingsPage extends ConsumerWidget {
                       value: '每 ${prefs.interval} 轮',
                       navigation: true,
                     ),
+                    ..._feedbackItems(prefs, prefs.pomodoroFeedback),
                   ],
+                ),
+                CommonListGroup(
+                  id: 'stopwatch',
+                  title: '正计时',
+                  items: _feedbackItems(prefs, prefs.stopwatchFeedback),
                 ),
                 CommonListGroup(
                   id: 'countdown',
@@ -155,27 +186,30 @@ class YikeSettingsPage extends ConsumerWidget {
                       value: '${prefs.presets.whereType<int>().length} 项',
                       navigation: true,
                     ),
+                    ..._feedbackItems(prefs, prefs.countdownFeedback),
                   ],
                 ),
                 CommonListGroup(
-                  id: 'feedback',
-                  title: '记录与反馈',
-                  items: [
-                    CommonListItem(
-                      id: 'threshold',
-                      title: '短时记录确认阈值',
-                      value: durationLabel(prefs.threshold),
-                      navigation: true,
-                    ),
-                    CommonListItem(
-                      id: 'sound',
-                      title: '提示音',
-                      switchValue: prefs.sound,
-                    ),
-                  ],
+                  id: 'habits',
+                  title: '打卡反馈',
+                  items: _feedbackItems(
+                    prefs,
+                    prefs.habitFeedback,
+                    timer: false,
+                  ),
                 ),
               ],
               onNavigate: (group, item) async {
+                if (item == 'beatMinutes') {
+                  await AppPop.sheet<void>(
+                    title: '节拍间隔',
+                    material: CommonSurfaceMaterial.glass,
+                    child: _BeatMinutesSheet(
+                      mode: TimerMode.values.byName(group),
+                    ),
+                  );
+                  return;
+                }
                 if (item == 'presets') {
                   openPresetSettings();
                   return;
@@ -227,9 +261,42 @@ class YikeSettingsPage extends ConsumerWidget {
                       ),
                 );
               },
-              onChanged: (_, item, value) => ref
-                  .read(timingPreferencesProvider.notifier)
-                  .update((p) => p.copyWith(sound: value)),
+              onChanged: (group, item, value) {
+                final before = ref.read(timingPreferencesProvider);
+                ref.read(timingPreferencesProvider.notifier).update((p) {
+                  if (group == 'feedback') {
+                    return p.copyWith(
+                      sound: item == 'sound' ? value : null,
+                      haptics: item == 'haptics' ? value : null,
+                    );
+                  }
+                  FeedbackOptions change(FeedbackOptions options) =>
+                      options.copyWith(
+                        sound: item == 'sound' ? value : null,
+                        haptics: item == 'haptics' ? value : null,
+                        secondTick: item == 'secondTick' ? value : null,
+                      );
+                  if (group == 'habits') {
+                    return p.copyWith(habitFeedback: change(p.habitFeedback));
+                  }
+                  final mode = TimerMode.values.byName(group);
+                  return p.withFeedback(mode, change(p.feedbackFor(mode)));
+                });
+                final after = ref.read(timingPreferencesProvider);
+                final scope = group == 'feedback'
+                    ? ref.read(focusDataProvider).mode.name
+                    : group;
+                bool enabled(TimingPreferences p) =>
+                    p.sound &&
+                    (scope == 'habits'
+                        ? p.habitFeedback.sound
+                        : p.feedbackFor(TimerMode.values.byName(scope)).sound);
+                if (item == 'sound' && !enabled(before) && enabled(after)) {
+                  ref
+                      .read(feedbackServiceProvider)
+                      .play(FeedbackCue.preview, theme: pack.id, scope: scope);
+                }
+              },
             ),
             SizedBox(height: ts.spacing.md),
             CommonDataList(
@@ -264,6 +331,39 @@ class YikeSettingsPage extends ConsumerWidget {
       ),
     );
   }
+
+  List<CommonListItem> _feedbackItems(
+    TimingPreferences master,
+    FeedbackOptions options, {
+    bool timer = true,
+  }) => [
+    CommonListItem(
+      id: 'sound',
+      title: '提示音',
+      switchValue: options.sound,
+      disabled: !master.sound,
+    ),
+    CommonListItem(
+      id: 'haptics',
+      title: '触感',
+      switchValue: options.haptics,
+      disabled: !master.haptics,
+    ),
+    if (timer)
+      CommonListItem(
+        id: 'secondTick',
+        title: '每秒滴答',
+        switchValue: options.secondTick,
+        disabled: !master.sound || !options.sound,
+      ),
+    if (timer)
+      CommonListItem(
+        id: 'beatMinutes',
+        title: '节拍间隔',
+        value: options.beatMinutes == 0 ? '关闭' : '${options.beatMinutes} 分钟',
+        navigation: true,
+      ),
+  ];
 
   Future<void> _reset(BuildContext context, WidgetRef ref) async {
     final ts = TS.of(context);
@@ -305,6 +405,40 @@ class YikeSettingsPage extends ConsumerWidget {
       (route) => route.settings.name == AppRoutes.home || route.isFirst,
     );
   }
+}
+
+class _BeatMinutesSheet extends ConsumerWidget {
+  const _BeatMinutesSheet({required this.mode});
+  final TimerMode mode;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => AppSheetContent(
+    body: CommonRadioGroup<int>(
+      value: ref.watch(
+        timingPreferencesProvider.select(
+          (p) => p.feedbackFor(mode).beatMinutes,
+        ),
+      ),
+      options: [
+        for (final value in const [0, 1, 5, 10, 15])
+          CommonChoiceOption(
+            value: value,
+            label: value == 0 ? '关闭' : '$value 分钟',
+          ),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          ref
+              .read(timingPreferencesProvider.notifier)
+              .update(
+                (p) => p.withFeedback(
+                  mode,
+                  p.feedbackFor(mode).copyWith(beatMinutes: value),
+                ),
+              );
+        }
+      },
+    ),
+  );
 }
 
 class _IntervalSheet extends ConsumerStatefulWidget {

@@ -1,15 +1,17 @@
 # 技术方案
 
-状态：方案稿。返回 [计划索引](README.md)。架构边界沿用 [工程架构](../engineering/architecture.md)，存储规则沿用 [本地存储](../engineering/storage.md)。
+状态：第一阶段已实施待用户验收；后续阶段仍为方案稿。返回 [计划索引](README.md)。架构边界沿用 [工程架构](../engineering/architecture.md)，存储规则沿用 [本地存储](../engineering/storage.md)。
 
 ## 依赖
 
 | 依赖 | 版本 | 用途 | 说明 |
 | --- | --- | --- | --- |
-| flutter_soloud | 5.2.1（固定） | 预加载的短音效，低延迟、可以同时播放多个 | iOS 最低版本要求 13，当前工程是 15，满足 |
+| flutter_soloud | 4.1.7（固定，2026-10-24 用户确认替换） | 预加载的短音效，低延迟、可以同时播放多个 | iOS 最低版本要求 13，当前工程是 15，满足 |
 | audio_session | 0.2.4（固定） | 把 iOS 音频会话设为 ambient 并与其它音频混音 | flutter_soloud 本身不管理系统音频会话 |
 | flutter_local_notifications | 22.3.2（固定） | 阶段 5 的后台到点通知和习惯提醒 | 阶段 5 开始前不加入 |
 | HapticFeedback | Flutter 内置 | 震动 | 不需要额外依赖或权限 |
+
+原计划 5.2.1 的 native_toolchain_c 要求 meta ^1.19.0，与当前 Flutter SDK 固定的 meta 1.18.0 冲突；用户确认改为 4.1.7，保持 SDK，不添加 dependency_overrides。
 
 不加入 audioplayers，它的延迟不适合每秒和拨动的反馈。不加入图表库，统计图形按现有做法用 CustomPainter 实现，以便适配三主题的笔触。
 
@@ -48,7 +50,7 @@ common/feedback 不依赖任何 feature。主题音色通过 `TS.pack.id` 选择
 - 节拍：focus_feedback 监听现有的 250ms 时钟脉冲，每次用 FocusProjection 计算当前有效秒数，与上一次采样比较，由 focus_beats 返回这一段越过的边界（倒计时的每一秒、最后 10 秒、间隔分钟）。两次采样之间越过多个边界时只播放最后一个，避免一次补播一串。
 - 进入后台、页面重建、会话 id 或阶段变化、暂停时，重置上一次采样，不补播。
 - 完成：沿用现有的 focusCompletionEventsProvider。声音和震动不再要求专注页可见，只要求应用在前台；视觉收束的可见性门控保持不变。
-- 打卡、计圈、开始和暂停：在发出业务命令的位置直接调用 FeedbackService，与业务成功与否无关（命令被拒绝时，例如重复计圈，不发反馈）。
+- 打卡、计圈、开始和暂停：在发出业务命令的位置直接调用 FeedbackService，有效动作被内存接受后立即反馈，不等待落盘成功；被拒绝的动作（例如重复计圈）不反馈。
 
 250ms 的脉冲意味着每秒滴答可能有最多 250ms 的相位误差，但节奏仍然是每秒一次。如果真机上听起来不均匀，再给 focus_feedback 单独加一个对齐到整秒的计时器，这不影响业务计时。
 
@@ -56,15 +58,11 @@ common/feedback 不依赖任何 feature。主题音色通过 `TS.pack.id` 选择
 
 ### 偏好
 
-TimingPreferences 新增三个字段，随业务快照保存：
+2026-10-24 用户确认：TimingPreferences 的 sound / haptics 作为总开关，feedback 对象持有四个来源的独立配置。番茄 / 正计时 / 倒计时各有 sound、haptics、secondTick、beatMinutes；打卡仅 sound、haptics。共用纯值类型 FeedbackOptions 放 common/feedback，不依赖 feature。
 
-| 字段 | 类型 | 默认 |
-| --- | --- | --- |
-| haptics | bool | true |
-| secondTick | bool | true |
-| beatMinutes | int，取值 0、1、5、10、15 | 5 |
+FeedbackService 接受通用字符串 scope，业务调用明确带入事件来源。应用边界发布全局及各 scope 的当前设置；声音按 scope 记录播放句柄，关闭局部声音只停止该来源，第二次强触在触发前重新检查对应 scope。服务不根据当前页面或 Tab 选择模式。
 
-快照目前只接受 schemaVersion 1，并且存储规范写明了“无需兼容旧实例”。这三个字段读取时如果不存在就使用默认值，所以不需要提高版本号；写出时总是写全。这一点会在存储文档中注明。
+旧 schemaVersion 1 缺少 feedback 时按原有效行为迁移；存在但损坏时阻断。写出完整嵌套对象，不再写顶层 secondTick / beatMinutes。具体映射和坏值规则见 [存储规范](../engineering/storage.md#第一阶段反馈偏好)。
 
 ### 本次时长
 

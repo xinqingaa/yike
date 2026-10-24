@@ -7,6 +7,7 @@ asset/
   base/icons/        公共图标
   yike/icons/        yike 专属图标
   yike/artwork/      yike 主题图形与状态图层
+  yike/sound/        Flutter 自有三主题短音效
 ```
 
 同一目录内按资源用途扩展 `images/` 等子目录，不按页面另存公共资源，不在多个归属下复制同一文件。新增文件须同时登记 `pubspec.yaml`；禁止把整个原型目录复制进应用资源包。
@@ -38,3 +39,7 @@ PNG 的像素尺寸与界面逻辑尺寸分开：组件通过主题指定显示�
 页面采集只固定资源身份、源摘要、使用信息和截图，正常路径不再重复归档 DS 原文件；页面可见图像实际加载失败仍使对应 Case 失败。消费页面 Evidence 时，图标信息可在节点 props 的 name/icons 中读取，表盘的 props.artwork 分开保留 declared、sourceDigest 与实际 image views。配合本地生成清单选择已有 PNG，不从 URL 或截图猜资源。
 
 固定版本不匹配时记录同步缺口，不以相似图代替。逐资产实际使用核验与历史原稿恢复的限制见 [专项说明](../integrations/proto-bridge.md)；旧归档 Blob 保持原有固定读取兼容。
+
+## 仓库内合成音效
+
+`tool/synth-sounds.mjs` 使用 Node 内置模块生成 `asset/yike/sound/{mechanical|water|sundial}-{tick|chime|finish}.wav`，共 9 个文件，16 位 PCM、44.1kHz、单声道，每段小于 150KB。来源为本仓库原创程序合成，无外部采样；以固定公式与包络可重复生成。资源已在 pubspec 登记，由 common/feedback 的类型化主题映射消费。它们不属于导入基线，不运行 DS 同步；合成脚本是产品资源维护工具，用户验收后保留。

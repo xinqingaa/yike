@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_soloud: 4.1.7
+  audio_session: 0.2.4
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.4.3
   mmkv: ^2.4.3
@@ -28,6 +30,7 @@ flutter:
     enable-swift-package-manager: false
   uses-material-design: true
   assets:
+    - asset/yike/sound/
     - asset/yike/artwork/
     - asset/base/icons/
     - asset/yike/icons/

@@ -14,7 +14,7 @@
 
 ## 当前实现
 
-Flutter 工程已有上述页面、设置和启动页，以及三主题、导航和表单交互。已接入本地计时、历史结算、习惯与打卡、统计、偏好及快照恢复；已接入三主题计时与打卡反馈、导航及内容过渡、未保存自定义浮层与更新隔离，本轮实现和验证范围见 [动效实施记录](docs/reviews/2026-10-23-motion-implementation.md)。完整移动视觉与真机性能验收仍未完成。具体状态与待决事项见 [已知缺口](docs/known-gaps.md)。
+Flutter 工程已有上述页面、设置和启动页，以及三主题、导航和表单交互。已接入本地计时、历史结算、习惯与打卡、统计、偏好及快照恢复；已接入三主题计时与打卡反馈、导航及内容过渡、未保存自定义浮层与更新隔离，本轮实现和验证范围见 [动效实施记录](docs/reviews/2026-10-23-motion-implementation.md)。完整移动视觉与真机性能验收仍未完成。第一阶段已接入三主题音效、系统触感、两级开关与独立模式 / 打卡配置，修复正计时记圈溢出；集中行为检查和模拟器 UI 检查已完成，声音听感及真实震感待用户验收，通知未接入。具体状态与待决事项见 [已知缺口](docs/known-gaps.md)。
 
 ## 运行
 
@@ -25,6 +25,19 @@ flutter run -d <device-id>
 ```
 
 需要 Flutter SDK，Dart 版本须满足 `pubspec.yaml` 中的 `^3.12.0`。iOS 使用 Xcode 与 CocoaPods。完整检查和设备验证见 [测试与视觉验证](docs/engineering/testing.md)。
+
+iOS 原生构建会调用 PATH 中的 CMake。换设备时下载官方 macOS 通用包 4.4.4，核对 SHA-256 后解压到用户目录，再把最后一行写入该设备的 shell 配置（如 `~/.zshrc`）。新开终端后运行。不要再安装第二份。
+
+```bash
+mkdir -p "$HOME/.local/opt"
+curl -fL -o /tmp/cmake-4.4.4-macos-universal.tar.gz \
+  https://github.com/Kitware/CMake/releases/download/v4.4.4/cmake-4.4.4-macos-universal.tar.gz
+echo "4b7b73704b1db9b374e5c9ab8e17ac6148b817b6396ee75cd94a852cbac9d305  /tmp/cmake-4.4.4-macos-universal.tar.gz" | shasum -a 256 -c -
+tar -xzf /tmp/cmake-4.4.4-macos-universal.tar.gz -C "$HOME/.local/opt"
+export PATH="$HOME/.local/opt/cmake-4.4.4-macos-universal/CMake.app/Contents/bin:$PATH"
+```
+
+校验值来自该版本发布文件 `cmake-4.4.4-SHA-256.txt`。解压后的可执行文件是 `~/.local/opt/cmake-4.4.4-macos-universal/CMake.app/Contents/bin/cmake`。Android 构建使用 Android SDK 自带的 CMake 3.22.1，不读取这条 PATH。
 
 ## 文档
 

@@ -504,7 +504,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
                     ),
                     if (value.finished)
                       Text(
-                        prefs.sound ? '提示音已开启' : '提示音已关闭',
+                        prefs.sound && prefs.pomodoroFeedback.sound
+                            ? '提示音已开启'
+                            : '提示音已关闭',
                         style: ts.textStyle.caption,
                       ),
                   ],

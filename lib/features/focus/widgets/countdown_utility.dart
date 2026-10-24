@@ -79,7 +79,8 @@ class CountdownUtility extends StatelessWidget {
                       children: [
                         Text(
                           value.finished
-                              ? preferences.sound
+                              ? preferences.sound &&
+                                        preferences.countdownFeedback.sound
                                     ? '提示音已开启'
                                     : '提示音已关闭'
                               : '本次 ${durationLabel(value.target)}',

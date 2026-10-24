@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../common/feedback/feedback_options.dart';
 
 enum TimerMode { pomodoro, stopwatch, countdown }
 
@@ -123,10 +124,33 @@ class TimingPreferences {
     this.interval = 4,
     this.threshold = 10,
     this.sound = true,
+    this.haptics = true,
+    this.pomodoroFeedback = const FeedbackOptions(),
+    this.stopwatchFeedback = const FeedbackOptions(),
+    this.countdownFeedback = const FeedbackOptions(
+      secondTick: true,
+      beatMinutes: 0,
+    ),
+    this.habitFeedback = const FeedbackOptions(beatMinutes: 0),
     this.presets = const [180, 300, 600, 1200],
   });
   final int focusMinutes, shortMinutes, longMinutes, interval, threshold;
-  final bool sound;
+  final bool sound, haptics;
+  final FeedbackOptions pomodoroFeedback,
+      stopwatchFeedback,
+      countdownFeedback,
+      habitFeedback;
+  FeedbackOptions feedbackFor(TimerMode mode) => switch (mode) {
+    TimerMode.pomodoro => pomodoroFeedback,
+    TimerMode.stopwatch => stopwatchFeedback,
+    TimerMode.countdown => countdownFeedback,
+  };
+  TimingPreferences withFeedback(TimerMode mode, FeedbackOptions value) =>
+      copyWith(
+        pomodoroFeedback: mode == TimerMode.pomodoro ? value : null,
+        stopwatchFeedback: mode == TimerMode.stopwatch ? value : null,
+        countdownFeedback: mode == TimerMode.countdown ? value : null,
+      );
   final List<int?> presets;
   TimingPreferences copyWith({
     int? focusMinutes,
@@ -135,6 +159,11 @@ class TimingPreferences {
     int? interval,
     int? threshold,
     bool? sound,
+    bool? haptics,
+    FeedbackOptions? pomodoroFeedback,
+    FeedbackOptions? stopwatchFeedback,
+    FeedbackOptions? countdownFeedback,
+    FeedbackOptions? habitFeedback,
     List<int?>? presets,
   }) => TimingPreferences(
     focusMinutes: focusMinutes ?? this.focusMinutes,
@@ -143,6 +172,11 @@ class TimingPreferences {
     interval: interval ?? this.interval,
     threshold: threshold ?? this.threshold,
     sound: sound ?? this.sound,
+    haptics: haptics ?? this.haptics,
+    pomodoroFeedback: pomodoroFeedback ?? this.pomodoroFeedback,
+    stopwatchFeedback: stopwatchFeedback ?? this.stopwatchFeedback,
+    countdownFeedback: countdownFeedback ?? this.countdownFeedback,
+    habitFeedback: habitFeedback ?? this.habitFeedback,
     presets: presets ?? this.presets,
   );
 }

@@ -83,6 +83,7 @@ class LapList extends StatelessWidget {
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
@@ -90,36 +91,39 @@ class LapList extends StatelessWidget {
           child: columns('圈次', '单圈', '累计', header: true),
         ),
         SizedBox(height: ts.spacing.xs),
-        SizedBox(
-          height: rowHeight * (compact ? 2 : 3),
-          child: MotionList<int>(
-            key: const ValueKey('lap-scroll'),
-            items: [for (var n = value.laps.length + 1; n > 0; n--) n],
-            identity: (number) => number,
-            itemBuilder: (context, number) {
-              final current = number == value.laps.length + 1;
-              final total = current ? value.seconds : value.laps[number - 1];
-              final previous = number > 1 ? value.laps[number - 2] : 0;
-              return Container(
-                key: ValueKey('lap-row-$number'),
-                constraints: BoxConstraints(minHeight: rowHeight),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: current ? ts.colors.primarySoft : Colors.transparent,
-                  borderRadius: BorderRadius.circular(ts.radius.sm),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: ts.spacing.xs),
-                child: columns(
-                  current
-                      ? '${value.paused ? '暂停' : '当前'} · $number'
-                      : '$number',
-                  timerDigits(total - previous),
-                  timerDigits(total),
-                  index: number,
-                  current: current,
-                ),
-              );
-            },
+        Flexible(
+          fit: FlexFit.loose,
+          child: SizedBox(
+            height: rowHeight * (compact ? 2 : 3),
+            child: MotionList<int>(
+              key: const ValueKey('lap-scroll'),
+              items: [for (var n = value.laps.length + 1; n > 0; n--) n],
+              identity: (number) => number,
+              itemBuilder: (context, number) {
+                final current = number == value.laps.length + 1;
+                final total = current ? value.seconds : value.laps[number - 1];
+                final previous = number > 1 ? value.laps[number - 2] : 0;
+                return Container(
+                  key: ValueKey('lap-row-$number'),
+                  constraints: BoxConstraints(minHeight: rowHeight),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: current ? ts.colors.primarySoft : Colors.transparent,
+                    borderRadius: BorderRadius.circular(ts.radius.sm),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: ts.spacing.xs),
+                  child: columns(
+                    current
+                        ? '${value.paused ? '暂停' : '当前'} · $number'
+                        : '$number',
+                    timerDigits(total - previous),
+                    timerDigits(total),
+                    index: number,
+                    current: current,
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],

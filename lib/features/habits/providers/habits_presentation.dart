@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/clock.dart';
+import '../../../common/feedback/feedback_cue.dart';
+import '../../../common/feedback/feedback_service.dart';
+import '../../../theme/ts.dart';
 import '../../../common/time.dart';
 import '../../../common/state/local_value.dart';
 import '../../../app/navigation.dart';
@@ -142,6 +145,13 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
                 : HabitFeedbackKind.removed,
           ),
         );
+    ref
+        .read(feedbackServiceProvider)
+        .play(
+          previous == null ? FeedbackCue.chime : FeedbackCue.select,
+          theme: ref.read(themePackProvider).id,
+          scope: 'habits',
+        );
     return ticket;
   }
 
@@ -177,6 +187,13 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
     ]);
     if (result.accepted) {
       ref
+          .read(feedbackServiceProvider)
+          .play(
+            FeedbackCue.select,
+            theme: ref.read(themePackProvider).id,
+            scope: 'habits',
+          );
+      ref
           .read(habitFeedbackProvider.notifier)
           .set(
             HabitFeedbackEvent(
@@ -195,5 +212,10 @@ class HabitsPresentation extends Notifier<List<HabitViewData>> {
 final habitsProvider =
     NotifierProvider<HabitsPresentation, List<HabitViewData>>(
       HabitsPresentation.new,
-      dependencies: [localDataProvider, habitFeedbackProvider],
+      dependencies: [
+        localDataProvider,
+        habitFeedbackProvider,
+        feedbackServiceProvider,
+        themePackProvider,
+      ],
     );

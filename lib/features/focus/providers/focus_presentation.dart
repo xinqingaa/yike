@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/clock.dart';
+import '../../../common/feedback/feedback_cue.dart';
+import '../../../common/feedback/feedback_service.dart';
+import '../../../theme/ts.dart';
 import '../../../common/identity.dart';
 import '../../local_data/local_data.dart';
 import '../focus_models.dart';
@@ -65,14 +68,62 @@ class FocusActions {
       .read(localDataProvider.notifier)
       .commit(ref.read(localDataProvider).data.copyWith(focus: value));
   void calibrate() => ref.read(localDataProvider.notifier).advance(now);
-  void start() => _commit(FocusEngine.start(data, now, identity));
-  void pause() => _commit(FocusEngine.pause(data, now));
-  void resume() => _commit(FocusEngine.resume(data, now));
-  void lap() => _commit(FocusEngine.lap(data, now));
+  void _feedbackCommit(FocusData next, {required bool effective}) {
+    final result = ref
+        .read(localDataProvider.notifier)
+        .commitResult(ref.read(localDataProvider).data.copyWith(focus: next));
+    if (effective && result.accepted) {
+      ref
+          .read(feedbackServiceProvider)
+          .play(
+            FeedbackCue.light,
+            theme: ref.read(themePackProvider).id,
+            scope: next.session!.mode.name,
+          );
+    }
+  }
+
+  void start() {
+    final before = data, next = FocusEngine.start(data, now, identity);
+    _feedbackCommit(
+      next,
+      effective: before.session == null && next.session != null,
+    );
+  }
+
+  void pause() {
+    final before = data, next = FocusEngine.pause(data, now);
+    _feedbackCommit(
+      next,
+      effective:
+          before.session?.status == TimerStatus.running &&
+          next.session?.status == TimerStatus.paused,
+    );
+  }
+
+  void resume() {
+    final before = data, next = FocusEngine.resume(data, now);
+    _feedbackCommit(
+      next,
+      effective:
+          before.session?.status == TimerStatus.paused &&
+          next.session?.status == TimerStatus.running,
+    );
+  }
+
+  void lap() {
+    final before = data, next = FocusEngine.lap(data, now);
+    _feedbackCommit(
+      next,
+      effective:
+          (next.session?.laps.length ?? 0) > (before.session?.laps.length ?? 0),
+    );
+  }
+
   bool prepareFinish() {
     calibrate();
     if (!FocusEngine.needsConfirmation(data)) return false;
-    pause();
+    _commit(FocusEngine.pause(data, now));
     return true;
   }
 
@@ -86,7 +137,16 @@ class FocusActions {
 
   bool finish() => _commit(FocusEngine.finish(data, now));
   void discard() => _commit(FocusEngine.leave(FocusEngine.advance(data, now)));
-  void beginBreak() => _commit(FocusEngine.beginBreak(data, now, identity));
+  void beginBreak() {
+    final before = data, next = FocusEngine.beginBreak(data, now, identity);
+    _feedbackCommit(
+      next,
+      effective:
+          before.session?.id != next.session?.id &&
+          next.session?.status == TimerStatus.running,
+    );
+  }
+
   void again() {
     final s = data.session;
     if (s == null ||
@@ -94,7 +154,10 @@ class FocusActions {
         s.status != TimerStatus.finished) {
       return;
     }
-    _commit(FocusEngine.start(FocusEngine.leave(data), now, identity));
+    _feedbackCommit(
+      FocusEngine.start(FocusEngine.leave(data), now, identity),
+      effective: true,
+    );
   }
 
   void switchMode(TimerMode mode, {bool record = false}) {
@@ -120,5 +183,5 @@ class FocusActions {
 
 final focusActionsProvider = Provider<FocusActions>(
   FocusActions.new,
-  dependencies: [localDataProvider],
+  dependencies: [localDataProvider, feedbackServiceProvider, themePackProvider],
 );

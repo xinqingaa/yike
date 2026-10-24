@@ -68,3 +68,7 @@ lib/
 新增依赖前检查 Flutter SDK、现有能力与包的公开 API；说明引入目的、平台支持和生命周期，不用新包复制已有基础设施。依赖变更提交 `pubspec.yaml` 与锁文件，生成目录不提交。构建与检查方式见 [测试](testing.md)。
 
 重要产品取舍或跨模块边界变化写入简短决策记录；小范围实现细节直接在代码与所属规范维护。
+
+## 声音与震动
+
+`common/feedback` 拥有类型化 cue、独立播放器接口及可替换的反馈服务，不依赖 feature。`app/feedback_boundary.dart` 在业务数据可读取后组合偏好与前后台状态，并预加载音效。focus 的纯 `focus_beats` 计算节拍边界，应用级 `focusFeedbackProvider` 消费 250ms 时钟与既有完成事件；FocusActions 与 HabitsPresentation 只在有效操作被接受时发出反馈。FeedbackService 只维护总开关及通用 scope → FeedbackOptions 映射，不认识 feature；事件携带来源 scope，声音句柄按来源记录以支持局部停止。模式与打卡各自持有配置，总开关不改写局部值。反馈错误不传播到业务命令，结束或后台不补播。服务不依赖根 Tab 可见性，视觉仍使用原有 MotionGate。

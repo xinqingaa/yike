@@ -1,5 +1,6 @@
 import '../../../common/time.dart';
 import 'focus_view.dart';
+import '../../../common/feedback/feedback_options.dart';
 
 int boundedInt(dynamic value, int min, int max) {
   if (value is! int || value < min || value > max) {
@@ -15,6 +16,33 @@ String validDay(dynamic value) {
   return value;
 }
 
+Map<String, dynamic> feedbackOptionsJson(
+  FeedbackOptions value, {
+  bool timer = true,
+}) => {
+  'sound': value.sound,
+  'haptics': value.haptics,
+  if (timer) 'secondTick': value.secondTick,
+  if (timer) 'beatMinutes': value.beatMinutes,
+};
+int validBeat(dynamic value) {
+  final beat = boundedInt(value, 0, 15);
+  if (!const [0, 1, 5, 10, 15].contains(beat)) {
+    throw const FormatException('Invalid beat interval');
+  }
+  return beat;
+}
+
+FeedbackOptions feedbackOptionsFromJson(dynamic value, {bool timer = true}) {
+  final j = value as Map<String, dynamic>;
+  return FeedbackOptions(
+    sound: j['sound'] as bool,
+    haptics: j['haptics'] as bool,
+    secondTick: timer ? j['secondTick'] as bool : false,
+    beatMinutes: timer ? validBeat(j['beatMinutes']) : 0,
+  );
+}
+
 Map<String, dynamic> preferencesJson(TimingPreferences p) => {
   'focus': p.focusMinutes,
   'short': p.shortMinutes,
@@ -22,6 +50,12 @@ Map<String, dynamic> preferencesJson(TimingPreferences p) => {
   'interval': p.interval,
   'threshold': p.threshold,
   'sound': p.sound,
+  'haptics': p.haptics,
+  'feedback': {
+    for (final mode in TimerMode.values)
+      mode.name: feedbackOptionsJson(p.feedbackFor(mode)),
+    'habits': feedbackOptionsJson(p.habitFeedback, timer: false),
+  },
   'presets': p.presets,
 };
 TimingPreferences preferencesFromJson(Map<String, dynamic> j) {
@@ -32,13 +66,55 @@ TimingPreferences preferencesFromJson(Map<String, dynamic> j) {
       slots.whereType<int>().toSet().length != slots.whereType<int>().length) {
     throw const FormatException('Invalid presets');
   }
+  final sound = j['sound'] as bool;
+  final haptics = j.containsKey('haptics') ? j['haptics'] as bool : true;
+  // Validate legacy optional fields even if a new feedback object is present.
+  final oldTick = j.containsKey('secondTick') ? j['secondTick'] as bool : true;
+  final oldBeat = j.containsKey('beatMinutes')
+      ? validBeat(j['beatMinutes'])
+      : 5;
+  final groups = j.containsKey('feedback')
+      ? j['feedback'] as Map<String, dynamic>
+      : null;
+  FeedbackOptions read(
+    String scope,
+    FeedbackOptions legacy, {
+    bool timer = true,
+  }) => groups == null
+      ? legacy
+      : feedbackOptionsFromJson(groups[scope], timer: timer);
   return TimingPreferences(
     focusMinutes: boundedInt(j['focus'], 1, 180),
     shortMinutes: boundedInt(j['short'], 1, 60),
     longMinutes: boundedInt(j['long'], 1, 60),
     interval: boundedInt(j['interval'], 2, 8),
     threshold: boundedInt(j['threshold'], 1, 86399),
-    sound: j['sound'] as bool,
+    sound: sound,
+    haptics: haptics,
+    // The original switches remain the masters. Copy them into each source so
+    // migration preserves the user's effective settings without enabling cues.
+    pomodoroFeedback: read(
+      'pomodoro',
+      FeedbackOptions(sound: sound, haptics: haptics, beatMinutes: oldBeat),
+    ),
+    stopwatchFeedback: read(
+      'stopwatch',
+      FeedbackOptions(sound: sound, haptics: haptics, beatMinutes: oldBeat),
+    ),
+    countdownFeedback: read(
+      'countdown',
+      FeedbackOptions(
+        sound: sound,
+        haptics: haptics,
+        secondTick: oldTick,
+        beatMinutes: 0,
+      ),
+    ),
+    habitFeedback: read(
+      'habits',
+      FeedbackOptions(sound: sound, haptics: haptics, beatMinutes: 0),
+      timer: false,
+    ),
     presets: List.unmodifiable(slots),
   );
 }
