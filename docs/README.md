@@ -33,13 +33,14 @@
 
 - [Flutter 独立迭代](decisions/2026-10-23-flutter-development.md)
 - [动效事件与重播](decisions/2026-10-23-motion-policy.md)
+- [秒级时长与统一有效范围](decisions/2026-10-24-duration-rules.md)
 - [Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md)
 
 决策记录说明日期、已决定的行为和原因；具体规格仍在所属产品/工程文档维护。
 
 ## 当前交接
 
-[体验迭代计划](plan/README.md) 是本轮实施依据；2026-10-24 用户确认第一阶段验收完成，临时验收文件已清理；[第二阶段执行计划](plan/stage2-execution.md) 的参数与边界已确认，等待用户启动，第二阶段编码及后续阶段未启动。
+[体验迭代计划](plan/README.md) 是本轮实施依据；2026-10-24 用户确认第一阶段验收完成，临时验收文件已清理；[第二阶段执行计划](plan/stage2-execution.md) 已按 [统一时长规则](plan/duration-rules.md) 修订，规则已确认，[表盘评估](plan/stage2-dial-evaluation.md) 已明确两套机械底图、固定量程、常用项切换与反馈，等待用户启动编码；后续阶段未启动。
 
 [Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md) 记录研究与用户接管后的最终修改范围；当前工作区已按该指令修订，用户要求不运行测试，尚无修订后验收结论。[前轮复审提案](reviews/2026-10-23-motion-audit-and-polish-proposal.md) 只保留研究背景，不作为当前实施规格。
 
