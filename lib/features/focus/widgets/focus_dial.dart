@@ -16,11 +16,19 @@ import '../logic/focus_projection.dart';
 import '../models/focus_data.dart';
 import '../models/focus_view.dart';
 import '../providers/focus_dial_presentation.dart';
+import '../providers/focus_presentation.dart';
+import 'dial_adjuster.dart';
 
 class FocusDial extends ConsumerStatefulWidget {
-  const FocusDial({super.key, required this.mode, required this.width});
+  const FocusDial({
+    super.key,
+    required this.mode,
+    required this.width,
+    required this.adjustment,
+  });
   final TimerMode mode;
   final double width;
+  final DialAdjustmentController adjustment;
   @override
   ConsumerState<FocusDial> createState() => _FocusDialState();
 }
@@ -54,11 +62,41 @@ class _FocusDialState extends ConsumerState<FocusDial> {
 
   @override
   Widget build(BuildContext context) {
-    return _FocusDialMotion(
-      data: ref.watch(focusDialPresentationProvider(widget.mode)),
+    final presentation = ref.watch(focusDialPresentationProvider(widget.mode));
+    final data = ref.watch(focusDataProvider);
+    final now = ref.watch(clockProvider);
+    final enabled =
+        presentation.view.ready &&
+        widget.mode != TimerMode.stopwatch &&
+        data.mode == widget.mode;
+    return SizedBox(
       width: widget.width,
-      completions: _completion,
-      now: ref.watch(clockProvider),
+      child: DialAdjuster(
+        mode: widget.mode,
+        seconds: presentation.view.seconds,
+        maximum: widget.mode == TimerMode.countdown
+            ? data.countdownMaximum
+            : maxFocusSeconds,
+        scale: presentation.view.scaleSeconds,
+        enabled: enabled,
+        controller: widget.adjustment,
+        onCommit: (seconds, expected, maximum) => ref
+            .read(focusActionsProvider)
+            .adjustDial(
+              widget.mode,
+              seconds,
+              expectedValue: expected,
+              expectedMaximum: maximum,
+            ),
+        builder: (draft) => _FocusDialMotion(
+          data: presentation,
+          width: widget.width,
+          completions: _completion,
+          now: now,
+          draft: draft,
+          hint: enabled && !data.dialAdjusted,
+        ),
+      ),
     );
   }
 }
@@ -69,8 +107,12 @@ class _FocusDialMotion extends StatefulWidget {
     required this.width,
     required this.now,
     required this.completions,
+    this.draft,
+    this.hint = false,
   });
   final FocusDialPresentation data;
+  final double? draft;
+  final bool hint;
   FocusViewData get value => data.view;
   FocusSession? get session => data.session;
   final double width;
@@ -99,7 +141,9 @@ class _FocusDialMotionState extends State<_FocusDialMotion>
     final second = projection.elapsedSeconds % 1;
     final minute = projection.elapsedSeconds % 60;
     _frame.value = DialFrame(
-      progress: projection.progress,
+      progress: widget.draft == null
+          ? projection.progress
+          : widget.draft! / widget.value.scaleSeconds,
       secondBeat: running
           ? math.max(0, 1 - second / YikeMotion.secondWindow) *
                 YikeMotion.secondStrength
@@ -205,9 +249,15 @@ class _FocusDialMotionState extends State<_FocusDialMotion>
             );
             return YikeDial(
               width: widget.width,
-              digits: timerDigits(projection.seconds),
+              digits: timerDigits(
+                widget.draft?.round().clamp(1, maxFocusSeconds) ??
+                    projection.seconds,
+              ),
+              hint: widget.hint ? '拨动表盘调整本次时长' : null,
               caption: widget.value.caption,
-              progress: projection.progress,
+              progress: widget.draft == null
+                  ? projection.progress
+                  : widget.draft! / widget.value.scaleSeconds,
               paused: widget.value.paused,
               resting: widget.value.resting,
               completed: widget.value.finished,

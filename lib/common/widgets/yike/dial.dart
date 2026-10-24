@@ -16,6 +16,7 @@ class YikeDial extends StatefulWidget {
     super.key,
     this.digits,
     this.caption,
+    this.hint,
     this.progress = 25 / 60,
     this.paused = false,
     this.resting = false,
@@ -31,7 +32,7 @@ class YikeDial extends StatefulWidget {
     this.wavePhase = 0,
     this.frame,
   });
-  final String? digits, caption;
+  final String? digits, caption, hint;
   final double progress;
   final bool paused, resting, completed, countdown, brand;
   final double? width;
@@ -268,6 +269,19 @@ class _YikeDialState extends State<YikeDial>
                 caption,
                 textAlign: TextAlign.center,
                 style: captionStyle,
+              ),
+            ),
+          ),
+        if (widget.hint != null && !inverse)
+          Positioned(
+            top: captionY + captionHeight + ts.spacing.xs,
+            left: 0,
+            right: 0,
+            child: Text(
+              widget.hint!,
+              textAlign: TextAlign.center,
+              style: ts.textStyle.caption.copyWith(
+                color: ts.colors.onSurfaceMuted.withValues(alpha: .45),
               ),
             ),
           ),

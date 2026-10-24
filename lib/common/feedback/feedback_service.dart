@@ -53,6 +53,8 @@ class FeedbackService {
     final sound = switch (cue) {
       FeedbackCue.tick ||
       FeedbackCue.lastSecondsTick => options.secondTick ? SoundCue.tick : null,
+      FeedbackCue.dialSecond => SoundCue.tick,
+      FeedbackCue.dialMinute => SoundCue.chime,
       FeedbackCue.chime ||
       FeedbackCue.interval ||
       FeedbackCue.preview => SoundCue.chime,
@@ -60,6 +62,9 @@ class FeedbackService {
       _ => null,
     };
     final haptic = switch (cue) {
+      FeedbackCue.dialSecond => HapticCue.selection,
+      FeedbackCue.dialLimit => HapticCue.medium,
+      FeedbackCue.dialMinute ||
       FeedbackCue.lastSecondsTick ||
       FeedbackCue.light ||
       FeedbackCue.interval => HapticCue.light,
@@ -88,6 +93,14 @@ class FeedbackService {
         });
       }
     }
+  }
+
+  /// Settings audition uses only the master sound gate and never vibrates.
+  void previewFinish({required String theme}) {
+    if (_disposed || !_foreground || !_sound) return;
+    unawaited(
+      _safely(() => soundPlayer.play(theme, SoundCue.finish, scope: 'preview')),
+    );
   }
 
   void _cancelSecondImpact() {

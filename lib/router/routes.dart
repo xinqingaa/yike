@@ -8,3 +8,9 @@ abstract final class AppRoutes {
   static const settings = '/settings';
   static const habitDetail = '/habit';
 }
+
+/// Optional initial panel within the full settings page.
+class SettingsRouteArguments {
+  const SettingsRouteArguments({this.openCountdownPresets = false});
+  final bool openCountdownPresets;
+}

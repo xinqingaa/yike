@@ -16,15 +16,17 @@ class CountdownUtility extends StatelessWidget {
     required this.value,
     required this.preferences,
     required this.availableWidth,
+    required this.selectedIndex,
     required this.onSelected,
-    required this.onCustom,
+    required this.onEdit,
     required this.onRecovery,
   });
   final FocusViewData value;
   final TimingPreferences preferences;
   final double availableWidth;
+  final int? selectedIndex;
   final ValueChanged<int> onSelected;
-  final VoidCallback onCustom, onRecovery;
+  final VoidCallback onEdit, onRecovery;
 
   static double heightFor(
     BuildContext context,
@@ -64,9 +66,9 @@ class CountdownUtility extends StatelessWidget {
               child: CountdownChoices(
                 availableWidth: availableWidth,
                 presets: preferences.presets.whereType<int>().toList(),
-                value: value.target,
+                selectedIndex: selectedIndex,
                 onSelected: onSelected,
-                onCustom: onCustom,
+                onEdit: onEdit,
               ),
             ),
             if (!value.ready)

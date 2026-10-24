@@ -44,9 +44,9 @@ FeedbackOptions feedbackOptionsFromJson(dynamic value, {bool timer = true}) {
 }
 
 Map<String, dynamic> preferencesJson(TimingPreferences p) => {
-  'focus': p.focusMinutes,
-  'short': p.shortMinutes,
-  'long': p.longMinutes,
+  'focusSeconds': p.focusSeconds,
+  'shortSeconds': p.shortSeconds,
+  'longSeconds': p.longSeconds,
   'interval': p.interval,
   'threshold': p.threshold,
   'sound': p.sound,
@@ -60,61 +60,26 @@ Map<String, dynamic> preferencesJson(TimingPreferences p) => {
 };
 TimingPreferences preferencesFromJson(Map<String, dynamic> j) {
   final slots = (j['presets'] as List)
-      .map((v) => v == null ? null : boundedInt(v, 1, 86399))
+      .map((v) => v == null ? null : boundedInt(v, 1, maxFocusSeconds))
       .toList();
   if (slots.length != 4 ||
+      slots.first == null ||
       slots.whereType<int>().toSet().length != slots.whereType<int>().length) {
     throw const FormatException('Invalid presets');
   }
-  final sound = j['sound'] as bool;
-  final haptics = j.containsKey('haptics') ? j['haptics'] as bool : true;
-  // Validate legacy optional fields even if a new feedback object is present.
-  final oldTick = j.containsKey('secondTick') ? j['secondTick'] as bool : true;
-  final oldBeat = j.containsKey('beatMinutes')
-      ? validBeat(j['beatMinutes'])
-      : 5;
-  final groups = j.containsKey('feedback')
-      ? j['feedback'] as Map<String, dynamic>
-      : null;
-  FeedbackOptions read(
-    String scope,
-    FeedbackOptions legacy, {
-    bool timer = true,
-  }) => groups == null
-      ? legacy
-      : feedbackOptionsFromJson(groups[scope], timer: timer);
+  final groups = j['feedback'] as Map<String, dynamic>;
   return TimingPreferences(
-    focusMinutes: boundedInt(j['focus'], 1, 180),
-    shortMinutes: boundedInt(j['short'], 1, 60),
-    longMinutes: boundedInt(j['long'], 1, 60),
+    focusSeconds: boundedInt(j['focusSeconds'], 1, maxFocusSeconds),
+    shortSeconds: boundedInt(j['shortSeconds'], 1, 59),
+    longSeconds: boundedInt(j['longSeconds'], 1, maxFocusSeconds),
     interval: boundedInt(j['interval'], 2, 8),
     threshold: boundedInt(j['threshold'], 1, 86399),
-    sound: sound,
-    haptics: haptics,
-    // The original switches remain the masters. Copy them into each source so
-    // migration preserves the user's effective settings without enabling cues.
-    pomodoroFeedback: read(
-      'pomodoro',
-      FeedbackOptions(sound: sound, haptics: haptics, beatMinutes: oldBeat),
-    ),
-    stopwatchFeedback: read(
-      'stopwatch',
-      FeedbackOptions(sound: sound, haptics: haptics, beatMinutes: oldBeat),
-    ),
-    countdownFeedback: read(
-      'countdown',
-      FeedbackOptions(
-        sound: sound,
-        haptics: haptics,
-        secondTick: oldTick,
-        beatMinutes: 0,
-      ),
-    ),
-    habitFeedback: read(
-      'habits',
-      FeedbackOptions(sound: sound, haptics: haptics, beatMinutes: 0),
-      timer: false,
-    ),
+    sound: j['sound'] as bool,
+    haptics: j['haptics'] as bool,
+    pomodoroFeedback: feedbackOptionsFromJson(groups['pomodoro']),
+    stopwatchFeedback: feedbackOptionsFromJson(groups['stopwatch']),
+    countdownFeedback: feedbackOptionsFromJson(groups['countdown']),
+    habitFeedback: feedbackOptionsFromJson(groups['habits'], timer: false),
     presets: List.unmodifiable(slots),
   );
 }
@@ -130,6 +95,7 @@ class FocusSession {
     required this.round,
     required this.longRest,
     this.elapsedMs = 0,
+    this.scaleSeconds = fullDialSeconds,
     this.days = const {},
     this.laps = const [],
     this.anchor,
@@ -141,7 +107,9 @@ class FocusSession {
   final TimerStage stage;
   final TimerStatus status;
   final DateTime startedAt;
-  final int targetMs, elapsedMs, round;
+  final int targetMs, elapsedMs, round, scaleSeconds;
+  int get limitMs =>
+      mode == TimerMode.stopwatch ? maxFocusSeconds * 1000 : targetMs;
   final bool longRest, recovered, promptShort;
   final Map<String, int> days;
   final List<int> laps;
@@ -163,6 +131,7 @@ class FocusSession {
     status: status ?? this.status,
     startedAt: startedAt,
     targetMs: targetMs,
+    scaleSeconds: scaleSeconds,
     round: round,
     longRest: longRest,
     elapsedMs: elapsedMs ?? this.elapsedMs,
@@ -179,6 +148,7 @@ class FocusSession {
     'status': status.name,
     'startedAt': startedAt.toIso8601String(),
     'targetMs': targetMs,
+    'scaleSeconds': scaleSeconds,
     'elapsedMs': elapsedMs,
     'round': round,
     'longRest': longRest,
@@ -209,20 +179,23 @@ class FocusSession {
         laps.indexed.any((e) => e.$1 > 0 && e.$2 <= laps[e.$1 - 1])) {
       throw const FormatException('Invalid session');
     }
-    if ((mode == TimerMode.stopwatch &&
-            (target != 0 ||
-                status == TimerStatus.finished ||
-                laps.isNotEmpty && elapsed == 0)) ||
+    final scale = boundedInt(j['scaleSeconds'], 1, fullDialSeconds);
+    final limit = mode == TimerMode.stopwatch ? maxFocusSeconds * 1000 : target;
+    if (elapsed > limit ||
+        (mode == TimerMode.stopwatch &&
+            (target != 0 || laps.isNotEmpty && elapsed == 0)) ||
         (mode != TimerMode.stopwatch &&
             (target % 1000 != 0 ||
                 target < 1000 ||
-                (status == TimerStatus.finished
-                    ? elapsed != target
-                    : elapsed >= target))) ||
+                target > maxFocusSeconds * 1000)) ||
+        (status == TimerStatus.finished
+            ? elapsed != limit
+            : elapsed >= limit) ||
         (mode != TimerMode.stopwatch && laps.isNotEmpty) ||
-        (mode == TimerMode.pomodoro &&
-            (target % 60000 != 0 ||
-                target > (stage == TimerStage.focus ? 180 : 60) * 60000))) {
+        (stage == TimerStage.shortBreak && target > 59000) ||
+        (mode == TimerMode.countdown
+            ? scale * 1000 < target
+            : scale != fullDialSeconds)) {
       throw const FormatException('Invalid phase state');
     }
     return FocusSession(
@@ -232,6 +205,7 @@ class FocusSession {
       status: status,
       startedAt: storedTime(j['startedAt']),
       targetMs: target,
+      scaleSeconds: scale,
       elapsedMs: elapsed,
       round: boundedInt(j['round'], 1, 8),
       longRest: j['longRest'] as bool,
@@ -288,13 +262,34 @@ class FocusData {
     this.records = const [],
     this.cycles = 0,
     this.mode = TimerMode.pomodoro,
-    this.countdown = 300,
-  });
+    int? countdown,
+    this.pomodoroOnce,
+    int countdownPreset = 0,
+    this.dialAdjusted = false,
+    // Public constructor names describe the draft; getters enforce preset bounds.
+    // ignore: prefer_initializing_formals
+  }) : _countdown = countdown,
+       // ignore: prefer_initializing_formals
+       _countdownPreset = countdownPreset;
   final TimingPreferences preferences;
   final FocusSession? session;
   final List<FocusRecord> records;
-  final int cycles, countdown;
+  final int cycles;
+  final int? _countdown;
+  final int _countdownPreset;
   final TimerMode mode;
+  final int? pomodoroOnce;
+  final bool dialAdjusted;
+  int get countdownPreset =>
+      _countdownPreset >= 0 &&
+          _countdownPreset < preferences.presets.length &&
+          preferences.presets[_countdownPreset] != null
+      ? _countdownPreset
+      : 0;
+  int get countdownMaximum => preferences.presets[countdownPreset]!;
+  int get countdownScale => countdownMaximum;
+  int get countdown =>
+      (_countdown ?? countdownMaximum).clamp(1, countdownMaximum);
   FocusData copyWith({
     TimingPreferences? preferences,
     FocusSession? session,
@@ -303,6 +298,10 @@ class FocusData {
     int? cycles,
     TimerMode? mode,
     int? countdown,
+    int? pomodoroOnce,
+    bool clearPomodoroOnce = false,
+    int? countdownPreset,
+    bool? dialAdjusted,
   }) => FocusData(
     preferences: preferences ?? this.preferences,
     session: clearSession ? null : session ?? this.session,
@@ -310,23 +309,31 @@ class FocusData {
     cycles: cycles ?? this.cycles,
     mode: mode ?? this.mode,
     countdown: countdown ?? this.countdown,
+    pomodoroOnce: clearPomodoroOnce ? null : pomodoroOnce ?? this.pomodoroOnce,
+    countdownPreset: countdownPreset ?? this.countdownPreset,
+    dialAdjusted: dialAdjusted ?? this.dialAdjusted,
   );
   FocusViewData get view {
     final s = session;
     final target = s == null
         ? (mode == TimerMode.stopwatch
-              ? 0
+              ? maxFocusSeconds
               : mode == TimerMode.countdown
               ? countdown
-              : preferences.focusMinutes * 60)
+              : pomodoroOnce ?? preferences.focusSeconds)
         : s.targetMs ~/ 1000;
     return FocusViewData(
       mode: s?.mode ?? mode,
       status: s?.status ?? TimerStatus.ready,
       stage: s?.stage ?? TimerStage.focus,
       target: target,
+      scaleSeconds:
+          s?.scaleSeconds ??
+          (mode == TimerMode.countdown ? countdownScale : fullDialSeconds),
       seconds: s == null
-          ? target
+          ? mode == TimerMode.stopwatch
+                ? 0
+                : target
           : s.mode == TimerMode.stopwatch
           ? s.elapsedMs ~/ 1000
           : ((s.targetMs - s.elapsedMs) / 1000).ceil(),
@@ -373,9 +380,7 @@ class FocusData {
       mode: session?.mode ?? TimerMode.pomodoro,
       countdown: session?.mode == TimerMode.countdown
           ? session!.targetMs ~/ 1000
-          : prefs.presets.contains(300)
-          ? 300
-          : prefs.presets.whereType<int>().firstOrNull ?? 300,
+          : null,
     );
   }
 }

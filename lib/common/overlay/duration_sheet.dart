@@ -12,6 +12,8 @@ Future<int?> pickYikeDuration({
   int minimum = 1,
   int maximum = 86399,
   bool seconds = true,
+  bool hours = true,
+  bool secondsOnly = false,
   String confirm = '确认',
   bool autoSave = false,
   bool Function(int)? onConfirm,
@@ -25,6 +27,8 @@ Future<int?> pickYikeDuration({
       minimum: minimum,
       maximum: maximum,
       seconds: seconds,
+      hours: hours,
+      secondsOnly: secondsOnly,
       confirm: confirm,
       autoSave: autoSave,
       onSave: (value) {
@@ -44,11 +48,13 @@ class DurationSheetBody extends ConsumerStatefulWidget {
     this.minimum = 1,
     this.maximum = 86399,
     this.seconds = true,
+    this.hours = true,
+    this.secondsOnly = false,
     this.confirm = '确认',
     this.autoSave = false,
   });
   final int initial, minimum, maximum;
-  final bool seconds, autoSave;
+  final bool seconds, autoSave, hours, secondsOnly;
   final String confirm;
   final bool Function(int) onSave;
   @override
@@ -71,6 +77,10 @@ class _DurationSheetBodyState extends ConsumerState<DurationSheetBody> {
           DurationWheels(
             value: value,
             seconds: widget.seconds,
+            hours: widget.hours,
+            secondsOnly: widget.secondsOnly,
+            minimum: widget.minimum,
+            maximum: widget.maximum,
             filled: widget.autoSave,
             onSettled: widget.autoSave
                 ? (value) {
@@ -93,7 +103,7 @@ class _DurationSheetBodyState extends ConsumerState<DurationSheetBody> {
           MotionExpand(
             expanded: invalid && ref.watch(_attempted),
             child: Text(
-              '请选择 ${widget.minimum == 1 ? '至少 1 秒' : '有效时长'}，不超过 ${widget.maximum ~/ 60} 分钟',
+              '请选择有效时长（${widget.minimum}–${widget.maximum} 秒）',
               style: ts.textStyle.caption.copyWith(color: ts.colors.error),
             ),
           ),
@@ -136,39 +146,85 @@ class DurationWheels extends StatelessWidget {
     this.onSettled,
     this.filled = false,
     this.seconds = true,
+    this.hours = true,
+    this.secondsOnly = false,
+    this.minimum = 1,
+    this.maximum = 86399,
     this.maxHour = 23,
   });
-  final int value, maxHour;
-  final bool seconds;
-  final bool filled;
+  final int value, maxHour, minimum, maximum;
+  final bool seconds, hours, secondsOnly, filled;
   final ValueChanged<int> onChanged;
   final ValueChanged<int>? onSettled;
+
   @override
   Widget build(BuildContext context) {
-    CommonWheelColumn column(String id, String label, String unit, int max) =>
-        CommonWheelColumn(
-          id: id,
-          label: label,
-          unit: unit,
-          numeric: true,
-          options: [
-            for (var i = 0; i <= max; i++)
-              CommonWheelOption(value: i, label: i.toString().padLeft(2, '0')),
-          ],
-        );
-    int duration(List<Object> values) =>
-        (values[0] as int) * 3600 +
-        (values[1] as int) * 60 +
-        (seconds ? values[2] as int : 0);
+    final bounded = value.clamp(minimum, maximum);
+    final hour = hours && !secondsOnly ? bounded ~/ 3600 : 0;
+    final minute = secondsOnly ? 0 : bounded ~/ 60 % 60;
+    CommonWheelColumn column(
+      String id,
+      String label,
+      String unit,
+      int min,
+      int max,
+    ) => CommonWheelColumn(
+      id: id,
+      label: label,
+      unit: unit,
+      numeric: true,
+      options: [
+        for (var i = min; i <= max; i++)
+          CommonWheelOption(value: i, label: i.toString().padLeft(2, '0')),
+      ],
+    );
+    final columns = <CommonWheelColumn>[
+      if (hours && !secondsOnly)
+        column('hour', '小时', '时', 0, maxHour.clamp(0, maximum ~/ 3600)),
+      if (!secondsOnly)
+        column(
+          'minute',
+          '分钟',
+          '分',
+          0,
+          hour == maximum ~/ 3600 ? maximum ~/ 60 % 60 : 59,
+        ),
+      if (seconds || secondsOnly)
+        column(
+          'second',
+          '秒',
+          '秒',
+          hour == 0 && minute == 0 ? minimum.clamp(1, 59) : 0,
+          secondsOnly
+              ? maximum
+              : (hour * 3600 + minute * 60 == maximum ~/ 60 * 60
+                    ? maximum % 60
+                    : 59),
+        ),
+    ];
+    int duration(List<Object> values) {
+      var total = 0;
+      for (var i = 0; i < columns.length; i++) {
+        total +=
+            (values[i] as int) *
+            switch (columns[i].id) {
+              'hour' => 3600,
+              'minute' => 60,
+              _ => 1,
+            };
+      }
+      return total.clamp(minimum, maximum);
+    }
+
     return CommonWheelPicker(
       visibleRows: 3,
       filled: filled,
-      columns: [
-        column('hour', '小时', '时', maxHour),
-        column('minute', '分钟', '分', 59),
-        if (seconds) column('second', '秒', '秒', 59),
+      columns: columns,
+      values: [
+        if (hours && !secondsOnly) hour,
+        if (!secondsOnly) minute,
+        if (seconds || secondsOnly) secondsOnly ? bounded : bounded % 60,
       ],
-      values: [value ~/ 3600, value ~/ 60 % 60, if (seconds) value % 60],
       onChanged: (values) => onChanged(duration(values)),
       onSettled: onSettled == null
           ? null

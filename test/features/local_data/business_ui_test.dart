@@ -43,7 +43,7 @@ void main() {
       expect(find.byType(DurationSheetBody), findsOneWidget);
       expect(find.text('尚未保存，请重试；关闭后可能丢失'), findsOneWidget);
       expect(disk.values[PrefsKey.snapshot.storageKey], old);
-      expect(app.read(timingPreferencesProvider).focusMinutes, 26);
+      expect(app.read(timingPreferencesProvider).focusSeconds, 1560);
       disk.failWrite = false;
       await tester.tap(find.text('确认'));
       await pumpPresentation(tester);
@@ -125,7 +125,7 @@ void main() {
       final app = await pumpYike(tester, clock: () => now);
       app
           .read(timingPreferencesProvider.notifier)
-          .update((p) => p.copyWith(focusMinutes: 1, threshold: 180));
+          .update((p) => p.copyWith(focusSeconds: 60, threshold: 180));
       await pumpPresentation(tester);
       await tester.tap(find.byKey(const ValueKey('focus-primary')));
       now = now.add(const Duration(seconds: 65));

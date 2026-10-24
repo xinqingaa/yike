@@ -10,15 +10,15 @@ class CountdownChoices extends StatelessWidget {
     super.key,
     required this.availableWidth,
     required this.presets,
-    required this.value,
+    required this.selectedIndex,
     required this.onSelected,
-    required this.onCustom,
+    required this.onEdit,
   });
   final double availableWidth;
   final List<int> presets;
-  final int value;
+  final int? selectedIndex;
   final ValueChanged<int> onSelected;
-  final VoidCallback onCustom;
+  final VoidCallback onEdit;
 
   static ({double rowHeight, double customHeight, double height}) metrics(
     BuildContext context,
@@ -27,7 +27,7 @@ class CountdownChoices extends StatelessWidget {
   ) {
     final ts = TS.of(context);
     final painter = TextPainter(
-      text: TextSpan(text: '自定义', style: ts.textStyle.content),
+      text: TextSpan(text: '常用', style: ts.textStyle.content),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
     )..layout();
@@ -36,11 +36,7 @@ class CountdownChoices extends StatelessWidget {
       painter.height + ts.spacing.sm * 2,
     );
     painter.dispose();
-    return (
-      rowHeight: height,
-      customHeight: height,
-      height: presets.isEmpty ? height : height * 2 + ts.spacing.xs,
-    );
+    return (rowHeight: height, customHeight: height, height: height);
   }
 
   @override
@@ -60,17 +56,10 @@ class CountdownChoices extends StatelessWidget {
       minWidth = math.max(minWidth, painter.width + ts.spacing.sm * 2);
       painter.dispose();
     }
-    final optionWidth = math.max(
-      minWidth,
-      (availableWidth - ts.spacing.xs * math.max(0, presets.length - 1)) /
-          math.max(1, presets.length),
-    );
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Row(
       children: [
-        if (presets.isNotEmpty) ...[
-          SingleChildScrollView(
+        Expanded(
+          child: SingleChildScrollView(
             key: const ValueKey('countdown-presets-scroll'),
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -79,14 +68,22 @@ class CountdownChoices extends StatelessWidget {
                   if (i > 0) SizedBox(width: ts.spacing.xs),
                   CommonPressableSurface(
                     key: ValueKey('countdown-preset-${presets[i]}'),
-                    selected: value == presets[i],
+                    selected: selectedIndex == i,
                     onPressed: () => onSelected(presets[i]),
                     child: Container(
-                      width: optionWidth,
+                      width: math.max(
+                        minWidth,
+                        (availableWidth -
+                                ts.sizing.touch -
+                                ts.spacing.sm -
+                                ts.spacing.xs *
+                                    math.max(0, presets.length - 1)) /
+                            math.max(1, presets.length),
+                      ),
                       height: layout.rowHeight,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: value == presets[i]
+                        color: selectedIndex == i
                             ? ts.colors.primarySoft
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(ts.radius.md),
@@ -95,7 +92,7 @@ class CountdownChoices extends StatelessWidget {
                         durationLabel(presets[i], compact: true),
                         maxLines: 1,
                         style: ts.textStyle.numericContent.copyWith(
-                          color: value == presets[i]
+                          color: selectedIndex == i
                               ? ts.colors.primary
                               : ts.colors.onSurfaceMuted,
                         ),
@@ -106,13 +103,20 @@ class CountdownChoices extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: ts.spacing.xs),
-        ],
-        CommonButton(
-          key: const ValueKey('countdown-custom'),
-          label: '自定义',
-          kind: CommonButtonKind.quiet,
-          onPressed: onCustom,
+        ),
+        SizedBox(width: ts.spacing.xs),
+        IconButton(
+          key: const ValueKey('countdown-edit'),
+          tooltip: '编辑常用倒计时',
+          onPressed: onEdit,
+          style: IconButton.styleFrom(
+            minimumSize: Size.square(ts.sizing.touch),
+          ),
+          icon: Icon(
+            Icons.edit_outlined,
+            size: ts.sizing.iconMd,
+            color: ts.colors.onSurfaceMuted,
+          ),
         ),
       ],
     );

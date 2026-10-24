@@ -181,7 +181,7 @@ void main() {
     await tester.drag(panels, const Offset(-320, 0));
     await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.pomodoro);
-    expect(dialDigits('25:00'), findsOneWidget);
+    // A drag can now adjust time; it must not change the selected mode.
     await tester.tap(find.text('正计时'));
     await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.stopwatch);
@@ -189,7 +189,8 @@ void main() {
     await tester.tap(find.text('倒计时'));
     await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.countdown);
-    expect(find.text('自定义'), findsOneWidget);
+    expect(find.byKey(const ValueKey('countdown-edit')), findsOneWidget);
+    expect(find.text('自定义'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -356,14 +357,14 @@ void main() {
         focus: FocusViewData(
           mode: TimerMode.stopwatch,
           status: TimerStatus.running,
-          seconds: 3600,
+          seconds: 3598,
           laps: List.generate(30, (i) => (i + 1) * 60),
         ),
       );
       expect(
         find.descendant(
           of: find.byType(YikeDial),
-          matching: dialDigits('1:00:00'),
+          matching: dialDigits('59:58'),
         ),
         findsOneWidget,
       );

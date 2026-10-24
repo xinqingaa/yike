@@ -44,7 +44,7 @@ Future<void> openSetting(WidgetTester tester, String label) async {
 }
 
 void verifyValues(TimingPreferences prefs) {
-  expect(prefs.focusMinutes, 26);
+  expect(prefs.focusSeconds, 1560);
   expect(prefs.interval, 3);
   expect(prefs.threshold, 5);
   expect(prefs.sound, false);

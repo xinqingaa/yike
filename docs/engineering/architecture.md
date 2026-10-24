@@ -72,3 +72,5 @@ lib/
 ## 声音与震动
 
 `common/feedback` 拥有类型化 cue、独立播放器接口及可替换的反馈服务，不依赖 feature。`app/feedback_boundary.dart` 在业务数据可读取后组合偏好与前后台状态，并预加载音效。focus 的纯 `focus_beats` 计算节拍边界，应用级 `focusFeedbackProvider` 消费 250ms 时钟与既有完成事件；FocusActions 与 HabitsPresentation 只在有效操作被接受时发出反馈。FeedbackService 只维护总开关及通用 scope → FeedbackOptions 映射，不认识 feature；事件携带来源 scope，声音句柄按来源记录以支持局部停止。模式与打卡各自持有配置，总开关不改写局部值。反馈错误不传播到业务命令，结束或后台不补播。服务不依赖根 Tab 可见性，视觉仍使用原有 MotionGate。
+
+表盘纯映射、吸附与阻尼规则位于 focus/logic，输入与局部 Ticker 位于 focus/widgets；FocusActions 只接受合法最终时长，FocusEngine / FocusProjection 共享 3599 秒上限。设置编辑通过类型化路由参数自动展开既有面板，feature 不跨导入私有页面。完成音试听由通用服务提供声音专用 API，页面不直接操作音频引擎。

@@ -1,4 +1,3 @@
-import '../../../theme/yike_motion.dart';
 import '../models/focus_data.dart';
 import '../models/focus_view.dart';
 
@@ -20,21 +19,14 @@ class FocusProjection {
           now.difference(session.anchor!).inMicroseconds.clamp(0, 1 << 53) /
           1000;
     }
-    if (session.mode != TimerMode.stopwatch) {
-      elapsed = elapsed.clamp(0, session.targetMs.toDouble());
-    }
+    elapsed = elapsed.clamp(0, session.limitMs.toDouble());
     final remaining = (session.targetMs - elapsed).clamp(0, double.infinity);
     final seconds = session.mode == TimerMode.stopwatch
         ? elapsed ~/ 1000
         : (remaining / 1000).ceil();
-    final progress = session.mode == TimerMode.countdown
-        ? remaining / session.targetMs
-        : session.mode == TimerMode.stopwatch
-        ? (elapsed >= 3600000 &&
-                  elapsed % 3600000 < YikeMotion.hourHold.inMilliseconds
-              ? 1.0
-              : (elapsed % 3600000) / 3600000)
-        : remaining / 3600000;
+    final progress =
+        (session.mode == TimerMode.stopwatch ? elapsed : remaining) /
+        (session.scaleSeconds * 1000);
     return FocusProjection(seconds, progress.clamp(0, 1), elapsed / 1000);
   }
 }

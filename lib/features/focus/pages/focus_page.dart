@@ -5,6 +5,7 @@ import '../widgets/countdown_utility.dart';
 import '../widgets/lap_list.dart';
 import '../widgets/focus_panel_layout.dart';
 import '../providers/focus_presentation.dart';
+import '../providers/focus_dial_presentation.dart';
 import '../../../common/time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +15,7 @@ import '../../../common/widgets.dart';
 import '../widgets/focus_dial.dart';
 import '../../../router/routes.dart';
 import '../../../theme/ts.dart';
-import '../../../common/overlay/duration_sheet.dart';
+import '../widgets/dial_adjuster.dart';
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -25,10 +26,16 @@ class FocusPage extends ConsumerStatefulWidget {
 class _FocusPageState extends ConsumerState<FocusPage>
     with TickerProviderStateMixin {
   late TabController _tabs;
+  final _dial = DialAdjustmentController();
+  void _dialStateChanged() {
+    if (mounted) setState(() {});
+  }
+
   final _switching = localValueProvider(false);
   final _recordPromptOpen = localValueProvider(false);
 
   Future<void> _requestMode(String value) async {
+    _dial.finish();
     if (ref.read(_switching)) return;
     ref.read(_switching.notifier).set(true);
     try {
@@ -69,6 +76,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   @override
   void dispose() {
+    _dial.removeListener(_dialStateChanged);
+    _dial.dispose();
     _tabs.dispose();
     super.dispose();
   }
@@ -76,6 +85,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
   @override
   void initState() {
     super.initState();
+    _dial.addListener(_dialStateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && ref.read(focusViewProvider).recovered) {
         _recovery();
@@ -267,12 +277,14 @@ class _FocusPageState extends ConsumerState<FocusPage>
   }
 
   Future<void> _primary() async {
+    if (_dial.value) return;
     _actions.calibrate();
     final value = ref.read(focusViewProvider);
     if (value.finished) {
       if (value.mode == TimerMode.pomodoro && !value.resting) {
         if (await _shortRecord() && mounted) _actions.beginBreak();
       } else {
+        if (value.mode == TimerMode.stopwatch && !await _shortRecord()) return;
         _actions.discard();
       }
     } else if (value.ready) {
@@ -287,7 +299,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
-    final value = ref.watch(focusViewProvider);
     ref.listen(
       focusDataProvider.select((d) => d.session?.promptShort ?? false),
       (before, after) {
@@ -310,7 +321,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
         );
       }
     });
-    final prefs = ref.watch(timingPreferencesProvider);
     final today = ref.watch(todayProvider);
     final todaySeconds = ref
         .watch(focusRecordsProvider)
@@ -330,26 +340,30 @@ class _FocusPageState extends ConsumerState<FocusPage>
               Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${today.month}月${today.day}日星期${const ['一', '二', '三', '四', '五', '六', '日'][today.weekday - 1]}',
-                          style: ts.textStyle.caption,
-                        ),
-                        Text(
-                          '今天已专注 ${durationLabel(todaySeconds)}',
-                          style: ts.textStyle.caption,
-                        ),
-                      ],
+                    child: _dim(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${today.month}月${today.day}日星期${const ['一', '二', '三', '四', '五', '六', '日'][today.weekday - 1]}',
+                            style: ts.textStyle.caption,
+                          ),
+                          Text(
+                            '今天已专注 ${durationLabel(todaySeconds)}',
+                            style: ts.textStyle.caption,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   CommonIconButton(
                     name: CommonIconName.settings,
                     label: '设置',
                     variant: CommonIconButtonVariant.text,
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed(AppRoutes.settings),
+                    onPressed: () {
+                      _dial.finish();
+                      Navigator.of(context).pushNamed(AppRoutes.settings);
+                    },
                   ),
                 ],
               ),
@@ -375,23 +389,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               swipe: false,
               children: [
                 for (final mode in TimerMode.values)
-                  _panel(
-                    mode == value.mode
-                        ? value
-                        : FocusViewData(
-                            mode: mode,
-                            seconds: mode == TimerMode.stopwatch
-                                ? 0
-                                : mode == TimerMode.countdown
-                                ? 300
-                                : prefs.focusMinutes * 60,
-                            target: mode == TimerMode.stopwatch
-                                ? 0
-                                : mode == TimerMode.countdown
-                                ? 300
-                                : prefs.focusMinutes * 60,
-                          ),
-                  ),
+                  _panel(ref.watch(focusDialPresentationProvider(mode)).view),
               ],
             ),
           ),
@@ -406,7 +404,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
     final label = value.finished
         ? value.resting
               ? '准备下一轮'
-              : value.mode == TimerMode.countdown
+              : value.mode != TimerMode.pomodoro
               ? '完成'
               : '开始休息'
         : value.status == TimerStatus.running
@@ -438,87 +436,96 @@ class _FocusPageState extends ConsumerState<FocusPage>
         ),
         LapList.minimumHeight(context, compact: compact),
       ),
-      dialBuilder: (width) => FocusDial(width: width, mode: value.mode),
-      utilityBuilder: (width) => value.mode == TimerMode.countdown
-          ? Center(
-              child: CountdownUtility(
-                key: const ValueKey('countdown-utility'),
-                value: value,
-                preferences: prefs,
-                availableWidth: width,
-                onRecovery: _recovery,
-                onSelected: _actions.selectCountdown,
-                onCustom: () async {
-                  final duration = await pickYikeDuration(
-                    title: '倒计时时长',
-                    initial: value.seconds,
-                    confirm: '确认时长',
-                  );
-                  if (duration != null && mounted) {
-                    _actions.selectCountdown(duration);
-                  }
-                },
-              ),
-            )
-          : value.mode == TimerMode.stopwatch && !value.ready
-          ? LapList(
-              key: ValueKey(
-                ref.watch(focusDataProvider.select((data) => data.session?.id)),
-              ),
-              value: value,
-              compact: compact,
-            )
-          : Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (value.seconds >= 3600 &&
-                      value.mode == TimerMode.stopwatch)
-                    Text(
-                      '已满 ${value.seconds ~/ 3600} 小时',
-                      style: ts.textStyle.caption,
-                    ),
-                  if (value.mode == TimerMode.pomodoro) ...[
-                    Text(
-                      roundText,
-                      textAlign: TextAlign.center,
-                      style: ts.textStyle.content.copyWith(
-                        color: ts.colors.onSurfaceMuted,
+      dialBuilder: (width) =>
+          FocusDial(width: width, mode: value.mode, adjustment: _dial),
+      utilityBuilder: (width) => _dim(
+        value.mode == TimerMode.countdown
+            ? Center(
+                child: CountdownUtility(
+                  key: const ValueKey('countdown-utility'),
+                  value: value,
+                  preferences: prefs,
+                  availableWidth: width,
+                  onRecovery: _recovery,
+                  selectedIndex: (() {
+                    final data = ref.watch(focusDataProvider);
+                    final slot = data.countdownPreset;
+                    return data.preferences.presets
+                        .take(slot)
+                        .whereType<int>()
+                        .length;
+                  })(),
+                  onSelected: (seconds) {
+                    _dial.finish();
+                    _actions.selectCountdownPreset(seconds);
+                  },
+                  onEdit: () {
+                    _dial.finish();
+                    Navigator.of(context).pushNamed(
+                      AppRoutes.settings,
+                      arguments: const SettingsRouteArguments(
+                        openCountdownPresets: true,
                       ),
-                    ),
-                    SizedBox(height: ts.spacing.sm),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: ts.spacing.xs,
-                      runSpacing: ts.spacing.xs,
-                      children: [
-                        for (var i = 0; i < prefs.interval; i++)
-                          _RoundMark(
-                            active:
-                                i <
-                                value.round -
-                                    (value.finished || value.resting ? 0 : 1),
-                            current: !value.ready && i == value.round - 1,
-                          ),
-                      ],
-                    ),
-                    if (value.finished)
+                    );
+                  },
+                ),
+              )
+            : value.mode == TimerMode.stopwatch && !value.ready
+            ? LapList(
+                key: ValueKey(
+                  ref.watch(
+                    focusDataProvider.select((data) => data.session?.id),
+                  ),
+                ),
+                value: value,
+                compact: compact,
+              )
+            : Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (value.mode == TimerMode.pomodoro) ...[
                       Text(
-                        prefs.sound && prefs.pomodoroFeedback.sound
-                            ? '提示音已开启'
-                            : '提示音已关闭',
-                        style: ts.textStyle.caption,
+                        roundText,
+                        textAlign: TextAlign.center,
+                        style: ts.textStyle.content.copyWith(
+                          color: ts.colors.onSurfaceMuted,
+                        ),
+                      ),
+                      SizedBox(height: ts.spacing.sm),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: ts.spacing.xs,
+                        runSpacing: ts.spacing.xs,
+                        children: [
+                          for (var i = 0; i < prefs.interval; i++)
+                            _RoundMark(
+                              active:
+                                  i <
+                                  value.round -
+                                      (value.finished || value.resting ? 0 : 1),
+                              current: !value.ready && i == value.round - 1,
+                            ),
+                        ],
+                      ),
+                      if (value.finished)
+                        Text(
+                          prefs.sound && prefs.pomodoroFeedback.sound
+                              ? '提示音已开启'
+                              : '提示音已关闭',
+                          style: ts.textStyle.caption,
+                        ),
+                    ],
+                    if (value.paused && value.recovered)
+                      CommonButton(
+                        label: '查看恢复选项',
+                        kind: CommonButtonKind.quiet,
+                        onPressed: _recovery,
                       ),
                   ],
-                  if (value.paused && value.recovered)
-                    CommonButton(
-                      label: '查看恢复选项',
-                      kind: CommonButtonKind.quiet,
-                      onPressed: _recovery,
-                    ),
-                ],
+                ),
               ),
-            ),
+      ),
       actions: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -553,7 +560,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                           size: CommonControlSize.lg,
                           shape: CommonButtonShape.pill,
                           block: true,
-                          onPressed: _primary,
+                          onPressed: _dial.value ? null : _primary,
                         ),
                       ),
                     ),
@@ -563,22 +570,33 @@ class _FocusPageState extends ConsumerState<FocusPage>
             ),
           ),
           SizedBox(height: ts.spacing.sm),
-          Expanded(child: Center(child: _secondaryActions(value, prefs))),
+          Expanded(child: Center(child: _dim(_secondaryActions(value, prefs)))),
         ],
       ),
     );
   }
+
+  Widget _dim(Widget child) => AnimatedOpacity(
+    opacity: _dial.value ? .35 : 1,
+    duration: MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : TS.of(context).motion.durationFast,
+    child: child,
+  );
 
   Widget _secondaryActions(FocusViewData value, TimingPreferences prefs) {
     final ts = TS.of(context);
     if (value.ready) {
       return value.mode == TimerMode.pomodoro
           ? Text(
-              '专注 ${prefs.focusMinutes} 分钟 · 短休 ${prefs.shortMinutes} 分钟',
+              '专注 ${durationLabel(value.target)} · 短休 ${durationLabel(prefs.shortSeconds)}',
               textAlign: TextAlign.center,
               style: ts.textStyle.caption,
             )
           : const SizedBox.shrink();
+    }
+    if (value.finished && value.mode == TimerMode.stopwatch) {
+      return const SizedBox.shrink();
     }
     if (value.finished && value.mode == TimerMode.countdown) {
       return CommonButton(

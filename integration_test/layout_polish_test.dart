@@ -125,7 +125,7 @@ void main() {
         lessThanOrEqualTo(tester.getRect(find.byType(CommonBottomNav)).top),
       );
       await capture(tester, '$theme-countdown');
-      await tap(tester, find.byKey(const ValueKey('countdown-custom')));
+      await tap(tester, find.byKey(const ValueKey('countdown-edit')));
       await capture(tester, '$theme-duration');
       await tap(tester, find.byTooltip('关闭'));
       app.read(themeModeProvider.notifier).setMode(ThemeMode.dark);

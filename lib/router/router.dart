@@ -12,6 +12,12 @@ export 'routes.dart';
 final Map<String, WidgetBuilder> appRoutes = {
   AppRoutes.bootstrap: (_) => const BootstrapPage(),
   AppRoutes.home: (_) => const YikeHomePage(),
-  AppRoutes.settings: (_) => const YikeSettingsPage(),
+  AppRoutes.settings: (context) {
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    return YikeSettingsPage(
+      openCountdownPresets:
+          arguments is SettingsRouteArguments && arguments.openCountdownPresets,
+    );
+  },
   AppRoutes.habitDetail: (_) => const HabitDetailPage(),
 };

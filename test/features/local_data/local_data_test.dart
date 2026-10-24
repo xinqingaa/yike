@@ -63,6 +63,45 @@ void main() {
   }
 
   test(
+    'countdown always selects a preset and reconciles edits without changing sessions',
+    () {
+      final actions = app.read(focusActionsProvider);
+      final prefs = app.read(timingPreferencesProvider.notifier);
+      actions.switchMode(TimerMode.countdown);
+      expect(app.read(focusViewProvider).target, 180);
+      expect(app.read(focusDataProvider).countdownPreset, 0);
+      actions.selectCountdownPreset(300);
+      expect(
+        actions.adjustDial(
+          TimerMode.countdown,
+          120,
+          expectedValue: 300,
+          expectedMaximum: 300,
+        ),
+        isTrue,
+      );
+      actions.selectCountdownPreset(300);
+      expect(app.read(focusViewProvider).target, 120);
+      expect(app.read(focusViewProvider).scaleSeconds, 300);
+      prefs.update((p) => p.copyWith(presets: [180, 90, 600, 1200]));
+      expect(app.read(focusViewProvider).target, 90);
+      expect(app.read(focusDataProvider).countdownPreset, 1);
+      actions.start();
+      prefs.update((p) => p.copyWith(presets: [30, null, 600, 1200]));
+      expect(app.read(focusDataProvider).countdownPreset, 0);
+      expect(app.read(focusViewProvider).target, 90);
+      expect(app.read(focusViewProvider).scaleSeconds, 90);
+      advance(const Duration(seconds: 90));
+      actions.again();
+      expect(app.read(focusViewProvider).target, 90);
+      expect(app.read(focusViewProvider).scaleSeconds, 90);
+      actions.discard();
+      expect(app.read(focusViewProvider).target, 30);
+      expect(app.read(focusViewProvider).scaleSeconds, 30);
+    },
+  );
+
+  test(
     'first initialization is saved, deleting all habits remains empty after reopen',
     () {
       expect(app.read(habitsProvider), hasLength(4));
@@ -265,7 +304,7 @@ void main() {
     final wire = YikeData.initial(now).toJson();
     (wire['focus'] as Map<String, dynamic>)['cycles'] = -1;
     disk.values[PrefsKey.snapshot.storageKey] = jsonEncode({
-      'schemaVersion': 1,
+      'schemaVersion': 2,
       'data': wire,
     });
     expect(app.read(localDataProvider).readError, isNotNull);
@@ -288,17 +327,17 @@ void main() {
         .read(timingPreferencesProvider.notifier)
         .update(
           (p) => p.copyWith(
-            presets: [90, null, 86399, 1],
+            presets: [90, null, 3599, 1],
             threshold: 7,
             sound: false,
-            focusMinutes: 1,
+            focusSeconds: 60,
             interval: 3,
           ),
         );
     app.dispose();
     app = open();
     final p = app.read(timingPreferencesProvider);
-    expect(p.presets, [90, null, 86399, 1]);
+    expect(p.presets, [90, null, 3599, 1]);
     expect(p.threshold, 7);
     expect(p.sound, isFalse);
     expect(app.read(focusViewProvider).seconds, 60);
@@ -313,7 +352,7 @@ void main() {
       final saved = app
           .read(timingPreferencesProvider.notifier)
           .update(
-            (p) => p.copyWith(threshold: 15, presets: [90, null, 1, 86399]),
+            (p) => p.copyWith(threshold: 15, presets: [90, null, 1, 3599]),
           );
       expect(saved, isFalse);
       expect(app.read(localDataProvider).writeError, isNotNull);
@@ -329,7 +368,7 @@ void main() {
       app.dispose();
       app = open();
       expect(app.read(timingPreferencesProvider).threshold, 15);
-      expect(app.read(timingPreferencesProvider).presets, [90, null, 1, 86399]);
+      expect(app.read(timingPreferencesProvider).presets, [90, null, 1, 3599]);
     },
   );
   test(
@@ -341,7 +380,7 @@ void main() {
       expect(
         app
             .read(timingPreferencesProvider.notifier)
-            .update((p) => p.copyWith(focusMinutes: 17, interval: 2)),
+            .update((p) => p.copyWith(focusSeconds: 1020, interval: 2)),
         isTrue,
       );
       expect(app.read(focusDataProvider).session!.targetMs, session.targetMs);
@@ -350,7 +389,7 @@ void main() {
       app = open();
       expect(app.read(focusViewProvider).paused, isTrue);
       expect(app.read(focusViewProvider).target, 1500);
-      expect(app.read(timingPreferencesProvider).focusMinutes, 17);
+      expect(app.read(timingPreferencesProvider).focusSeconds, 1020);
       app.read(focusActionsProvider).discard();
       app.read(focusActionsProvider).start();
       expect(app.read(focusViewProvider).target, 17 * 60);

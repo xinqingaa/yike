@@ -24,13 +24,13 @@ void main() {
       final value = initial.copyWith(
         focus: initial.focus.copyWith(
           preferences: const TimingPreferences(
-            focusMinutes: 17,
-            shortMinutes: 7,
-            longMinutes: 19,
+            focusSeconds: 1020,
+            shortSeconds: 59,
+            longSeconds: 1140,
             interval: 3,
             threshold: 15,
             sound: false,
-            presets: [90, null, 86399, 1],
+            presets: [90, null, 3599, 1],
           ),
         ),
       );
@@ -49,7 +49,7 @@ void main() {
       expect(prefs.read(localDataPrefs)!.focus.preferences.presets, [
         90,
         null,
-        86399,
+        3599,
         1,
       ]);
       prefs.close();

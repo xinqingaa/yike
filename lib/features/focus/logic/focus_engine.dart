@@ -23,9 +23,7 @@ abstract final class FocusEngine {
       return data;
     }
     var delta = math.max(0, now.difference(s.anchor!).inMilliseconds);
-    if (s.mode != TimerMode.stopwatch) {
-      delta = math.min(delta, s.targetMs - s.elapsedMs);
-    }
+    delta = math.min(delta, s.limitMs - s.elapsedMs);
     if (delta == 0) return data;
     final days = {...s.days};
     if (!s.resting) {
@@ -45,8 +43,7 @@ abstract final class FocusEngine {
         remaining -= part;
       }
     }
-    final done =
-        s.mode != TimerMode.stopwatch && s.elapsedMs + delta >= s.targetMs;
+    final done = s.elapsedMs + delta >= s.limitMs;
     final next = s.copyWith(
       elapsedMs: s.elapsedMs + delta,
       days: Map.unmodifiable(days),
@@ -56,8 +53,8 @@ abstract final class FocusEngine {
       promptShort:
           done &&
           !s.resting &&
-          s.mode == TimerMode.pomodoro &&
-          s.targetMs < data.preferences.threshold * 1000,
+          s.mode != TimerMode.countdown &&
+          s.limitMs < data.preferences.threshold * 1000,
     );
     var result = data.copyWith(
       session: next,
@@ -75,13 +72,14 @@ abstract final class FocusEngine {
         ? 0
         : (data.mode == TimerMode.countdown
                   ? data.countdown
-                  : data.preferences.focusMinutes * 60) *
+                  : data.pomodoroOnce ?? data.preferences.focusSeconds) *
               1000;
-    if (data.mode == TimerMode.countdown &&
-        (target < 1000 || target > 86399000)) {
+    if (data.mode != TimerMode.stopwatch &&
+        (target < 1000 || target > maxFocusSeconds * 1000)) {
       return data;
     }
     return data.copyWith(
+      clearPomodoroOnce: data.mode == TimerMode.pomodoro,
       session: FocusSession(
         id: id,
         mode: data.mode,
@@ -89,10 +87,36 @@ abstract final class FocusEngine {
         status: TimerStatus.running,
         startedAt: now,
         targetMs: target,
+        scaleSeconds: data.mode == TimerMode.countdown
+            ? data.countdownScale
+            : fullDialSeconds,
         round: data.cycles + 1,
         longRest:
             data.mode == TimerMode.pomodoro &&
             data.cycles + 1 >= data.preferences.interval,
+        anchor: now,
+      ),
+    );
+  }
+
+  static FocusData again(FocusData data, DateTime now, String id) {
+    final previous = data.session;
+    if (previous == null ||
+        previous.mode != TimerMode.countdown ||
+        previous.status != TimerStatus.finished) {
+      return data;
+    }
+    return data.copyWith(
+      session: FocusSession(
+        id: id,
+        mode: TimerMode.countdown,
+        stage: TimerStage.focus,
+        status: TimerStatus.running,
+        startedAt: now,
+        targetMs: previous.targetMs,
+        scaleSeconds: previous.scaleSeconds,
+        round: previous.round,
+        longRest: false,
         anchor: now,
       ),
     );
@@ -219,9 +243,9 @@ abstract final class FocusEngine {
         startedAt: now,
         targetMs:
             (s.longRest
-                ? data.preferences.longMinutes
-                : data.preferences.shortMinutes) *
-            60000,
+                ? data.preferences.longSeconds
+                : data.preferences.shortSeconds) *
+            1000,
         round: s.round,
         longRest: s.longRest,
         anchor: now,

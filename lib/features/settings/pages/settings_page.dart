@@ -16,10 +16,26 @@ import '../../../router/routes.dart';
 import '../../../theme/ts.dart';
 import '../../../common/overlay/duration_sheet.dart';
 
-class YikeSettingsPage extends ConsumerWidget {
-  const YikeSettingsPage({super.key});
+class YikeSettingsPage extends ConsumerStatefulWidget {
+  const YikeSettingsPage({super.key, this.openCountdownPresets = false});
+  final bool openCountdownPresets;
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<YikeSettingsPage> createState() => _YikeSettingsPageState();
+}
+
+class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.openCountdownPresets) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) openPresetSettings();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ts = TS.of(context);
     final pack = ref.watch(themePackProvider);
     final mode = ref.watch(themeModeProvider);
@@ -133,6 +149,12 @@ class YikeSettingsPage extends ConsumerWidget {
                       switchValue: prefs.haptics,
                     ),
                     CommonListItem(
+                      id: 'previewFinish',
+                      title: '试听提示音',
+                      navigation: true,
+                      disabled: !prefs.sound,
+                    ),
+                    CommonListItem(
                       id: 'threshold',
                       title: '短时记录确认阈值',
                       value: durationLabel(prefs.threshold),
@@ -147,19 +169,19 @@ class YikeSettingsPage extends ConsumerWidget {
                     CommonListItem(
                       id: 'focus',
                       title: '专注时长',
-                      value: durationLabel(prefs.focusMinutes * 60),
+                      value: durationLabel(prefs.focusSeconds),
                       navigation: true,
                     ),
                     CommonListItem(
                       id: 'short',
                       title: '短休息',
-                      value: durationLabel(prefs.shortMinutes * 60),
+                      value: durationLabel(prefs.shortSeconds),
                       navigation: true,
                     ),
                     CommonListItem(
                       id: 'long',
                       title: '长休息',
-                      value: durationLabel(prefs.longMinutes * 60),
+                      value: durationLabel(prefs.longSeconds),
                       navigation: true,
                     ),
                     CommonListItem(
@@ -200,6 +222,12 @@ class YikeSettingsPage extends ConsumerWidget {
                 ),
               ],
               onNavigate: (group, item) async {
+                if (item == 'previewFinish') {
+                  ref
+                      .read(feedbackServiceProvider)
+                      .previewFinish(theme: pack.id);
+                  return;
+                }
                 if (item == 'beatMinutes') {
                   await AppPop.sheet<void>(
                     title: '节拍间隔',
@@ -235,28 +263,30 @@ class YikeSettingsPage extends ConsumerWidget {
                   return;
                 }
                 final initial = item == 'focus'
-                    ? prefs.focusMinutes
+                    ? prefs.focusSeconds
                     : item == 'short'
-                    ? prefs.shortMinutes
-                    : prefs.longMinutes;
+                    ? prefs.shortSeconds
+                    : prefs.longSeconds;
                 await pickYikeDuration(
                   title: item == 'focus'
                       ? '专注时长'
                       : item == 'short'
                       ? '短休息'
                       : '长休息',
-                  initial: initial * 60,
-                  minimum: 60,
-                  maximum: (item == 'focus' ? 180 : 60) * 60,
-                  seconds: false,
+                  initial: initial,
+                  minimum: 1,
+                  maximum: item == 'short' ? 59 : maxFocusSeconds,
+                  secondsOnly: item == 'short',
+                  hours: false,
+                  seconds: true,
                   autoSave: true,
                   onConfirm: (value) => ref
                       .read(timingPreferencesProvider.notifier)
                       .update(
                         (p) => p.copyWith(
-                          focusMinutes: item == 'focus' ? value ~/ 60 : null,
-                          shortMinutes: item == 'short' ? value ~/ 60 : null,
-                          longMinutes: item == 'long' ? value ~/ 60 : null,
+                          focusSeconds: item == 'focus' ? value : null,
+                          shortSeconds: item == 'short' ? value : null,
+                          longSeconds: item == 'long' ? value : null,
                         ),
                       ),
                 );
@@ -510,9 +540,9 @@ class _SettingsFlowPageState extends State<_SettingsFlowPage> {
   );
 }
 
-void openPresetSettings() {
+Future<void> openPresetSettings() async {
   final controller = FlowSheetController<void>();
-  AppPop.flowSheet<void>(
+  await AppPop.flowSheet<void>(
     controller: controller,
     title: '常用倒计时',
     pageTitles: const {'preset-edit': '编辑常用倒计时'},
@@ -581,8 +611,9 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
   final _error = localValueProvider<String?>(null);
   void _save(int? value) {
     final prefs = ref.read(timingPreferencesProvider);
-    if (value != null && (value < 1 || value > 86399)) {
-      ref.read(_error.notifier).set('时长必须为 1 秒至 23 小时 59 分 59 秒');
+    if (widget.index == 0 && value == null) return;
+    if (value != null && (value < 1 || value > maxFocusSeconds)) {
+      ref.read(_error.notifier).set('时长必须为 1 秒至 59 分 59 秒');
       return;
     }
     if (value != null &&
@@ -612,6 +643,8 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
         children: [
           DurationWheels(
             filled: true,
+            hours: false,
+            maximum: maxFocusSeconds,
             value: ref.watch(_value),
             onSettled: _save,
             onChanged: (v) {
@@ -619,11 +652,12 @@ class _PresetEditState extends ConsumerState<_PresetEdit> {
               ref.read(_error.notifier).set(null);
             },
           ),
-          CommonButton(
-            label: '清空此项',
-            kind: CommonButtonKind.quiet,
-            onPressed: () => _save(null),
-          ),
+          if (widget.index != 0)
+            CommonButton(
+              label: '清空此项',
+              kind: CommonButtonKind.quiet,
+              onPressed: () => _save(null),
+            ),
           MotionExpand(
             expanded: ref.watch(_error) != null,
             child: Text(

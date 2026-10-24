@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yike/common/widgets.dart';
 import 'package:yike/features/focus/focus.dart';
+import 'package:yike/features/settings/pages/settings_page.dart';
 import 'package:yike/features/focus/widgets/countdown_choices.dart';
 import 'package:yike/features/focus/widgets/lap_list.dart';
 import 'package:yike/features/habits/habits.dart';
@@ -108,95 +109,86 @@ void main() {
   );
 
   for (final count in [0, 1, 3, 4]) {
-    testWidgets(
-      '$count countdown presets use equal columns and a full custom row',
-      (tester) async {
-        final presets = [180, 300, 86399, 3600].take(count).toList();
-        int? selected;
-        var custom = 0;
-        await tester.pumpWidget(
-          shell(
-            (context) => Center(
-              child: SizedBox(
-                width: 272,
-                child: CountdownChoices(
-                  availableWidth: 272,
-                  presets: presets,
-                  value: 86398,
-                  onSelected: (value) => selected = value,
-                  onCustom: () => custom++,
-                ),
+    testWidgets('$count countdown presets and edit share one row', (
+      tester,
+    ) async {
+      final presets = [180, 300, 3599, 360].take(count).toList();
+      int? selected;
+      var edits = 0;
+      await tester.pumpWidget(
+        shell(
+          (context) => Center(
+            child: SizedBox(
+              width: 272,
+              child: CountdownChoices(
+                availableWidth: 272,
+                presets: presets,
+                selectedIndex: null,
+                onSelected: (value) => selected = value,
+                onEdit: () => edits++,
               ),
             ),
           ),
+        ),
+      );
+      final edit = find.byKey(const ValueKey('countdown-edit'));
+      final editRect = tester.getRect(edit);
+      expect(
+        editRect.right,
+        lessThanOrEqualTo(tester.getRect(find.byType(CountdownChoices)).right),
+      );
+      for (final seconds in presets) {
+        final rect = tester.getRect(
+          find.byKey(ValueKey('countdown-preset-$seconds')),
         );
-        final customRect = tester.getRect(
-          find.byKey(const ValueKey('countdown-custom')),
+        expect(rect.center.dy, closeTo(editRect.center.dy, 1));
+      }
+      if (presets.isNotEmpty) {
+        await tester.tap(
+          find.byKey(ValueKey('countdown-preset-${presets.first}')),
         );
-        expect(customRect.width, 272);
-        for (var i = 0; i < presets.length; i++) {
-          final rect = tester.getRect(
-            find.byKey(ValueKey('countdown-preset-${presets[i]}')),
-          );
-          expect(rect.width, (272 - 8) / 2);
-          expect(
-            rect.height,
-            tester
-                .getSize(
-                  find.byKey(ValueKey('countdown-preset-${presets.first}')),
-                )
-                .height,
-          );
-          expect(rect.bottom, lessThan(customRect.top));
-          if (i.isOdd) {
-            expect(
-              rect.top,
-              tester
-                  .getTopLeft(
-                    find.byKey(ValueKey('countdown-preset-${presets[i - 1]}')),
-                  )
-                  .dy,
-            );
-          }
-        }
-        if (presets.isNotEmpty) {
-          await tester.tap(
-            find.byKey(ValueKey('countdown-preset-${presets.first}')),
-          );
-          expect(selected, presets.first);
-        }
-        await tester.tap(find.byKey(const ValueKey('countdown-custom')));
-        expect(custom, 1);
-        expect(tester.takeException(), isNull);
-      },
-    );
+        expect(selected, presets.first);
+      }
+      await tester.tap(edit);
+      expect(edits, 1);
+      expect(find.text('自定义'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   }
 
-  testWidgets('countdown choices and custom cancellation never start a timer', (
-    tester,
-  ) async {
-    final app = await pumpYike(tester, size: const Size(320, 640));
-    await tester.tap(find.text('倒计时'));
-    await pumpPresentation(tester);
-    final preset = find.byKey(const ValueKey('countdown-preset-600'));
-    await tester.ensureVisible(preset);
-    await tester.tap(preset);
-    await pumpPresentation(tester);
-    expect(app.read(focusViewProvider).target, 600);
-    expect(app.read(focusViewProvider).ready, isTrue);
-    final custom = find.byKey(const ValueKey('countdown-custom'));
-    await tester.ensureVisible(custom);
-    await tester.tap(custom);
-    await pumpPresentation(tester);
-    expect(find.text('时'), findsOneWidget);
-    expect(find.text('分'), findsOneWidget);
-    expect(find.text('秒'), findsOneWidget);
-    await tester.tap(find.byTooltip('关闭'));
-    await pumpPresentation(tester);
-    expect(app.read(focusViewProvider).target, 600);
-    expect(app.read(focusViewProvider).ready, isTrue);
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'countdown preset editor cancellation preserves the pending target',
+    (tester) async {
+      final app = await pumpYike(tester, size: const Size(320, 640));
+      await tester.tap(find.text('倒计时'));
+      await pumpPresentation(tester);
+      final preset = find.byKey(const ValueKey('countdown-preset-600'));
+      await tester.ensureVisible(preset);
+      await tester.tap(preset);
+      await pumpPresentation(tester);
+      expect(app.read(focusViewProvider).target, 600);
+      expect(app.read(focusViewProvider).ready, isTrue);
+      final edit = find.byKey(const ValueKey('countdown-edit'));
+      await tester.ensureVisible(edit);
+      await tester.tap(edit);
+      await pumpPresentation(tester);
+      expect(find.text('常用倒计时'), findsWidgets);
+      expect(find.byType(YikeSettingsPage), findsOneWidget);
+      await tester.tap(find.text('常用 1'));
+      await pumpPresentation(tester);
+      expect(find.text('清空此项'), findsNothing);
+      await tester.tap(find.byTooltip('关闭'));
+      await pumpPresentation(tester);
+      expect(find.byType(YikeSettingsPage), findsOneWidget);
+      expect(find.text('试听提示音'), findsOneWidget);
+      await tester.tap(find.byTooltip('返回'));
+      await pumpPresentation(tester);
+      expect(find.byType(YikeSettingsPage), findsNothing);
+      expect(app.read(focusViewProvider).target, 600);
+      expect(app.read(focusViewProvider).ready, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'lap table aligns time edges and baselines across unequal durations',

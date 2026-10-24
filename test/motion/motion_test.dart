@@ -24,34 +24,31 @@ Widget shell(Widget child, {bool reduced = false}) => MaterialApp(
 );
 
 void main() {
-  test(
-    'hour boundary has an observable full-circle window without changing time',
-    () {
-      final now = DateTime.utc(2026, 10, 23);
-      final session = FocusSession(
-        id: 'hour',
-        mode: TimerMode.stopwatch,
-        stage: TimerStage.focus,
-        status: TimerStatus.running,
-        startedAt: now,
-        anchor: now,
-        targetMs: 0,
-        round: 1,
-        longRest: false,
-      );
-      FocusProjection at(int milliseconds) => FocusProjection.at(
-        session,
-        const FocusViewData(mode: TimerMode.stopwatch),
-        now.add(Duration(milliseconds: milliseconds)),
-      );
-      expect(at(3599999).seconds, 3599);
-      expect(at(3600005).progress, 1);
-      expect(at(3600650).progress, 1);
-      expect(at(3600800).progress, lessThan(.001));
-      expect(at(3600800).seconds, 3600);
-      expect(at(7200050).progress, 1);
-    },
-  );
+  test('stopwatch projection caps at 59:59 without hour wrapping', () {
+    final now = DateTime.utc(2026, 10, 23);
+    final session = FocusSession(
+      id: 'hour',
+      mode: TimerMode.stopwatch,
+      stage: TimerStage.focus,
+      status: TimerStatus.running,
+      startedAt: now,
+      anchor: now,
+      targetMs: 0,
+      round: 1,
+      longRest: false,
+    );
+    FocusProjection at(int milliseconds) => FocusProjection.at(
+      session,
+      const FocusViewData(mode: TimerMode.stopwatch),
+      now.add(Duration(milliseconds: milliseconds)),
+    );
+    expect(at(3599999).seconds, 3599);
+    expect(at(3600005).progress, 3599 / 3600);
+    expect(at(3600650).progress, 3599 / 3600);
+    expect(at(3600800).progress, 3599 / 3600);
+    expect(at(3600800).seconds, 3599);
+    expect(at(7200050).progress, 3599 / 3600);
+  });
 
   testWidgets(
     'replacement excludes outgoing input and semantics; reversal keeps latest',
@@ -255,7 +252,7 @@ void main() {
     );
 
     testWidgets(
-      '$theme hour digit growth stays readable on a narrow large-text dial',
+      '$theme 59:59 limit stays readable on a narrow large-text dial',
       (tester) async {
         var now = DateTime.utc(2026, 10, 16, 12);
         tester.platformDispatcher.textScaleFactorTestValue = 1.6;
@@ -267,7 +264,7 @@ void main() {
           focus: const FocusViewData(
             mode: TimerMode.stopwatch,
             status: TimerStatus.running,
-            seconds: 3599,
+            seconds: 3598,
             target: 0,
           ),
         );
@@ -276,15 +273,15 @@ void main() {
         final readout = tester.widget<RollingDigits>(
           find.byType(RollingDigits).first,
         );
-        expect(readout.value, '1:00:00');
-        expect(readout.phase, 1);
+        expect(readout.value, '59:59');
+        expect(readout.phase, inInclusiveRange(0, 1));
         expect(
           tester
               .widget<YikeDial>(find.byType(YikeDial).first)
               .frame!
               .value
               .progress,
-          1,
+          3599 / 3600,
         );
         app.read(focusActionsProvider).pause();
         await pumpPresentation(tester);

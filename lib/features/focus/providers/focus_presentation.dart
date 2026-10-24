@@ -154,10 +154,7 @@ class FocusActions {
         s.status != TimerStatus.finished) {
       return;
     }
-    _feedbackCommit(
-      FocusEngine.start(FocusEngine.leave(data), now, identity),
-      effective: true,
-    );
+    _feedbackCommit(FocusEngine.again(data, now, identity), effective: true);
   }
 
   void switchMode(TimerMode mode, {bool record = false}) {
@@ -172,13 +169,71 @@ class FocusActions {
   }
 
   void selectCountdown(int seconds) {
-    if (data.session != null || seconds < 1 || seconds > 86399) return;
+    if (data.session != null ||
+        seconds < 1 ||
+        seconds > data.countdownMaximum) {
+      return;
+    }
     _commit(data.copyWith(countdown: seconds));
   }
 
-  bool configure(TimingPreferences preferences) => _commit(
-    FocusEngine.advance(data, now).copyWith(preferences: preferences),
-  );
+  void selectCountdownPreset(int seconds) {
+    if (data.session != null || data.mode != TimerMode.countdown) return;
+    final index = data.preferences.presets.indexOf(seconds);
+    if (index < 0) return;
+    if (data.countdownPreset == index) return;
+    _commit(data.copyWith(countdown: seconds, countdownPreset: index));
+  }
+
+  bool adjustDial(
+    TimerMode mode,
+    int seconds, {
+    required int expectedValue,
+    required int expectedMaximum,
+  }) {
+    final current = data;
+    if (current.session != null ||
+        current.mode != mode ||
+        mode == TimerMode.stopwatch) {
+      return false;
+    }
+    final maximum = mode == TimerMode.countdown
+        ? current.countdownMaximum
+        : maxFocusSeconds;
+    final value = mode == TimerMode.countdown
+        ? current.countdown
+        : current.pomodoroOnce ?? current.preferences.focusSeconds;
+    if (value != expectedValue ||
+        maximum != expectedMaximum ||
+        seconds < 1 ||
+        seconds > maximum) {
+      return false;
+    }
+    final next = mode == TimerMode.countdown
+        ? current.copyWith(
+            countdown: seconds,
+            dialAdjusted: current.dialAdjusted || seconds != value,
+          )
+        : current.copyWith(
+            pomodoroOnce: seconds,
+            dialAdjusted: current.dialAdjusted || seconds != value,
+          );
+    final result = ref
+        .read(localDataProvider.notifier)
+        .commitResult(ref.read(localDataProvider).data.copyWith(focus: next));
+    return result.accepted;
+  }
+
+  bool configure(TimingPreferences preferences) {
+    final before = data;
+    return _commit(
+      FocusEngine.advance(before, now).copyWith(
+        preferences: preferences,
+        clearPomodoroOnce:
+            preferences.focusSeconds != before.preferences.focusSeconds,
+      ),
+    );
+  }
 }
 
 final focusActionsProvider = Provider<FocusActions>(

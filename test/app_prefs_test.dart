@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yike/features/local_data/models/local_data.dart';
 import 'package:yike/features/local_data/models/local_data_prefs.dart';
 import 'package:yike/features/focus/focus.dart';
+import 'package:yike/features/focus/models/focus_data.dart'
+    show preferencesFromJson, preferencesJson;
 import 'package:yike/storage/app_prefs.dart';
 
 import 'support/fake_app_prefs.dart';
@@ -40,6 +42,16 @@ Matcher failure(PrefsOperation operation, {Matcher? cause}) =>
         .having((e) => e.cause, 'cause', cause ?? anything);
 
 void main() {
+  test('first countdown preset cannot be empty in a snapshot', () {
+    expect(
+      () => preferencesFromJson(
+        preferencesJson(
+          const TimingPreferences(presets: [null, 300, null, null]),
+        ),
+      ),
+      throwsFormatException,
+    );
+  });
   test('absence is distinct from empty strings, false and zero', () {
     final prefs = FakeAppPrefs();
     expect(prefs.read(AppPrefs.themePack), isNull);
@@ -99,7 +111,7 @@ void main() {
     final value = initial.copyWith(
       focus: initial.focus.copyWith(
         preferences: const TimingPreferences(
-          presets: [90, null, 86399, 1],
+          presets: [90, null, 3599, 1],
           threshold: 15,
           sound: false,
         ),
@@ -108,7 +120,7 @@ void main() {
     prefs.write(localDataPrefs, value);
     final restored = prefs.read(localDataPrefs)!;
     expect(restored.toJson(), value.toJson());
-    expect(restored.focus.preferences.presets, [90, null, 86399, 1]);
+    expect(restored.focus.preferences.presets, [90, null, 3599, 1]);
     expect(restored.focus.preferences.threshold, 15);
   });
 

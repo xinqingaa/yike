@@ -122,9 +122,9 @@ void main() {
     () {
       var d = const FocusData(
         preferences: TimingPreferences(
-          focusMinutes: 1,
-          shortMinutes: 1,
-          longMinutes: 2,
+          focusSeconds: 60,
+          shortSeconds: 59,
+          longSeconds: 120,
         ),
       );
       var now = start;
@@ -155,13 +155,13 @@ void main() {
   test('round rest decision and running target survive preference changes', () {
     var d = running(
       TimerMode.pomodoro,
-      prefs: const TimingPreferences(focusMinutes: 1, interval: 4),
+      prefs: const TimingPreferences(focusSeconds: 60, interval: 4),
     );
     d = d.copyWith(
       preferences: d.preferences.copyWith(
-        focusMinutes: 30,
+        focusSeconds: 1800,
         interval: 2,
-        shortMinutes: 2,
+        shortSeconds: 59,
       ),
     );
     expect(d.session!.targetMs, 60000);
@@ -172,9 +172,9 @@ void main() {
       'rest',
     );
     expect(d.session!.stage, TimerStage.shortBreak);
-    expect(d.session!.targetMs, 120000);
-    d = d.copyWith(preferences: d.preferences.copyWith(shortMinutes: 10));
-    expect(d.session!.targetMs, 120000);
+    expect(d.session!.targetMs, 59000);
+    d = d.copyWith(preferences: d.preferences.copyWith(shortSeconds: 59));
+    expect(d.session!.targetMs, 59000);
   });
   test(
     'early end does not complete a round and discard does not erase prior records',
@@ -198,7 +198,7 @@ void main() {
     () {
       var d = running(
         TimerMode.pomodoro,
-        prefs: const TimingPreferences(focusMinutes: 1, threshold: 180),
+        prefs: const TimingPreferences(focusSeconds: 60, threshold: 180),
       );
       d = FocusEngine.advance(d, start.add(const Duration(minutes: 1)));
       expect(d.cycles, 1);

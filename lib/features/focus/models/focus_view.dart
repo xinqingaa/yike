@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../../../common/feedback/feedback_options.dart';
 
+const maxFocusSeconds = 3599;
+const fullDialSeconds = 3600;
+
 enum TimerMode { pomodoro, stopwatch, countdown }
 
 enum TimerStatus { ready, running, paused, finished }
@@ -15,6 +18,7 @@ class FocusViewData {
     this.stage = TimerStage.focus,
     this.seconds = 1500,
     this.target = 1500,
+    this.scaleSeconds = fullDialSeconds,
     this.round = 1,
     this.laps = const [],
     this.recovered = false,
@@ -22,7 +26,7 @@ class FocusViewData {
   final TimerMode mode;
   final TimerStatus status;
   final TimerStage stage;
-  final int seconds, target, round;
+  final int seconds, target, round, scaleSeconds;
   final List<int> laps;
   final bool recovered;
   bool get resting => stage != TimerStage.focus;
@@ -34,15 +38,17 @@ class FocusViewData {
             ? '休息结束'
             : mode == TimerMode.countdown
             ? '到点了'
+            : mode == TimerMode.stopwatch
+            ? '计时完成'
             : '本轮完成'
       : paused
       ? resting
             ? '休息已暂停'
             : '已暂停'
       : ready
-      ? mode == TimerMode.countdown
-            ? '设置时长'
-            : '准备开始'
+      ? mode == TimerMode.stopwatch
+            ? '准备开始'
+            : '拨动调整'
       : resting
       ? stage == TimerStage.longBreak
             ? '长休息'
@@ -50,14 +56,7 @@ class FocusViewData {
       : mode == TimerMode.stopwatch
       ? '已计时'
       : '剩余';
-  double get progress => mode == TimerMode.countdown
-      ? (seconds / target).clamp(0, 1)
-      : mode == TimerMode.stopwatch && seconds > 0 && seconds % 3600 == 0
-      ? 1
-      : ((mode == TimerMode.stopwatch ? seconds % 3600 : seconds) / 3600).clamp(
-          0,
-          1,
-        );
+  double get progress => (seconds / scaleSeconds).clamp(0, 1);
   @override
   bool operator ==(Object other) =>
       other is FocusViewData &&
@@ -66,6 +65,7 @@ class FocusViewData {
       stage == other.stage &&
       seconds == other.seconds &&
       target == other.target &&
+      scaleSeconds == other.scaleSeconds &&
       round == other.round &&
       recovered == other.recovered &&
       listEquals(laps, other.laps);
@@ -76,6 +76,7 @@ class FocusViewData {
     stage,
     seconds,
     target,
+    scaleSeconds,
     round,
     recovered,
     Object.hashAll(laps),
@@ -86,6 +87,7 @@ class FocusViewData {
     TimerStage? stage,
     int? seconds,
     int? target,
+    int? scaleSeconds,
     int? round,
     List<int>? laps,
     bool? recovered,
@@ -95,6 +97,7 @@ class FocusViewData {
     stage: stage ?? this.stage,
     seconds: seconds ?? this.seconds,
     target: target ?? this.target,
+    scaleSeconds: scaleSeconds ?? this.scaleSeconds,
     round: round ?? this.round,
     laps: laps ?? this.laps,
     recovered: recovered ?? this.recovered,
@@ -118,9 +121,9 @@ class FocusRecordView {
 @immutable
 class TimingPreferences {
   const TimingPreferences({
-    this.focusMinutes = 25,
-    this.shortMinutes = 5,
-    this.longMinutes = 15,
+    this.focusSeconds = 1500,
+    this.shortSeconds = 30,
+    this.longSeconds = 900,
     this.interval = 4,
     this.threshold = 10,
     this.sound = true,
@@ -134,7 +137,7 @@ class TimingPreferences {
     this.habitFeedback = const FeedbackOptions(beatMinutes: 0),
     this.presets = const [180, 300, 600, 1200],
   });
-  final int focusMinutes, shortMinutes, longMinutes, interval, threshold;
+  final int focusSeconds, shortSeconds, longSeconds, interval, threshold;
   final bool sound, haptics;
   final FeedbackOptions pomodoroFeedback,
       stopwatchFeedback,
@@ -153,9 +156,9 @@ class TimingPreferences {
       );
   final List<int?> presets;
   TimingPreferences copyWith({
-    int? focusMinutes,
-    int? shortMinutes,
-    int? longMinutes,
+    int? focusSeconds,
+    int? shortSeconds,
+    int? longSeconds,
     int? interval,
     int? threshold,
     bool? sound,
@@ -166,9 +169,9 @@ class TimingPreferences {
     FeedbackOptions? habitFeedback,
     List<int?>? presets,
   }) => TimingPreferences(
-    focusMinutes: focusMinutes ?? this.focusMinutes,
-    shortMinutes: shortMinutes ?? this.shortMinutes,
-    longMinutes: longMinutes ?? this.longMinutes,
+    focusSeconds: focusSeconds ?? this.focusSeconds,
+    shortSeconds: shortSeconds ?? this.shortSeconds,
+    longSeconds: longSeconds ?? this.longSeconds,
     interval: interval ?? this.interval,
     threshold: threshold ?? this.threshold,
     sound: sound ?? this.sound,
