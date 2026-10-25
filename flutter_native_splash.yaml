@@ -1,0 +1,16 @@
+flutter_native_splash:
+  android: true
+  ios: true
+  web: false
+  color: '#FAFBF9'
+  color_dark: '#202526'
+  image: asset/yike/brand/splash.png
+  image_dark: asset/yike/brand/splash-dark.png
+  android_gravity: center
+  ios_content_mode: center
+  fullscreen: false
+  android_12:
+    color: '#FAFBF9'
+    color_dark: '#202526'
+    image: asset/yike/brand/splash-android12.png
+    image_dark: asset/yike/brand/splash-android12-dark.png

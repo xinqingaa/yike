@@ -35,6 +35,7 @@
 - [动效事件与重播](decisions/2026-10-23-motion-policy.md)
 - [秒级时长与统一有效范围](decisions/2026-10-24-duration-rules.md)
 - [三模式并行与前后台提醒](decisions/2026-10-24-parallel-timers-notifications.md)
+- [品牌 Logo 与平台启动图](decisions/2026-10-25-brand-logo.md)
 - [Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md)
 
 决策记录说明日期、已决定的行为和原因；具体规格仍在所属产品/工程文档维护。

@@ -8,6 +8,7 @@ asset/
   yike/icons/        yike 专属图标
   yike/artwork/      yike 主题图形与状态图层
   yike/sound/        Flutter 自有三主题短音效
+  yike/brand/        用户选定 Logo 派生的品牌、图标与启动屏输入
 ```
 
 同一目录内按资源用途扩展 `images/` 等子目录，不按页面另存公共资源，不在多个归属下复制同一文件。新增文件须同时登记 `pubspec.yaml`；禁止把整个原型目录复制进应用资源包。
@@ -33,6 +34,23 @@ PNG 的像素尺寸与界面逻辑尺寸分开：组件通过主题指定显示�
 ## Flutter 自有资源
 
 新增资源放入相应归属的 `images/` 或 `artwork/`，登记 pubspec 与本地映射，并说明用途、来源和逻辑尺寸。已有 PNG 图层可通过 Flutter 裁切、自绘进度与材质组合实现运动，不需回到 Vue 或重导出静态资源。避免重复大图和不必要预解码，保持无障碍语义独立于装饰。
+
+## 品牌图标与启动屏
+
+用户选定的原图为根目录 `logo.png`，保留原图以便追溯。`tool/prepare_brand.dart` 从浅色展示底板中提取标识，保留主体纹理和柿色，生成 `asset/yike/brand/` 中的 11 份输入。深色版本提亮灰色主体，Android 单色和 iOS 着色版本只使用同一轮廓。原图中的展示圆角不烘焙到应用图标，圆角和自适应遮罩交由系统处理。
+
+重新生成时运行：
+
+```bash
+flutter pub get
+node tool/generate-brand.mjs
+```
+
+入口先准备素材，再调用 `flutter_launcher_icons` 和 `flutter_native_splash`。配置分别位于根目录 `flutter_launcher_icons.yaml` 和 `flutter_native_splash.yaml`；两者仅用于开发时生成，不增加启动等待。入口同时保护图标插件误改的 Xcode Swift asset symbols 布尔设置，清理 AppIcon 清单不再引用的旧占位图，并调用 `tool/check_brand.dart` 核验 iOS 图标尺寸与不透明要求、Android 圆形安全区与各密度文件，避免后续再生成时带入无关工程变动或裁切。
+
+Android 包含各密度传统图标、自适应前景/背景、单色图标、旧版启动图与 Android 12+ 启动图；iOS 包含各尺寸 AppIcon 及深色/着色变体、浅深 LaunchImage 和 LaunchBackground。Android 12+ 素材单独留足圆形安全区。原生启动屏浅深背景分别为 `#FAFBF9` / `#202526`，启动时遵循系统外观；业务偏好读取后仍遵循已保存的应用主题。
+
+应用内 `YikeLaunchPage` 经本地 `YikeBrand` 映射使用浅深标识，保留名称、说明与即时进入专注的规则。品牌素材属于 Flutter 自有资源，不写入外部 DS 生成清单，不运行 DS 同步。替换新的原图时须重新检查提取结果、透明边缘、各遮罩与浅深对比度。
 
 ## 专项固定资源核对
 

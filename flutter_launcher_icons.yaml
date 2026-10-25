@@ -1,0 +1,13 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: asset/yike/brand/icon.png
+  adaptive_icon_background: '#E8ECE8'
+  adaptive_icon_foreground: asset/yike/brand/adaptive-foreground.png
+  adaptive_icon_foreground_inset: 0
+  adaptive_icon_monochrome: asset/yike/brand/adaptive-monochrome.png
+  remove_alpha_ios: true
+  background_color_ios: '#E8ECE8'
+  image_path_ios_dark_transparent: asset/yike/brand/icon-dark.png
+  image_path_ios_tinted_grayscale: asset/yike/brand/icon-tinted.png
+  desaturate_tinted_to_grayscale_ios: true

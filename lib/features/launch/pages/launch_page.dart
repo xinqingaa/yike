@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../common/widgets.dart';
-import '../../../common/widgets/yike/dial.dart';
 import '../../../theme/ts.dart';
+import '../../../theme/yike_brand.dart';
 
 class YikeLaunchPage extends StatelessWidget {
   const YikeLaunchPage({super.key});
@@ -15,7 +15,12 @@ class YikeLaunchPage extends StatelessWidget {
         brand: CommonBrandMark(
           name: '一刻',
           layout: CommonBrandLayout.stacked,
-          mark: YikeDial(width: ts.sizing.plot * .64, brand: true),
+          mark: Image.asset(
+            YikeBrand.markFor(Theme.of(context).brightness),
+            width: ts.sizing.plot * .64,
+            height: ts.sizing.plot * .64,
+            excludeFromSemantics: true,
+          ),
           wordmark: Text('一刻', style: ts.textStyle.headline),
         ),
         content: Text(
