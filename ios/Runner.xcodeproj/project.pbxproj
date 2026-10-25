@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F51000000000000000000002 /* sundial_finish.caf in Resources */ = {isa = PBXBuildFile; fileRef = F50000000000000000000002 /* sundial_finish.caf */; };
-		F51000000000000000000001 /* water_finish.caf in Resources */ = {isa = PBXBuildFile; fileRef = F50000000000000000000001 /* water_finish.caf */; };
-		F51000000000000000000000 /* mechanical_finish.caf in Resources */ = {isa = PBXBuildFile; fileRef = F50000000000000000000000 /* mechanical_finish.caf */; };
+		029E4BAA08F4E8796BAE9E9E /* YikeWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F73E735EE8B90BBCD5DDFC84 /* YikeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		07955C363414219DCC908379 /* YikeWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD303BE9B5516201AE8D28DC /* YikeWidgets.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		186B3ACF357D88706A020505 /* SurfaceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97B92804576A8F85EFAE81C /* SurfaceModels.swift */; };
+		1A442F540D04FA523730E6AD /* SystemSurfaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C35C048D108A335F3E335F3 /* SystemSurfaces.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
@@ -18,10 +19,23 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		A7249E6ADE54D198742EA8F8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCA4FF9E9E427F65340AB1F6 /* SceneDelegate.swift */; };
+		BF8979E3BFD4580DAB1D47A3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F83CBCD02148F61A1FFF8BE4 /* Foundation.framework */; };
+		D0BE763ABF89208C5C691BA0 /* SurfaceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97B92804576A8F85EFAE81C /* SurfaceModels.swift */; };
 		D4D14088C708FB380D0EEF6B /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74A34F07D85C4CBE55FDB2EB /* Pods_Runner.framework */; };
+		F51000000000000000000000 /* mechanical_finish.caf in Resources */ = {isa = PBXBuildFile; fileRef = F50000000000000000000000 /* mechanical_finish.caf */; };
+		F51000000000000000000001 /* water_finish.caf in Resources */ = {isa = PBXBuildFile; fileRef = F50000000000000000000001 /* water_finish.caf */; };
+		F51000000000000000000002 /* sundial_finish.caf in Resources */ = {isa = PBXBuildFile; fileRef = F50000000000000000000002 /* sundial_finish.caf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		24E6ADB72F2BCC106083EE7B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7354BF9F9E0A026E0D01BA0A;
+			remoteInfo = YikeWidgets;
+		};
 		331C8085294A63A400263BE5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
@@ -42,22 +56,34 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AAE088E275D1C8FAFF5ACC8C /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				029E4BAA08F4E8796BAE9E9E /* YikeWidgets.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		F50000000000000000000002 /* sundial_finish.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = sundial_finish.caf; sourceTree = "<group>"; };
-		F50000000000000000000001 /* water_finish.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = water_finish.caf; sourceTree = "<group>"; };
-		F50000000000000000000000 /* mechanical_finish.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = mechanical_finish.caf; sourceTree = "<group>"; };
+		0A3FBC36FA46D0B42340D732 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		0C35C048D108A335F3E335F3 /* SystemSurfaces.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemSurfaces.swift; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		1C5FF2C6D415AEE64485EF03 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		2C188F198031A63A8AB8F877 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		30FE4457DDCAE54B0368935E /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		3EFB8810BE51D8013805B064 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3FE83D348A5CD99EF7EAE6CB /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		50FD86985B05E36B638332A7 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		6CB902D571CD2D10F4D76673 /* YikeWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = YikeWidgets.entitlements; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		74A34F07D85C4CBE55FDB2EB /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -70,10 +96,26 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AEBE767812FF6AF30333F57F /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
+		C97B92804576A8F85EFAE81C /* SurfaceModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SurfaceModels.swift; sourceTree = "<group>"; };
+		CD303BE9B5516201AE8D28DC /* YikeWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YikeWidgets.swift; sourceTree = "<group>"; };
 		CF5E91CAE12A877860ADEB9B /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
+		F50000000000000000000000 /* mechanical_finish.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = mechanical_finish.caf; sourceTree = "<group>"; };
+		F50000000000000000000001 /* water_finish.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = water_finish.caf; sourceTree = "<group>"; };
+		F50000000000000000000002 /* sundial_finish.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = sundial_finish.caf; sourceTree = "<group>"; };
+		F73E735EE8B90BBCD5DDFC84 /* YikeWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YikeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F83CBCD02148F61A1FFF8BE4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		FCA4FF9E9E427F65340AB1F6 /* SceneDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		0AA1D18C0603F0B371999BB3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BF8979E3BFD4580DAB1D47A3 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		97C146EB1CF9000F007C117D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -93,6 +135,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		25514DDA7A420F479FC844A3 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				C97B92804576A8F85EFAE81C /* SurfaceModels.swift */,
+			);
+			name = Shared;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		331C8082294A63A400263BE5 /* RunnerTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -106,6 +157,7 @@
 			children = (
 				74A34F07D85C4CBE55FDB2EB /* Pods_Runner.framework */,
 				3EFB8810BE51D8013805B064 /* Pods_RunnerTests.framework */,
+				B9DCC2F9EE158B624DF7C770 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -130,6 +182,8 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				A81C27D7CA6A608DFA751858 /* Pods */,
 				423171CD69910DF8725D3C93 /* Frameworks */,
+				25514DDA7A420F479FC844A3 /* Shared */,
+				D41CE4DBF2BD6DDAFB1B01E2 /* YikeWidgets */,
 			);
 			sourceTree = "<group>";
 		};
@@ -138,6 +192,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				F73E735EE8B90BBCD5DDFC84 /* YikeWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -156,6 +211,9 @@
 				F50000000000000000000001 /* water_finish.caf */,
 				F50000000000000000000000 /* mechanical_finish.caf */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				0C35C048D108A335F3E335F3 /* SystemSurfaces.swift */,
+				FCA4FF9E9E427F65340AB1F6 /* SceneDelegate.swift */,
+				30FE4457DDCAE54B0368935E /* Runner.entitlements */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -171,6 +229,25 @@
 				AEBE767812FF6AF30333F57F /* Pods-RunnerTests.profile.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		B9DCC2F9EE158B624DF7C770 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				F83CBCD02148F61A1FFF8BE4 /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		D41CE4DBF2BD6DDAFB1B01E2 /* YikeWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				CD303BE9B5516201AE8D28DC /* YikeWidgets.swift */,
+				0A3FBC36FA46D0B42340D732 /* Info.plist */,
+				6CB902D571CD2D10F4D76673 /* YikeWidgets.entitlements */,
+			);
+			name = YikeWidgets;
+			path = YikeWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -195,6 +272,23 @@
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		7354BF9F9E0A026E0D01BA0A /* YikeWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 237BD0B17E41E526CC652F11 /* Build configuration list for PBXNativeTarget "YikeWidgets" */;
+			buildPhases = (
+				1F2154CD101431CA6328A0A4 /* Sources */,
+				0AA1D18C0603F0B371999BB3 /* Frameworks */,
+				B2A608BDEACBA5E6448950E0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = YikeWidgets;
+			productName = YikeWidgets;
+			productReference = F73E735EE8B90BBCD5DDFC84 /* YikeWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -205,12 +299,14 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				AAE088E275D1C8FAFF5ACC8C /* Embed App Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				7E86939275F044EA6815974B /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				652FFB930BCDC2939C325333 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -252,6 +348,7 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				7354BF9F9E0A026E0D01BA0A /* YikeWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -275,6 +372,13 @@
 				F51000000000000000000001 /* water_finish.caf in Resources */,
 				F51000000000000000000000 /* mechanical_finish.caf in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B2A608BDEACBA5E6448950E0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +480,15 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1F2154CD101431CA6328A0A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07955C363414219DCC908379 /* YikeWidgets.swift in Sources */,
+				186B3ACF357D88706A020505 /* SurfaceModels.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807D294A63A400263BE5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -390,6 +503,9 @@
 			files = (
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
+				D0BE763ABF89208C5C691BA0 /* SurfaceModels.swift in Sources */,
+				1A442F540D04FA523730E6AD /* SystemSurfaces.swift in Sources */,
+				A7249E6ADE54D198742EA8F8 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -400,6 +516,12 @@
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
+		};
+		652FFB930BCDC2939C325333 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = YikeWidgets;
+			target = 7354BF9F9E0A026E0D01BA0A /* YikeWidgets */;
+			targetProxy = 24E6ADB72F2BCC106083EE7B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -423,6 +545,61 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		05A2698C95B13C37418BA6E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = YikeWidgets/YikeWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AAQMRZ72PQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YikeWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.protobridge.yike.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1E27B13C341280C44C8ED5C8 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = YikeWidgets/YikeWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AAQMRZ72PQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YikeWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.protobridge.yike.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -481,6 +658,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = AAQMRZ72PQ;
 				ENABLE_BITCODE = NO;
@@ -546,6 +724,34 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
 			};
 			name = Profile;
+		};
+		3EBEAD77164395899C31F39F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = YikeWidgets/YikeWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AAQMRZ72PQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YikeWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.protobridge.yike.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
 		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -664,6 +870,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = AAQMRZ72PQ;
 				ENABLE_BITCODE = NO;
@@ -687,6 +894,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = AAQMRZ72PQ;
 				ENABLE_BITCODE = NO;
@@ -706,6 +914,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		237BD0B17E41E526CC652F11 /* Build configuration list for PBXNativeTarget "YikeWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3EBEAD77164395899C31F39F /* Release */,
+				05A2698C95B13C37418BA6E8 /* Debug */,
+				1E27B13C341280C44C8ED5C8 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

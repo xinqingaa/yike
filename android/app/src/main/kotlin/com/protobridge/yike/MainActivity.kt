@@ -9,8 +9,28 @@ import org.json.JSONObject
 
 class MainActivity : FlutterActivity() {
     private var channel: MethodChannel? = null
+    private var surfaceChannel: MethodChannel? = null
+    private var surfacesReady = false
+    private val surfacePending = mutableListOf<String>()
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        surfaceChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "yike/system_surfaces")
+        surfaceChannel!!.setMethodCallHandler { call, result ->
+            try {
+                when (call.method) {
+                    "launch" -> {
+                        surfacesReady = true
+                        intent.data?.takeIf { it.scheme == "yike" && it.host == "surface" }?.let { surfacePending.add(it.toString()); intent.data = null }
+                        result.success(surfacePending.toList()); surfacePending.clear()
+                    }
+                    "access" -> result.success(mapOf("widgets" to true, "activities" to false, "allowed" to false, "shared" to true))
+                    "publish" -> { YikeWidgets.publish(this, call.arguments as String); result.success(null) }
+                    "clear" -> { surfacePending.clear(); YikeWidgets.clear(this); result.success(null) }
+                    "settings" -> { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:$packageName"))); result.success(null) }
+                    else -> result.notImplemented()
+                }
+            } catch (_: Exception) { result.error("surface_failed", "System surface operation failed", null) }
+        }
         channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger,"yike/notifications")
         channel!!.setMethodCallHandler { call, result ->
             try {
@@ -33,6 +53,10 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        intent.data?.takeIf { it.scheme == "yike" && it.host == "surface" }?.let {
+            if (surfacesReady) surfaceChannel?.invokeMethod("open", it.toString()) else surfacePending.add(it.toString())
+            intent.data = null
+        }
         val raw = intent.getStringExtra("yike_payload")
         if(raw != null) { channel?.invokeMethod("tap",raw); intent.removeExtra("yike_payload") }
     }

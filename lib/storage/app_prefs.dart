@@ -9,7 +9,8 @@ enum PrefsKey {
   themeMode('theme_mode'),
   themePack('theme_pack'),
   snapshot('business_snapshot'),
-  notifications('notification_metadata');
+  notifications('notification_metadata'),
+  systemSurfaces('system_surfaces');
 
   const PrefsKey(this.storageKey);
   final String storageKey;

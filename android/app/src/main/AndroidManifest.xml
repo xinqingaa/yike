@@ -24,11 +24,26 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="yike" android:host="surface" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <receiver android:name=".FocusWidget" android:exported="false" android:label="专注进度">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /><action android:name="android.intent.action.DATE_CHANGED"/><action android:name="android.intent.action.TIMEZONE_CHANGED"/><action android:name="android.intent.action.TIME_SET"/><action android:name="android.intent.action.BOOT_COMPLETED"/><action android:name="android.intent.action.MY_PACKAGE_REPLACED"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/yike_focus_widget" /></receiver>
+        <receiver android:name=".FocusLargeWidget" android:exported="false" android:label="专注全览">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/yike_focus_large_widget" /></receiver>
+        <receiver android:name=".HabitWidget" android:exported="false" android:label="今日打卡">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/yike_habit_widget" /></receiver>
+        <receiver android:name=".HabitMediumWidget" android:exported="false" android:label="打卡全览">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/yike_habit_medium_widget" /></receiver>
         <receiver android:name=".YikeNotificationReceiver" android:exported="false" />
         <receiver android:name=".YikeNotificationBootReceiver" android:exported="false">
             <intent-filter>

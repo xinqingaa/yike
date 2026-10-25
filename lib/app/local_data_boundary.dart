@@ -9,12 +9,14 @@ import 'timer_status_boundary.dart';
 import 'notifications/notification_coordinator.dart';
 import '../theme/ts.dart';
 import 'reset_data.dart';
+import 'system_surfaces/surface_coordinator.dart';
 
 class LocalDataBoundary extends ConsumerWidget {
   const LocalDataBoundary({super.key, required this.child});
   final Widget child;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(surfaceCoordinatorProvider);
     final errors = ref.watch(
       localDataProvider.select((s) => (s.readError, s.writeError)),
     );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import '../storage/providers.dart';
 import '../theme/ts.dart';
 import '../theme/app_metrics.dart';
 import 'app.dart';
+import '../common/system_surfaces/surface_adapter.dart';
 
 /// Initializes the app once. Route changes and foreground resumes keep it ready.
 class AppStartup extends StatelessWidget {
@@ -26,10 +28,17 @@ class _StartupBody extends ConsumerStatefulWidget {
 }
 
 class _StartupBodyState extends ConsumerState<_StartupBody> {
-  late final _preferencesProvider = FutureProvider.autoDispose<AppPrefs>(
-    (ref) => Future.sync(widget.openPreferences),
-    retry: (retryCount, error) => null,
-  );
+  late final _preferencesProvider = FutureProvider.autoDispose<AppPrefs>((
+    ref,
+  ) async {
+    try {
+      return await widget.openPreferences();
+    } catch (_) {
+      // Surface cleanup must not delay the original storage error UI.
+      unawaited(NativeSystemSurfaceAdapter().clear().catchError((Object _) {}));
+      rethrow;
+    }
+  }, retry: (retryCount, error) => null);
 
   @override
   Widget build(BuildContext context) {

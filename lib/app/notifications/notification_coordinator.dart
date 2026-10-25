@@ -7,14 +7,15 @@ import '../../common/notifications/notification_models.dart';
 import '../../common/notifications/notification_metadata.dart';
 import '../../common/overlay/app_pop.dart';
 import '../../common/overlay/popup_activity.dart';
+import '../../common/route_activity.dart';
+import '../../router/routes.dart';
 import '../../common/time.dart';
 import '../../features/local_data/local_data.dart';
-import '../../features/focus/focus.dart';
 import '../../storage/providers.dart';
 import '../../theme/ts.dart';
-import '../../router/router.dart';
+import '../external_targets.dart';
+import '../../common/system_surfaces/surface_models.dart';
 import '../navigation.dart';
-import '../../common/route_activity.dart';
 import 'notification_plan.dart';
 
 class NotificationStatus {
@@ -23,13 +24,11 @@ class NotificationStatus {
     this.ready = false,
     this.error,
     this.coverage = const {},
-    this.queued,
   });
   final NotificationAccess access;
   final bool ready;
   final String? error;
   final Map<String, List<String>> coverage;
-  final NotificationTarget? queued;
 }
 
 class NotificationCoordinator extends Notifier<NotificationStatus> {
@@ -39,7 +38,7 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
   bool _disposed = false, _busy = false, _dirty = false, _initialized = false;
   bool _metadataReady = false, _resetting = false;
   Future<void>? _draining;
-  bool _needsClear = false, _navigationScheduled = false;
+  bool _needsClear = false;
   Map<String, List<String>> _coverageProgress = {};
   int _generation = 0;
   DateTime? _sampled;
@@ -57,7 +56,6 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
     ref.onDispose(() {
       _disposed = true;
       _lifecycle?.dispose();
-      appRouteActivity.removeListener(navigate);
     });
     ref.listen(localDataProvider, (before, after) {
       // Pulses alone change elapsed time, not fixed finish anchors or the desired set.
@@ -75,9 +73,6 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
     });
     ref.listen(themePackProvider, (_, _) => reconcile());
     ref.listen(clockPulseProvider, (_, now) => sample(now));
-    ref.listen(popupActivityProvider, (_, after) {
-      if (after == 0) navigate();
-    });
     _lifecycle = AppLifecycleListener(
       onStateChange: (s) {
         _active = s == AppLifecycleState.resumed;
@@ -88,11 +83,9 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
               .read(localDataProvider.notifier)
               .advance(ref.read(clockProvider)());
           unawaited(refresh());
-          navigate();
         }
       },
     );
-    appRouteActivity.addListener(navigate);
     Future.microtask(_initialize);
     return const NotificationStatus();
   }
@@ -120,7 +113,6 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
         ready: _initialized,
         error: message,
         coverage: _coverageProgress,
-        queued: state.queued,
       );
     }
   }
@@ -150,7 +142,6 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
         access: access,
         ready: true,
         coverage: state.coverage,
-        queued: state.queued,
       );
       reconcile();
     } catch (_) {
@@ -269,7 +260,6 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
             access: state.access,
             ready: true,
             coverage: coverage,
-            queued: state.queued,
           );
         }
       }
@@ -342,70 +332,13 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
 
   void enqueue(NotificationTarget target) {
     if (_disposed) return;
-    state = NotificationStatus(
-      access: state.access,
-      ready: state.ready,
-      error: state.error,
-      coverage: state.coverage,
-      queued: target,
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) => navigate());
-    WidgetsBinding.instance.ensureVisualUpdate();
-  }
-
-  void navigate() {
-    if (_disposed || _navigationScheduled) return;
-    _navigationScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _navigationScheduled = false;
-      if (!_disposed) _navigate();
-    });
-    WidgetsBinding.instance.ensureVisualUpdate();
-  }
-
-  void _navigate() {
-    if (_disposed ||
-        state.queued == null ||
-        !_foreground ||
-        ref.read(popupActivityProvider) > 0 ||
-        ref.read(localDataProvider).readError != null ||
-        appRouteActivity.current == null ||
-        appRouteActivity.current == AppRoutes.bootstrap) {
-      return;
-    }
-    final target = state.queued!;
-    state = NotificationStatus(
-      access: state.access,
-      ready: state.ready,
-      error: state.error,
-      coverage: state.coverage,
-    );
-    AppDataCard.closeAll();
-    appNavigatorKey.currentState?.popUntil(
-      (r) => r.settings.name == AppRoutes.home,
-    );
-    if (target.kind == 'timer') {
-      ref
-          .read(focusActionsProvider)
-          .switchMode(TimerMode.values.byName(target.identity));
-      ref.read(rootTabProvider.notifier).set(0);
-    } else {
-      ref.read(rootTabProvider.notifier).set(1);
-      final exists = ref
-          .read(localDataProvider)
-          .data
-          .habits
-          .any((h) => h.id == target.identity && !h.archived);
-      if (exists) {
-        final ids = ref.read(habitReminderTargetsProvider);
-        ref.read(habitReminderTargetsProvider.notifier).set({
-          ...ids,
-          target.identity,
-        });
-      } else {
-        AppPop.toast('该习惯已删除或归档');
-      }
-    }
+    ref
+        .read(externalTargetsProvider.notifier)
+        .enqueue(
+          target.kind == 'timer'
+              ? SurfaceIntent(target: 'focus', mode: target.identity)
+              : SurfaceIntent(target: 'habits', habit: target.identity),
+        );
   }
 
   Future<void> reset() async {
@@ -439,6 +372,6 @@ final notificationCoordinatorProvider =
         appPrefsProvider,
         notificationAdapterProvider,
         themePackProvider,
-        focusActionsProvider,
+        externalTargetsProvider,
       ],
     );

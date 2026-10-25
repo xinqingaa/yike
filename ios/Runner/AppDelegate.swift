@@ -14,6 +14,9 @@ import UserNotifications
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "YikeSystemSurfaces") {
+      YikeSystemSurfaces.shared.install(registrar)
+    }
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "YikeNotifications") {
       let channel = FlutterMethodChannel(name: "yike/notifications", binaryMessenger: registrar.messenger())
       channel.setMethodCallHandler { call, result in

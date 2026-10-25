@@ -40,7 +40,7 @@
 						<key>UISceneConfigurationName</key>
 						<string>flutter</string>
 						<key>UISceneDelegateClassName</key>
-						<string>FlutterSceneDelegate</string>
+						<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 						<key>UISceneStoryboardFile</key>
 						<string>Main</string>
 					</dict>
@@ -68,5 +68,20 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSSupportsLiveActivities</key>
+		<true/>
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.protobridge.yike.surfaces</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>yike</string>
+				</array>
+			</dict>
+		</array>
 	</dict>
 </plist>

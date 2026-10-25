@@ -177,10 +177,25 @@ class FocusActions {
   }
 
   /// External affordances must carry the identity they actually displayed.
-  bool command(TimerMode mode, String expectedSessionId, FocusCommand command) {
+  bool command(
+    TimerMode mode,
+    String expectedSessionId,
+    FocusCommand command,
+  ) => commandResult(mode, expectedSessionId, command).accepted;
+
+  CommitResult commandResult(
+    TimerMode mode,
+    String expectedSessionId,
+    FocusCommand command, {
+    TimerStage? expectedStage,
+    bool feedback = true,
+  }) {
     final current = data;
     final session = current.sessionFor(mode);
-    if (session?.id != expectedSessionId) return false;
+    if (session?.id != expectedSessionId ||
+        (expectedStage != null && session?.stage != expectedStage)) {
+      return CommitResult.rejected;
+    }
     final requiredStatus = switch (command) {
       FocusCommand.pause || FocusCommand.lap => TimerStatus.running,
       FocusCommand.resume => TimerStatus.paused,
@@ -188,11 +203,11 @@ class FocusActions {
       _ => null,
     };
     if (requiredStatus != null && session!.status != requiredStatus) {
-      return false;
+      return CommitResult.rejected;
     }
     if (command == FocusCommand.record &&
         session!.status == TimerStatus.running) {
-      return false;
+      return CommitResult.rejected;
     }
     final selected = current.mode;
     final scoped = current.copyWith(mode: mode);
@@ -228,7 +243,8 @@ class FocusActions {
               .data
               .copyWith(focus: next.copyWith(mode: selected)),
         );
-    if (result.accepted &&
+    if (feedback &&
+        result.accepted &&
         changed &&
         ref.read(timerFeedbackVisibilityProvider).allows(mode)) {
       ref
@@ -239,7 +255,7 @@ class FocusActions {
             scope: mode.name,
           );
     }
-    return result.accepted;
+    return result;
   }
 
   void selectCountdown(int seconds) {

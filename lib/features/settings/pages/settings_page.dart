@@ -2,6 +2,7 @@ import '../../../common/motion/content_transition.dart';
 import '../../focus/focus.dart';
 import '../../../app/reset_data.dart';
 import '../../../app/notifications/notification_settings.dart';
+import '../../../app/system_surfaces/surface_settings.dart';
 import '../../../common/time.dart';
 import '../../../common/feedback/feedback_cue.dart';
 import '../../../common/feedback/feedback_options.dart';
@@ -144,6 +145,11 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage> {
                       title: '通知提醒',
                       navigation: true,
                     ),
+                    const CommonListItem(
+                      id: 'systemSurfaces',
+                      title: '桌面组件',
+                      navigation: true,
+                    ),
                     CommonListItem(
                       id: 'sound',
                       title: '声音总开关',
@@ -228,6 +234,10 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage> {
                 ),
               ],
               onNavigate: (group, item) async {
+                if (item == 'systemSurfaces') {
+                  await openSurfaceSettings();
+                  return;
+                }
                 if (item == 'notifications') {
                   await openNotificationSettings();
                   return;

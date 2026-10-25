@@ -92,3 +92,11 @@ FeedbackService.select 的可选 scope 支持只受总开关控制的回顾查�
 Android 使用最小 MethodChannel / AlarmManager 接收桥：发布前读取原生前后台状态；一次性预约落在独立原生调度缓存，重启 / 升级 / 时区变化重建，前台跳过系统通知。缓存不包含会话或打卡快照，不承担业务结算。iOS 使用 flutter_local_notifications 22.3.2 / UNUserNotificationCenter，前台展示选项全部关闭；单项取消 pending 与清理 delivered 分开。设备时区来自 flutter_timezone 5.1.1，timezone 0.11.2 提供日历换算；时区不可读时显示故障，不假定 UTC 成功。
 
 `TimerStatusBoundary` 唯一持有顶部玻璃区域、行身份和展示寿命；只消费公开投影，不做结算。正文使用原始 MediaQuery，不增加安全区或改 Navigator 约束；浮层测量只供未保存提示错开。行内按秒订阅，独立 CustomPainter 从公开 FocusProjection 在帧内投影进度；光效控制器只驱动绘制，不写业务状态。应用根部的私有 Overlay 为 Navigator 外的图标 Tooltip 提供宿主；未保存提示仍为独立浮层身份。模态不依赖库 pause / resume，宿主自身负责淡出、收展及触摸 / 焦点 / 语义屏蔽。减少动态效果绕过尺寸补间，后台停止装饰 Ticker。应用导航前由 AppDataCard.closeAll 关闭只读查看卡，通知点击等待读取成功和最后一层模态真实退场。
+
+## 原生桌面组件与实时活动
+
+`common/system_surfaces` 定义版本化展示 DTO、严格外部意图、类型化展示元数据与可替换 MethodChannel 适配器，不依赖 feature。`app/system_surfaces` 消费 focus / local_data 公开事实及主题，派生三模式、今日已记录时长和习惯进度，串行发布、失败重试及重置屏障由同一协调器负责；读取阻断分支也启动该协调器以撤销旧展示。
+
+Swift WidgetKit / ActivityKit 与 Kotlin RemoteViews 只读取原子展示缓存，不读取 MMKV 或独立结算。外部动作通过 URL / PendingIntent 打开主应用，校准后验证代次、会话、阶段、预期状态及状态转换 token，保存消费回执后调用 `FocusActions.commandResult`。状态 token 只保留在本进程，旧进程按钮只定位应用并提示状态更新。命令是否接受、业务是否保存及原生展示是否成功分别表达。
+
+`app/external_targets.dart` 统一通知与组件的查看目标，延迟跨越读取阻断、启动页及模态草稿；命令消费不等待导航。没有增加业务状态机、后台 isolate、常驻服务或依赖包，接入范围与验证见 [第六阶段](../plan/stage6-widgets-live-activity.md#实施与集中核验结果)。

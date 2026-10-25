@@ -226,6 +226,7 @@ void main() {
             )
             .first,
       );
+      await pumpPresentation(tester);
       await tester.tap(find.text('重置所有数据'));
       await pumpPresentation(tester);
       await tester.tap(find.text('取消'));

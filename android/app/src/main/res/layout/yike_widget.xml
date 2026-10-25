@@ -1,0 +1,9 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_card" android:layout_width="match_parent" android:layout_height="match_parent" android:contentDescription="一刻小部件">
+<ImageView android:id="@+id/widget_background" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/yike_widget_background" android:scaleType="fitXY" android:importantForAccessibility="no"/>
+<LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent" android:padding="12dp">
+<TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="一刻" android:textSize="12sp" android:textColor="#45413C" android:maxLines="1"/>
+<TextView android:id="@+id/widget_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="24sp" android:textStyle="bold" android:visibility="gone" android:maxLines="1"/>
+<ProgressBar android:id="@+id/widget_progress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:progressTint="#D27536" android:visibility="gone"/>
+<LinearLayout android:id="@+id/widget_rows" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical"/>
+<TextView android:id="@+id/widget_footer" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="10sp" android:text="打开一刻更新" android:textColor="#45413C" android:maxLines="2"/>
+</LinearLayout></FrameLayout>

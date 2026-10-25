@@ -8,10 +8,14 @@ import '../features/review/review.dart';
 import '../storage/preference_writer.dart';
 import '../theme/ts.dart';
 import 'navigation.dart';
+import 'system_surfaces/surface_coordinator.dart';
 import '../common/overlay/app_pop.dart';
 
 bool resetYikeData(WidgetRef ref) {
   AppPop.clearToasts();
+  final surfacesSaved = ref
+      .read(surfaceCoordinatorProvider.notifier)
+      .beginReset();
   final saved = ref.read(localDataProvider.notifier).reset();
   unawaited(ref.read(notificationCoordinatorProvider.notifier).reset());
   ref.read(habitReminderTargetsProvider.notifier).set(const {});
@@ -20,5 +24,5 @@ bool resetYikeData(WidgetRef ref) {
   ref.read(rootTabProvider.notifier).set(0);
   ref.read(themePackProvider.notifier).select('yike/mechanical');
   ref.read(themeModeProvider.notifier).setMode(ThemeMode.system);
-  return saved && ref.read(preferenceWriterProvider).isEmpty;
+  return saved && surfacesSaved && ref.read(preferenceWriterProvider).isEmpty;
 }
