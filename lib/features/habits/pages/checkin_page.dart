@@ -1,3 +1,4 @@
+import '../../../app/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,7 +20,11 @@ class CheckinPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ts = TS.of(context);
     final habits = ref.watch(habitsProvider);
-    final active = habits.where((h) => !h.archived).toList();
+    final targets = ref.watch(habitReminderTargetsProvider);
+    final active = [
+      ...habits.where((h) => !h.archived && targets.contains(h.id)),
+      ...habits.where((h) => !h.archived && !targets.contains(h.id)),
+    ];
     final archived = habits.where((h) => h.archived).length;
     final today = ref.watch(todayProvider);
     final done = active.where((h) => h.dates.contains(dayId(today))).length;
@@ -69,6 +74,7 @@ class CheckinPage extends ConsumerWidget {
         Expanded(
           child: MotionList<Object>(
             key: const PageStorageKey('checkin-scroll'),
+            scrollToStartToken: targets.join('|'),
             items: [if (active.isEmpty) 'empty', ...active, 'archive'],
             identity: (item) => item is HabitViewData ? item.id : item,
             padding: EdgeInsets.fromLTRB(
@@ -100,9 +106,13 @@ class CheckinPage extends ConsumerWidget {
               }
               return Padding(
                 padding: EdgeInsets.only(top: ts.spacing.sm),
-                child: HabitCheckinCard(
-                  habit: item as HabitViewData,
-                  today: today,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (targets.contains((item as HabitViewData).id))
+                      Text('提醒的习惯', style: ts.textStyle.caption),
+                    HabitCheckinCard(habit: item, today: today),
+                  ],
                 ),
               );
             },

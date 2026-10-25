@@ -14,6 +14,7 @@ class MotionList<T> extends StatefulWidget {
     this.padding = EdgeInsets.zero,
     this.shrinkWrap = false,
     this.physics,
+    this.scrollToStartToken,
   });
   final List<T> items;
   final Object Function(T item) identity;
@@ -21,6 +22,9 @@ class MotionList<T> extends StatefulWidget {
   final EdgeInsetsGeometry padding;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
+
+  /// A changed external navigation target reveals the start without replacing rows.
+  final Object? scrollToStartToken;
   @override
   State<MotionList<T>> createState() => _MotionListState<T>();
 }
@@ -47,6 +51,11 @@ class _MotionListState<T> extends State<MotionList<T>> {
   @override
   void didUpdateWidget(covariant MotionList<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.scrollToStartToken != oldWidget.scrollToStartToken) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scroll.hasClients) _scroll.jumpTo(0);
+      });
+    }
     final duration = _enabled
         ? TS.of(context).motion.durationNormal
         : Duration.zero;

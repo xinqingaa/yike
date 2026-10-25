@@ -132,6 +132,7 @@ void main() {
       app.dispose();
       now = now.add(const Duration(days: 1));
       app = open();
+      app.read(focusActionsProvider).switchMode(TimerMode.stopwatch);
       expect(app.read(focusViewProvider).seconds, 20);
       expect(app.read(focusDataProvider).session!.id, id);
       expect(app.read(focusViewProvider).paused, isTrue);
@@ -149,6 +150,7 @@ void main() {
       expect(app.read(focusRecordsProvider).single.seconds, 1);
       app.dispose();
       app = open();
+      app.read(focusActionsProvider).switchMode(TimerMode.countdown);
       expect(app.read(focusViewProvider).finished, isTrue);
       app.read(focusActionsProvider).calibrate();
       expect(app.read(focusRecordsProvider), hasLength(1));
@@ -161,25 +163,25 @@ void main() {
       );
     },
   );
-  test(
-    'mode switch cancellation keeps running, short finish cancellation freezes old mode',
-    () {
-      final a = app.read(focusActionsProvider);
-      a.start();
-      advance(const Duration(seconds: 3));
-      expect(app.read(focusViewProvider).status, TimerStatus.running);
-      expect(a.prepareFinish(), isTrue);
-      advance(const Duration(seconds: 20));
-      expect(app.read(focusViewProvider).seconds, 1497);
-      a.switchMode(TimerMode.countdown, record: true);
-      expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
-      a.acceptShort();
-      a.switchMode(TimerMode.countdown, record: true);
-      expect(app.read(focusViewProvider).ready, isTrue);
-      expect(app.read(focusViewProvider).mode, TimerMode.countdown);
-      expect(app.read(focusRecordsProvider).single.seconds, 3);
-    },
-  );
+  test('switch preserves paused short session until explicit recording', () {
+    final a = app.read(focusActionsProvider);
+    a.start();
+    advance(const Duration(seconds: 3));
+    expect(app.read(focusViewProvider).status, TimerStatus.running);
+    expect(a.prepareFinish(), isTrue);
+    advance(const Duration(seconds: 20));
+    expect(app.read(focusViewProvider).seconds, 1497);
+    final session = app.read(focusDataProvider).session!;
+    a.switchMode(TimerMode.countdown);
+    expect(
+      app.read(focusDataProvider).sessionFor(TimerMode.pomodoro)!.status,
+      TimerStatus.paused,
+    );
+    a.command(TimerMode.pomodoro, session.id, FocusCommand.record);
+    expect(app.read(focusViewProvider).ready, isTrue);
+    expect(app.read(focusViewProvider).mode, TimerMode.countdown);
+    expect(app.read(focusRecordsProvider).single.seconds, 3);
+  });
   test(
     'habit identities, local checkin identity and archive history survive reopen',
     () {
@@ -276,6 +278,7 @@ void main() {
       app.read(localDataProvider.notifier).retry();
       app.dispose();
       app = open();
+      app.read(focusActionsProvider).switchMode(TimerMode.countdown);
       expect(app.read(focusRecordsProvider), hasLength(1));
       expect(app.read(focusViewProvider).finished, isTrue);
     },
@@ -304,7 +307,7 @@ void main() {
     final wire = YikeData.initial(now).toJson();
     (wire['focus'] as Map<String, dynamic>)['cycles'] = -1;
     disk.values[PrefsKey.snapshot.storageKey] = jsonEncode({
-      'schemaVersion': 2,
+      'schemaVersion': 3,
       'data': wire,
     });
     expect(app.read(localDataProvider).readError, isNotNull);

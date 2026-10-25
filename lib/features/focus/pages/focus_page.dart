@@ -1,3 +1,6 @@
+import '../../../app/navigation.dart';
+import '../../../common/route_activity.dart';
+import '../../../common/overlay/popup_activity.dart';
 import 'dart:math' as math;
 import '../../../common/motion/content_transition.dart';
 import '../models/focus_view.dart';
@@ -74,6 +77,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
 
   @override
   void dispose() {
+    appRouteActivity.removeListener(_presentPending);
     _dial.dispose();
     _tabs.dispose();
     super.dispose();
@@ -82,14 +86,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && ref.read(focusViewProvider).recovered) {
-        _recovery();
-      } else if (mounted &&
-          (ref.read(focusDataProvider).session?.promptShort ?? false)) {
-        _shortRecord();
-      }
-    });
+    appRouteActivity.addListener(_presentPending);
+    _presentPending();
   }
 
   FocusActions get _actions => ref.read(focusActionsProvider);
@@ -101,61 +99,29 @@ class _FocusPageState extends ConsumerState<FocusPage>
     }
   }
 
-  String _modeLabel(TimerMode mode) => const ['番茄钟', '正计时', '倒计时'][mode.index];
-
   Future<void> _selectMode(String value) async {
-    _actions.calibrate();
-    final next = TimerMode.values.byName(value);
-    final current = ref.read(focusViewProvider);
-    if (next == current.mode) return;
-    if (!current.ready) {
-      final ts = TS.of(context);
-      final sheet = AppSheet<String>();
-      final result = await sheet.show(
-        title: '切换计时模式',
-        material: CommonSurfaceMaterial.glass,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              current.resting
-                  ? '结束当前休息后进入${_modeLabel(next)}，休息不计入专注。'
-                  : current.finished
-                  ? '当前阶段已完成。进入${_modeLabel(next)}后，已保存的记录会保留；放弃只离开当前阶段。'
-                  : '即将进入${_modeLabel(next)}。结束会记录本次有效专注；放弃不生成本次记录。',
-              style: ts.textStyle.content,
-            ),
-            SizedBox(height: ts.spacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: CommonButton(
-                    label: '放弃',
-                    kind: CommonButtonKind.outlined,
-                    destructive: true,
-                    onPressed: () => sheet.complete('discard'),
-                  ),
-                ),
-                SizedBox(width: ts.spacing.smPlus),
-                Expanded(
-                  child: CommonButton(
-                    label: '结束',
-                    kind: CommonButtonKind.accent,
-                    onPressed: () => sheet.complete('record'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-      if (!mounted || result == null) return;
-      if (result == 'record' && !await _shortRecord()) return;
-      _actions.switchMode(next, record: result == 'record');
-      return;
-    }
-    _actions.switchMode(next);
+    _actions.switchMode(TimerMode.values.byName(value));
+    _presentPending();
+  }
+
+  final _recoveryPresented = <String>{};
+  void _presentPending() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          !ModalRoute.of(context)!.isCurrent ||
+          ref.read(rootTabProvider) != 0 ||
+          ref.read(popupActivityProvider) != 0 ||
+          ref.read(_recordPromptOpen)) {
+        return;
+      }
+      final session = ref.read(focusDataProvider).session;
+      if ((session?.recovered ?? false) &&
+          _recoveryPresented.add(session!.id)) {
+        _recovery();
+      } else if (session?.promptShort ?? false) {
+        _shortRecord();
+      }
+    });
   }
 
   Future<bool> _shortRecord() async {
@@ -163,6 +129,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
     if (!_actions.prepareFinish()) return true;
     ref.read(_recordPromptOpen.notifier).set(true);
     final value = ref.read(focusViewProvider);
+    final sessionId = ref.read(focusDataProvider).session!.id;
     final elapsed = value.mode == TimerMode.stopwatch
         ? value.seconds
         : value.target - value.seconds;
@@ -178,18 +145,25 @@ class _FocusPageState extends ConsumerState<FocusPage>
     if (!mounted) return false;
     ref.read(_recordPromptOpen.notifier).set(false);
     if (accepted) {
-      _actions.acceptShort();
+      if (!_actions.command(value.mode, sessionId, FocusCommand.record)) {
+        return false;
+      }
     } else {
-      _actions.dismissPrompt();
+      _actions.command(value.mode, sessionId, FocusCommand.dismissPrompt);
     }
     return accepted;
   }
 
   Future<void> _finish() async {
-    if (await _shortRecord() && mounted) _actions.finish();
+    final s = ref.read(focusDataProvider).session;
+    if (s != null && await _shortRecord() && mounted) {
+      _actions.command(s.mode, s.id, FocusCommand.finish);
+    }
   }
 
   Future<void> _abandon() async {
+    final session = ref.read(focusDataProvider).session;
+    if (session == null) return;
     final ts = TS.of(context);
     final sheet = AppSheet<bool>();
     final result = await sheet.show(
@@ -220,12 +194,16 @@ class _FocusPageState extends ConsumerState<FocusPage>
         ],
       ),
     );
-    if (result == true && mounted) _reset();
+    if (result == true && mounted) {
+      _actions.command(session.mode, session.id, FocusCommand.discard);
+    }
   }
 
   Future<void> _recovery() async {
     final ts = TS.of(context);
-    final resting = ref.read(focusViewProvider).resting;
+    final session = ref.read(focusDataProvider).session;
+    if (session == null) return;
+    final resting = session.resting;
     final sheet = AppSheet<String>();
     final result = await sheet.show(
       title: '计时已暂停',
@@ -260,8 +238,12 @@ class _FocusPageState extends ConsumerState<FocusPage>
         ],
       ),
     );
-    if (!mounted) return;
-    if (result == 'resume') _actions.resume();
+    if (!mounted || ref.read(focusDataProvider).session?.id != session.id) {
+      return;
+    }
+    if (result == 'resume') {
+      _actions.command(session.mode, session.id, FocusCommand.resume);
+    }
     if (result == 'finish') {
       if (ref.read(focusViewProvider).resting) {
         _actions.discard();
@@ -276,12 +258,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
     if (_dial.value) return;
     _actions.calibrate();
     final value = ref.read(focusViewProvider);
+    final session = ref.read(focusDataProvider).session;
     if (value.finished) {
       if (value.mode == TimerMode.pomodoro && !value.resting) {
-        if (await _shortRecord() && mounted) _actions.beginBreak();
+        if (await _shortRecord() && mounted && session != null) {
+          _actions.command(session.mode, session.id, FocusCommand.beginBreak);
+        }
       } else {
         if (value.mode == TimerMode.stopwatch && !await _shortRecord()) return;
-        _actions.discard();
+        if (session != null) {
+          _actions.command(session.mode, session.id, FocusCommand.discard);
+        }
       }
     } else if (value.ready) {
       _actions.start();
@@ -302,6 +289,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
     final sheet = AppSheet<void>();
     try {
       await sheet.show(
+        timerPanel: true,
         direction: SheetDirection.right,
         showCloseButton: false,
         size: SheetSizeConfig(
@@ -331,15 +319,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
+    ref.listen(rootTabProvider, (_, next) {
+      if (next == 0) _presentPending();
+    });
+    ref.listen(popupActivityProvider, (_, next) {
+      if (next == 0) _presentPending();
+    });
     ref.listen(
-      focusDataProvider.select((d) => d.session?.promptShort ?? false),
-      (before, after) {
-        if (after && before != after) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted && !ref.read(_recordPromptOpen)) _shortRecord();
-          });
-        }
-      },
+      focusDataProvider.select(
+        (d) => (d.mode, d.session?.id, d.session?.promptShort),
+      ),
+      (_, next) => _presentPending(),
     );
     ref.listen(focusViewProvider.select((value) => value.mode), (_, mode) {
       if (_tabs.index != mode.index) {

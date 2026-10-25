@@ -77,7 +77,12 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       now = now.add(const Duration(days: 1));
       app = await pumpYike(tester, preferences: disk, clock: () => now);
-      expect(app.read(focusViewProvider).finished, isTrue);
+      expect(
+        app.read(focusDataProvider).sessionFor(TimerMode.countdown)!.status,
+        TimerStatus.finished,
+      );
+      app.read(focusActionsProvider).switchMode(TimerMode.countdown);
+      await pumpPresentation(tester);
       expect(app.read(focusRecordsProvider), hasLength(1));
       await tester.tap(find.byKey(const ValueKey('focus-primary')));
       await pumpPresentation(tester);

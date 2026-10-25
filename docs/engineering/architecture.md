@@ -73,7 +73,7 @@ lib/
 
 `common/feedback` 拥有类型化 cue、独立播放器接口及可替换的反馈服务，不依赖 feature。`app/feedback_boundary.dart` 在业务数据可读取后组合偏好与前后台状态，并预加载音效。focus 的纯 `focus_beats` 计算节拍边界，应用级 `focusFeedbackProvider` 消费 250ms 时钟与既有完成事件；FocusActions 与 HabitsPresentation 只在有效操作被接受时发出反馈。FeedbackService 只维护总开关及通用 scope → FeedbackOptions 映射，不认识 feature；事件携带来源 scope，声音句柄按来源记录以支持局部停止。模式与打卡各自持有配置，总开关不改写局部值。反馈错误不传播到业务命令，结束或后台不补播。服务不依赖根 Tab 可见性，视觉仍使用原有 MotionGate。
 
-第五阶段目标已确认、尚未实现：在应用 / focus 协调层组合当前路由、根 Tab、所选模式与弹层用途，仅向当前模式开放计时反馈，不把业务页面知识放进通用反馈服务；原跨 Tab 计时反馈将被替换。本模式计圈允许、通用模态静默，状态条对全部模态隐藏；不能直接复用会统一关闭计圈反馈的通用 MotionGate 作为完整声触条件。状态条使用 feature 公开投影，系统适配仍不依赖 feature。具体规则见 [运行时](runtime.md#第五阶段已确认的可见性规则尚未实现)。
+第五阶段实现：在应用 / focus 协调层组合当前路由、根 Tab、所选模式与弹层用途，仅向当前模式开放计时反馈，不把业务页面知识放进通用反馈服务；已替换原跨 Tab 计时反馈。本模式计圈允许、通用模态静默，状态条对全部模态隐藏；不能直接复用会统一关闭计圈反馈的通用 MotionGate 作为完整声触条件。状态条使用 feature 公开投影，系统适配仍不依赖 feature。具体规则见 [运行时](runtime.md#第五阶段可见性规则)。
 
 表盘纯映射、吸附与阻尼规则位于 focus/logic，输入与局部 Ticker 位于 focus/widgets；FocusActions 只接受合法最终时长，FocusEngine / FocusProjection 共享 3599 秒上限。设置编辑通过类型化路由参数自动展开既有面板，feature 不跨导入私有页面。完成音试听由通用服务提供声音专用 API，页面不直接操作音频引擎。
 
@@ -84,3 +84,11 @@ lib/
 FeedbackService.select 的可选 scope 支持只受总开关控制的回顾查看与沿用 habits 局部门控的习惯查看；不创建 review 偏好、不绕过服务调用系统触感。AppDataCard、ChartValue 与 CommonYearGrid 的公开职责见 [组件](components.md#第三四阶段扩展)。
 
 习惯详情与统计习惯完成格共用 habits 公开的 `HabitDayTarget` 与 `habitDayColor`；习惯状态、完成时间、当周进度与局部触感门控由同一组件提供，review 不复制该卡规则。习惯详情的年格布局使用 `CommonYearGrid`，不自建滚动和星期月份排布。
+
+## 通知与应用级状态区域
+
+`common/notifications` 定义类型化目标、请求、权限、可替换适配器与调度元数据；不依赖 feature。`app/notifications/notification_plan.dart` 消费公开事实，输出三路计时和按日期全局排序的最多 60 个习惯请求；`notification_coordinator.dart` 串行对账、代次失效、保存截止占位、前台到点合并、权限和安全导航。原生成功与业务保存分开报告，设置页通知入口位于“记录与反馈”。
+
+Android 使用最小 MethodChannel / AlarmManager 接收桥：发布前读取原生前后台状态；一次性预约落在独立原生调度缓存，重启 / 升级 / 时区变化重建，前台跳过系统通知。缓存不包含会话或打卡快照，不承担业务结算。iOS 使用 flutter_local_notifications 22.3.2 / UNUserNotificationCenter，前台展示选项全部关闭；单项取消 pending 与清理 delivered 分开。设备时区来自 flutter_timezone 5.1.1，timezone 0.11.2 提供日历换算；时区不可读时显示故障，不假定 UTC 成功。
+
+`TimerStatusBoundary` 唯一持有顶部玻璃区域、行身份和展示寿命；只消费公开投影，不做结算。通过测量后的 MediaQuery 安全区避让保留 Navigator 完整视口，逐秒订阅只在行内；未保存提示使用同一状态区域高度，独立浮层身份。模态不依赖库 pause / resume，宿主自身负责淡出、收展及触摸 / 焦点 / 语义屏蔽。减少动态效果绕过尺寸补间，后台停止装饰 Ticker。应用导航前由 AppDataCard.closeAll 关闭只读查看卡，通知点击等待读取成功和最后一层模态真实退场。

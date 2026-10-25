@@ -5,19 +5,40 @@ import '../models/focus_view.dart';
 
 /// Pure transitions. Identity, accounting and settlement never depend on widgets.
 abstract final class FocusEngine {
+  static bool _newIdentity(FocusData data, String id) =>
+      id.isNotEmpty &&
+      !data.allSessions.values.any((s) => s.id == id) &&
+      !data.records.any((r) => r.sessionId == id);
   static FocusData recover(FocusData data) {
-    final s = data.session;
-    if (s == null || s.status != TimerStatus.running) return data;
-    return data.copyWith(
-      session: s.copyWith(
-        status: TimerStatus.paused,
-        clearAnchor: true,
-        recovered: true,
-      ),
-    );
+    var result = data;
+    for (final s in data.allSessions.values) {
+      if (s.status == TimerStatus.running) {
+        result = result.copyWith(
+          session: s.copyWith(
+            status: TimerStatus.paused,
+            clearAnchor: true,
+            recovered: true,
+          ),
+        );
+      }
+    }
+    return result;
   }
 
   static FocusData advance(FocusData data, DateTime now) {
+    var result = data;
+    for (final mode in TimerMode.values) {
+      if (result.sessionFor(mode)?.status != TimerStatus.running) continue;
+      final selected = result.mode;
+      final next = _advanceSelected(result.copyWith(mode: mode), now);
+      if (!identical(next.sessionFor(mode), result.sessionFor(mode))) {
+        result = next.copyWith(mode: selected);
+      }
+    }
+    return result;
+  }
+
+  static FocusData _advanceSelected(FocusData data, DateTime now) {
     final s = data.session;
     if (s == null || s.status != TimerStatus.running || s.anchor == null) {
       return data;
@@ -67,7 +88,7 @@ abstract final class FocusEngine {
   }
 
   static FocusData start(FocusData data, DateTime now, String id) {
-    if (data.session != null) return data;
+    if (data.session != null || !_newIdentity(data, id)) return data;
     final target = data.mode == TimerMode.stopwatch
         ? 0
         : (data.mode == TimerMode.countdown
@@ -95,13 +116,17 @@ abstract final class FocusEngine {
             data.mode == TimerMode.pomodoro &&
             data.cycles + 1 >= data.preferences.interval,
         anchor: now,
+        shortSeconds: data.preferences.shortSeconds,
+        longSeconds: data.preferences.longSeconds,
+        interval: data.preferences.interval,
       ),
     );
   }
 
   static FocusData again(FocusData data, DateTime now, String id) {
     final previous = data.session;
-    if (previous == null ||
+    if (!_newIdentity(data, id) ||
+        previous == null ||
         previous.mode != TimerMode.countdown ||
         previous.status != TimerStatus.finished) {
       return data;
@@ -226,7 +251,8 @@ abstract final class FocusEngine {
     bool acceptShort = false,
   }) {
     final s = data.session;
-    if (s == null ||
+    if (!_newIdentity(data, id) ||
+        s == null ||
         s.mode != TimerMode.pomodoro ||
         s.resting ||
         s.status != TimerStatus.finished ||
@@ -241,13 +267,12 @@ abstract final class FocusEngine {
         stage: s.longRest ? TimerStage.longBreak : TimerStage.shortBreak,
         status: TimerStatus.running,
         startedAt: now,
-        targetMs:
-            (s.longRest
-                ? data.preferences.longSeconds
-                : data.preferences.shortSeconds) *
-            1000,
+        targetMs: (s.longRest ? s.longSeconds : s.shortSeconds) * 1000,
         round: s.round,
         longRest: s.longRest,
+        shortSeconds: s.shortSeconds,
+        longSeconds: s.longSeconds,
+        interval: s.interval,
         anchor: now,
       ),
     );

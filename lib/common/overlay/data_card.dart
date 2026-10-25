@@ -8,7 +8,15 @@ import '../widgets/display/glass_surface.dart';
 
 /// One nonmodal inspection card per owning page. Scrolling remains available.
 final class AppDataCard with WidgetsBindingObserver {
+  static final _instances = <AppDataCard>{};
+  static void closeAll() {
+    for (final card in _instances.toList()) {
+      card.close();
+    }
+  }
+
   AppDataCard() {
+    _instances.add(this);
     WidgetsBinding.instance.addObserver(this);
   }
   @override
@@ -70,6 +78,7 @@ final class AppDataCard with WidgetsBindingObserver {
   }
 
   void dispose() {
+    _instances.remove(this);
     WidgetsBinding.instance.removeObserver(this);
     close();
   }

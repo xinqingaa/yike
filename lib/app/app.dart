@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unified_popups/unified_popups.dart';
 
 import '../theme/ts.dart';
+import '../common/route_activity.dart';
 import '../common/motion/motion_activity.dart';
 import 'local_data_boundary.dart';
 import '../theme/app_metrics.dart';
@@ -39,7 +40,11 @@ class PbApp extends ConsumerWidget {
               : pack.motion.durationSlow,
           themeAnimationCurve: pack.motion.easingStandard,
           navigatorKey: appNavigatorKey,
-          navigatorObservers: [Pop.routeObserver, motionRouteObserver],
+          navigatorObservers: [
+            Pop.routeObserver,
+            motionRouteObserver,
+            appRouteActivity,
+          ],
           builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
             value: TS
                 .of(context)

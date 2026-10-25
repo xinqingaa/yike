@@ -129,13 +129,13 @@ AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay
 
 模态深度由应用 ProviderScope 中的 popupActivityProvider 管理，不使用静态全局状态；未保存提示的展开选择也由实例 Provider 管理。
 
-### 第五阶段状态条目标（已确认，尚未实现）
+### 第五阶段状态区域
 
 使用单个应用级常驻展示宿主组合最多三行计时状态；任何 AppPop 模态打开时隐藏并禁止交互，最后一层真实退场后恢复，不改变计时。unified_popups 2.2.1 的 `PopupHandle.pause/resume` 及 Host `Offstage/IgnorePointer` 支持挂起时保留内部状态，本地 `AppStatusPopup.suspend` 已封装该语义。
 
-宿主可以保活，但完成条不能常驻：可见行自然完成后拉满 / 标记、短停留并自动退场；新行、行增减、外壳高度、页面避让及模式转场须同步过渡。库 pause / resume 不包含这些动画，应在本地呈现层先完成受控淡出再挂起，交互在隐藏意图产生时立即关闭；恢复从最新运行 / 暂停集合呈现，不补播已错过的完成。持续时长与中断规则统一见 [动效规格](../product/motion.md#第五阶段站内状态条已确认目标尚未实现)，不能用重复开关弹层替代连续过渡。
+宿主可以保活，但完成条不能常驻：可见行自然完成后拉满 / 标记、短停留并自动退场；新行、行增减、外壳高度、页面避让及模式转场须同步过渡。库 pause / resume 不包含这些动画，应在本地呈现层先完成受控淡出再挂起，交互在隐藏意图产生时立即关闭；恢复从最新运行 / 暂停集合呈现，不补播已错过的完成。持续时长与中断规则统一见 [动效规格](../product/motion.md#第五阶段站内状态条)，不能用重复开关弹层替代连续过渡。
 
-新增计时调用不能直接复用 `AppStatusPopup.show` 当前固定的 `yike-unsaved` key；须先扩展受控身份，区分未保存与计时宿主，SDK 句柄仍留 overlay。状态条只用玻璃、进度、行点击与一个暂停 / 继续，不创建三个独立 Toast。应用边界统一协调顶部避让和未保存提示，feature 不拼独立 Overlay 或接管表单生命周期。
+计时宿主使用应用 Stack / 安全区测量，与 `AppStatusPopup.show` 的 `yike-unsaved` key 独立；未创建另一份同 key 浮层，SDK 句柄仍留 overlay。状态条只用玻璃、进度、行点击与一个暂停 / 继续，不创建三个独立 Toast。应用边界统一协调顶部避让和未保存提示，feature 不拼独立 Overlay 或接管表单生命周期。
 
 本模式计圈面板仍允许计时反馈，通用设置 / 编辑 / 确认层不允许；这与“所有模态期间状态条隐藏”是两条不同规则，模态深度不能独自承担反馈来源选择。详见 [第五阶段](../plan/stage5-notifications.md)。
 
@@ -148,3 +148,7 @@ AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay
 `CommonPressableSurface` 支持可选 onLongPress；短按与长按均使用现有主题反馈。`CommonMonthCalendar.dayInteractionBuilder` 将日期视觉与 FocusNode 一起交给调用方，在同一个 CommonPressableSurface 上处理点击与长按，避免嵌套命中区域；方向键与默认日期选择行为保持，不增加选中事实。CommonYearGrid 共用年度日期排布与横向滚动，习惯详情和最近一年专注都使用它。CommonHeatmap 只提供周数据、标签和语义，不再自绘描边格子。CommonHeatmapBlock 绘制无边框实色格。习惯年格的创建前、未来和周对齐占位用 heatmapOutside；专注年格的周对齐占位与零时长同一档主色。调用方决定格子是否响应。
 
 日期查看统一使用 DataCardTarget，在同一 CommonPressableSurface 上将 onPressed/onLongPress 接到同一个 show；每日记录 Sheet 仅由专注日期卡中的明确入口打开；返回优先关闭当前 Menu，关闭后再返回来源页面。热力图默认与查看状态均使用无边框色块，键盘焦点仍沿用公共按压组件的可访问性反馈。
+
+## 第五阶段通用扩展
+
+AppSheet 的受控 `timerPanel` 用途只表示仍可允许其计时来源反馈的面板，不改变模态深度；嵌套通用层仍静默。Toast 可传局部 duration，习惯静默提示使用 3 秒，其它提示沿用主题时长。MotionList 可接收 scrollToStartToken，仅在外部导航定位身份变化时回列表顶部，维持行状态。AppDataCard.closeAll 由应用跳转边界使用，不把非模态查看卡当作模态。

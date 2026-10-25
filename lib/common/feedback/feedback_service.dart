@@ -47,6 +47,11 @@ class FeedbackService {
     }
   }
 
+  void stopScope(String scope) {
+    if (_pendingScope == scope) _cancelSecondImpact();
+    unawaited(_safely(() => soundPlayer.stop(scope: scope)));
+  }
+
   void play(FeedbackCue cue, {required String theme, required String scope}) {
     final options = _scopes[scope];
     if (_disposed || !_foreground || options == null) return;

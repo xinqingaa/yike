@@ -1,3 +1,16 @@
+import 'dart:async';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yike/app/app.dart';
+import 'package:yike/app/navigation.dart';
+import 'package:yike/common/clock.dart';
+import 'package:yike/common/notifications/notification_adapter.dart';
+import 'package:yike/common/overlay/popup_activity.dart';
+import 'package:yike/features/focus/focus.dart';
+import 'package:yike/features/focus/providers/focus_dial_presentation.dart';
+import 'package:yike/storage/providers.dart';
+import 'support/fake_app_prefs.dart';
+import 'support/fake_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yike/common/feedback/feedback_cue.dart';
 import 'package:yike/common/feedback/feedback_service.dart';
@@ -7,6 +20,7 @@ import 'package:yike/common/feedback/sound_player.dart';
 
 class _Sounds implements SoundPlayer {
   final calls = <(String, SoundCue)>[];
+  final stops = <String?>[];
   @override
   bool get ready => true;
   @override
@@ -17,7 +31,10 @@ class _Sounds implements SoundPlayer {
   }
 
   @override
-  Future<void> stop({String? scope}) async {}
+  Future<void> stop({String? scope}) async {
+    stops.add(scope);
+  }
+
   @override
   Future<void> dispose() async {}
 }
@@ -31,6 +48,109 @@ class _Haptics implements HapticPlayer {
 }
 
 void main() {
+  testWidgets(
+    'leaving a timer scope stops its sound and cancels its second strong impact',
+    (tester) async {
+      final sounds = _Sounds(), haptics = _Haptics();
+      final service = FeedbackService(
+        soundPlayer: sounds,
+        hapticPlayer: haptics,
+      );
+      service.configure(
+        sound: true,
+        haptics: true,
+        scopes: const {'pomodoro': FeedbackOptions()},
+      );
+      service.setForeground(true);
+      service.play(FeedbackCue.finish, theme: 'yike/water', scope: 'pomodoro');
+      expect(haptics.calls, [HapticCue.heavy]);
+      service.stopScope('pomodoro');
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(sounds.stops, contains('pomodoro'));
+      expect(haptics.calls, [HapticCue.heavy]);
+      await service.dispose();
+    },
+  );
+
+  testWidgets(
+    'timer visibility follows root, mode and nested modal purpose without replay',
+    (tester) async {
+      final sounds = _Sounds(), haptics = _Haptics();
+      final service = FeedbackService(
+        soundPlayer: sounds,
+        hapticPlayer: haptics,
+      );
+      var now = DateTime(2026, 10, 24, 12);
+      final app = ProviderContainer(
+        overrides: [
+          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          notificationAdapterProvider.overrideWithValue(FakeNotifications()),
+          feedbackServiceProvider.overrideWithValue(service),
+          clockProvider.overrideWithValue(() => now),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: app, child: const PbApp()),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      final visibility = app.read(timerFeedbackVisibilityProvider);
+      final feedback = app.read(focusFeedbackProvider);
+      void complete(TimerMode mode) =>
+          feedback.completed(FocusCompletion('event', TimerStage.focus, mode));
+      expect(visibility.allows(TimerMode.pomodoro), isTrue);
+      complete(TimerMode.countdown);
+      expect(sounds.calls, isEmpty);
+      complete(TimerMode.pomodoro);
+      expect(sounds.calls, hasLength(1));
+      app.read(focusActionsProvider).switchMode(TimerMode.stopwatch);
+      await tester.pump();
+      expect(sounds.stops, contains('pomodoro'));
+      expect(visibility.allows(TimerMode.stopwatch), isTrue);
+      final actions = app.read(focusActionsProvider);
+      actions.start();
+      now = now.add(const Duration(seconds: 2));
+      final id = app.read(focusDataProvider).session!.id;
+      final beforeLap = haptics.calls.length;
+      expect(
+        actions.command(TimerMode.stopwatch, id, FocusCommand.lap),
+        isTrue,
+      );
+      expect(haptics.calls.length, beforeLap + 1);
+      expect(
+        actions.command(TimerMode.stopwatch, 'old-session', FocusCommand.pause),
+        isFalse,
+      );
+      expect(app.read(focusDataProvider).session!.status, TimerStatus.running);
+      final closedPanel = Completer<void>(), closedConfirm = Completer<void>();
+      final activity = app.read(popupActivityProvider.notifier);
+      final panel = activity.track(() => closedPanel.future, timerPanel: true);
+      expect(visibility.allows(TimerMode.stopwatch), isTrue);
+      complete(TimerMode.stopwatch);
+      expect(sounds.calls, hasLength(2));
+      final confirm = activity.track(() => closedConfirm.future);
+      expect(visibility.allows(TimerMode.stopwatch), isFalse);
+      complete(TimerMode.stopwatch);
+      expect(sounds.calls, hasLength(2));
+      closedConfirm.complete();
+      await confirm;
+      expect(visibility.allows(TimerMode.stopwatch), isTrue);
+      closedPanel.complete();
+      await panel;
+      app.read(rootTabProvider.notifier).set(1);
+      complete(TimerMode.stopwatch);
+      expect(sounds.calls, hasLength(2));
+      app.read(rootTabProvider.notifier).set(0);
+      await tester.pump();
+      expect(sounds.calls, hasLength(2));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      app.dispose();
+      await service.dispose();
+      await tester.pump();
+    },
+  );
+
   test(
     'inspection selection follows master, optional habit scope and foreground without sound',
     () async {

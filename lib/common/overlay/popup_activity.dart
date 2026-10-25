@@ -22,18 +22,27 @@ class PopupActivity extends Notifier<int> {
   @override
   int build() => 0;
 
-  Future<T> track<T>(Future<T> Function() open) async {
+  int timerPanelCount = 0;
+
+  Future<T> track<T>(
+    Future<T> Function() open, {
+    bool timerPanel = false,
+  }) async {
+    if (timerPanel) timerPanelCount++;
     state++;
     try {
       return await open();
     } finally {
+      if (timerPanel) timerPanelCount--;
       if (ref.mounted) state--;
     }
   }
 
-  static Future<T> modal<T>(Future<T> Function() open) =>
-      ProviderScope.containerOf(
-        popupHostContext(),
-        listen: false,
-      ).read(popupActivityProvider.notifier).track(open);
+  static Future<T> modal<T>(
+    Future<T> Function() open, {
+    bool timerPanel = false,
+  }) => ProviderScope.containerOf(
+    popupHostContext(),
+    listen: false,
+  ).read(popupActivityProvider.notifier).track(open, timerPanel: timerPanel);
 }

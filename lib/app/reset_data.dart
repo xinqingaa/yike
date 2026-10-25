@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'notifications/notification_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/local_data/local_data.dart';
@@ -11,6 +13,8 @@ import '../common/overlay/app_pop.dart';
 bool resetYikeData(WidgetRef ref) {
   AppPop.clearToasts();
   final saved = ref.read(localDataProvider.notifier).reset();
+  unawaited(ref.read(notificationCoordinatorProvider.notifier).reset());
+  ref.read(habitReminderTargetsProvider.notifier).set(const {});
   ref.read(habitsProvider.notifier).clearUndo();
   ref.invalidate(reviewSelectionProvider);
   ref.read(rootTabProvider.notifier).set(0);

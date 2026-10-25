@@ -129,6 +129,7 @@ void main() {
         jsonDecode(jsonEncode(d.toJson())) as Map<String, dynamic>,
       ),
     );
+    d = d.copyWith(mode: TimerMode.stopwatch);
     expect(d.session!.id, 'session-a');
     expect(d.session!.elapsedMs, 25000);
     expect(d.session!.laps, [20000]);
@@ -197,9 +198,9 @@ void main() {
       'rest',
     );
     expect(d.session!.stage, TimerStage.shortBreak);
-    expect(d.session!.targetMs, 59000);
+    expect(d.session!.targetMs, 30000);
     d = d.copyWith(preferences: d.preferences.copyWith(shortSeconds: 59));
-    expect(d.session!.targetMs, 59000);
+    expect(d.session!.targetMs, 30000);
   });
   test(
     'early end does not complete a round and discard does not erase prior records',

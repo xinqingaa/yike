@@ -9,6 +9,7 @@ abstract final class ToastPopup {
     String message, {
     String? actionLabel,
     VoidCallback? onAction,
+    Duration? duration,
     double bottomInset = 0,
     String? replacementKey,
   }) {
@@ -32,7 +33,7 @@ abstract final class ToastPopup {
       textStyle: ts.textStyle.content.copyWith(color: ts.colors.onToast),
       spacing: ts.spacing.sm,
     );
-    final lifetime = PopupLifetime.after(ts.motion.durationToast);
+    final lifetime = PopupLifetime.after(duration ?? ts.motion.durationToast);
     if (actionLabel == null) {
       Pop.toast(
         ToastConfig.text(

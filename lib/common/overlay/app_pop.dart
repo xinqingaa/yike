@@ -39,12 +39,14 @@ abstract final class AppPop {
     String message, {
     String? actionLabel,
     VoidCallback? onAction,
+    Duration? duration,
     double bottomInset = 0,
     String? replacementKey,
   }) => ToastPopup.show(
     message,
     actionLabel: actionLabel,
     onAction: onAction,
+    duration: duration,
     bottomInset: bottomInset,
     replacementKey: replacementKey,
   );
@@ -108,6 +110,7 @@ abstract final class AppPop {
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
+    bool timerPanel = false,
     void Function(PopupHandle<T> handle)? attach,
   }) => PopupActivity.modal(
     () => SheetPopup.show<T>(
@@ -120,6 +123,7 @@ abstract final class AppPop {
       material: material,
       attach: attach,
     ),
+    timerPanel: timerPanel,
   );
 
   static Future<R?> flowSheet<R>({
@@ -186,6 +190,7 @@ final class AppSheet<T> {
   Future<void> dismiss() => _completion.dismiss();
 
   Future<T?> show({
+    bool timerPanel = false,
     String? title,
     required Widget child,
     bool showCloseButton = true,
@@ -201,6 +206,7 @@ final class AppSheet<T> {
     size: size,
     drag: drag,
     material: material,
+    timerPanel: timerPanel,
     attach: _completion.attach,
   );
 }

@@ -5,6 +5,8 @@ import '../common/widgets.dart';
 import '../features/local_data/local_data.dart';
 import 'unsaved_status.dart';
 import 'feedback_boundary.dart';
+import 'timer_status_boundary.dart';
+import 'notifications/notification_coordinator.dart';
 import '../theme/ts.dart';
 import 'reset_data.dart';
 
@@ -51,6 +53,9 @@ class LocalDataBoundary extends ConsumerWidget {
         ),
       );
     }
-    return FeedbackBoundary(child: UnsavedStatus(child: child));
+    ref.watch(notificationCoordinatorProvider);
+    return FeedbackBoundary(
+      child: TimerStatusBoundary(child: UnsavedStatus(child: child)),
+    );
   }
 }

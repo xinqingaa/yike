@@ -94,6 +94,9 @@ class FocusSession {
     required this.targetMs,
     required this.round,
     required this.longRest,
+    this.shortSeconds = 30,
+    this.longSeconds = 900,
+    this.interval = 4,
     this.elapsedMs = 0,
     this.scaleSeconds = fullDialSeconds,
     this.days = const {},
@@ -110,6 +113,7 @@ class FocusSession {
   final int targetMs, elapsedMs, round, scaleSeconds;
   int get limitMs =>
       mode == TimerMode.stopwatch ? maxFocusSeconds * 1000 : targetMs;
+  final int shortSeconds, longSeconds, interval;
   final bool longRest, recovered, promptShort;
   final Map<String, int> days;
   final List<int> laps;
@@ -134,6 +138,9 @@ class FocusSession {
     scaleSeconds: scaleSeconds,
     round: round,
     longRest: longRest,
+    shortSeconds: shortSeconds,
+    longSeconds: longSeconds,
+    interval: interval,
     elapsedMs: elapsedMs ?? this.elapsedMs,
     days: days ?? this.days,
     laps: laps ?? this.laps,
@@ -152,6 +159,9 @@ class FocusSession {
     'elapsedMs': elapsedMs,
     'round': round,
     'longRest': longRest,
+    'shortSeconds': shortSeconds,
+    'longSeconds': longSeconds,
+    'interval': interval,
     'days': days,
     'laps': laps,
     'promptShort': promptShort,
@@ -209,6 +219,9 @@ class FocusSession {
       elapsedMs: elapsed,
       round: boundedInt(j['round'], 1, 8),
       longRest: j['longRest'] as bool,
+      shortSeconds: boundedInt(j['shortSeconds'], 1, 59),
+      longSeconds: boundedInt(j['longSeconds'], 1, maxFocusSeconds),
+      interval: boundedInt(j['interval'], 2, 8),
       days: Map.unmodifiable(days),
       laps: List.unmodifiable(laps),
       promptShort: j['promptShort'] as bool,
@@ -258,7 +271,7 @@ class FocusRecord {
 class FocusData {
   const FocusData({
     this.preferences = const TimingPreferences(),
-    this.session,
+    this.sessions = const {},
     this.records = const [],
     this.cycles = 0,
     this.mode = TimerMode.pomodoro,
@@ -272,7 +285,10 @@ class FocusData {
        // ignore: prefer_initializing_formals
        _countdownPreset = countdownPreset;
   final TimingPreferences preferences;
-  final FocusSession? session;
+  final Map<TimerMode, FocusSession> sessions;
+  FocusSession? sessionFor(TimerMode mode) => sessions[mode];
+  FocusSession? get session => sessionFor(mode);
+  Map<TimerMode, FocusSession> get allSessions => sessions;
   final List<FocusRecord> records;
   final int cycles;
   final int? _countdown;
@@ -293,6 +309,7 @@ class FocusData {
   FocusData copyWith({
     TimingPreferences? preferences,
     FocusSession? session,
+    Map<TimerMode, FocusSession>? sessions,
     bool clearSession = false,
     List<FocusRecord>? records,
     int? cycles,
@@ -304,7 +321,12 @@ class FocusData {
     bool? dialAdjusted,
   }) => FocusData(
     preferences: preferences ?? this.preferences,
-    session: clearSession ? null : session ?? this.session,
+    sessions: Map.unmodifiable(
+      {
+        ...(sessions ?? allSessions),
+        if (session != null && !clearSession) session.mode: session,
+      }..removeWhere((key, _) => clearSession && key == this.mode),
+    ),
     records: records ?? this.records,
     cycles: cycles ?? this.cycles,
     mode: mode ?? this.mode,
@@ -357,15 +379,19 @@ class FocusData {
   ];
   Map<String, dynamic> toJson() => {
     'preferences': preferencesJson(preferences),
-    'session': session?.toJson(),
+    'sessions': allSessions.values.map((s) => s.toJson()).toList(),
     'records': records.map((r) => r.toJson()).toList(),
     'cycles': cycles,
   };
   factory FocusData.fromJson(Map<String, dynamic> j) {
     final prefs = preferencesFromJson(j['preferences'] as Map<String, dynamic>);
-    final session = j['session'] == null
-        ? null
-        : FocusSession.fromJson(j['session'] as Map<String, dynamic>);
+    final sessions = (j['sessions'] as List)
+        .map((s) => FocusSession.fromJson(s as Map<String, dynamic>))
+        .toList();
+    if (sessions.map((s) => s.mode).toSet().length != sessions.length ||
+        sessions.map((s) => s.id).toSet().length != sessions.length) {
+      throw const FormatException('Duplicate session slot or identity');
+    }
     final records = (j['records'] as List)
         .map((r) => FocusRecord.fromJson(r as Map<String, dynamic>))
         .toList();
@@ -374,13 +400,9 @@ class FocusData {
     }
     return FocusData(
       preferences: prefs,
-      session: session,
+      sessions: Map.unmodifiable({for (final s in sessions) s.mode: s}),
       records: List.unmodifiable(records),
       cycles: boundedInt(j['cycles'], 0, 8),
-      mode: session?.mode ?? TimerMode.pomodoro,
-      countdown: session?.mode == TimerMode.countdown
-          ? session!.targetMs ~/ 1000
-          : null,
     );
   }
 }

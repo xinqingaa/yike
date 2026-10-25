@@ -1,6 +1,7 @@
 import '../../../common/motion/content_transition.dart';
 import '../../focus/focus.dart';
 import '../../../app/reset_data.dart';
+import '../../../app/notifications/notification_settings.dart';
 import '../../../common/time.dart';
 import '../../../common/feedback/feedback_cue.dart';
 import '../../../common/feedback/feedback_options.dart';
@@ -138,6 +139,11 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage> {
                   id: 'feedback',
                   title: '记录与反馈',
                   items: [
+                    const CommonListItem(
+                      id: 'notifications',
+                      title: '通知提醒',
+                      navigation: true,
+                    ),
                     CommonListItem(
                       id: 'sound',
                       title: '声音总开关',
@@ -222,6 +228,14 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage> {
                 ),
               ],
               onNavigate: (group, item) async {
+                if (item == 'notifications') {
+                  await AppSheet<void>().show(
+                    title: '通知提醒',
+                    material: CommonSurfaceMaterial.glass,
+                    child: const NotificationSettings(),
+                  );
+                  return;
+                }
                 if (item == 'previewFinish') {
                   ref
                       .read(feedbackServiceProvider)

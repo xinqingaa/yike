@@ -8,7 +8,8 @@ export 'prefs_codec.dart';
 enum PrefsKey {
   themeMode('theme_mode'),
   themePack('theme_pack'),
-  snapshot('business_snapshot');
+  snapshot('business_snapshot'),
+  notifications('notification_metadata');
 
   const PrefsKey(this.storageKey);
   final String storageKey;

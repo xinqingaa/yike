@@ -43,3 +43,6 @@ PNG 的像素尺寸与界面逻辑尺寸分开：组件通过主题指定显示�
 ## 仓库内合成音效
 
 `tool/synth-sounds.mjs` 使用 Node 内置模块生成 `asset/yike/sound/{mechanical|water|sundial}-{tick|chime|finish}.wav`，共 9 个文件，16 位 PCM、44.1kHz、单声道，每段小于 150KB。来源为本仓库原创程序合成，无外部采样；以固定公式与包络可重复生成。资源已在 pubspec 登记，由 common/feedback 的类型化主题映射消费。它们不属于导入基线，不运行 DS 同步；合成脚本是产品资源维护工具，用户验收后保留。
+
+
+第五阶段系统通知复用上述 finish 音源：Android 原始资源位于 `android/app/src/main/res/raw/{mechanical|water|sundial}_finish.wav`，iOS 为 `ios/Runner/{mechanical|water|sundial}_finish.caf`（由同源 WAV 转为 PCM CAF，加入 Runner 资源）。修改源声音时同步更新这两套平台资源，不能只替换 Flutter asset。通知小图标为 `android/app/src/main/res/drawable/ic_notification.xml`；后台声音最终受系统权限、渠道、静音 / 专注模式控制，构建不证明听感或触感通过。

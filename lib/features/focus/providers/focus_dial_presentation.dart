@@ -26,10 +26,8 @@ class FocusDialPresentation {
 final focusDialPresentationProvider =
     Provider.family<FocusDialPresentation, TimerMode>((ref, mode) {
       final data = ref.watch(focusDataProvider);
-      final session = data.session?.mode == mode ? data.session : null;
-      final view = data.view.mode == mode
-          ? data.view
-          : data.copyWith(mode: mode, clearSession: true).view;
+      final session = data.sessionFor(mode);
+      final view = data.copyWith(mode: mode).view;
       return FocusDialPresentation(session, view);
     }, dependencies: [focusDataProvider]);
 
@@ -45,15 +43,17 @@ class FocusCompletion {
 final focusCompletionEventsProvider = Provider<Stream<FocusCompletion>>((ref) {
   final events = StreamController<FocusCompletion>.broadcast(sync: true);
   ref.listen(localDataProvider, (before, after) {
-    final previous = before?.data.focus.session,
-        next = after.data.focus.session;
-    if (previous != null &&
-        next != null &&
-        previous.id == next.id &&
-        previous.stage == next.stage &&
-        previous.status != TimerStatus.finished &&
-        next.status == TimerStatus.finished) {
-      events.add(FocusCompletion(next.id, next.stage, next.mode));
+    for (final mode in TimerMode.values) {
+      final previous = before?.data.focus.sessionFor(mode),
+          next = after.data.focus.sessionFor(mode);
+      if (previous != null &&
+          next != null &&
+          previous.id == next.id &&
+          previous.stage == next.stage &&
+          previous.status != TimerStatus.finished &&
+          next.status == TimerStatus.finished) {
+        events.add(FocusCompletion(next.id, next.stage, next.mode));
+      }
     }
   });
   ref.onDispose(() => unawaited(events.close()));

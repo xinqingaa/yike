@@ -11,6 +11,15 @@ import '../logic/focus_projection.dart';
 import '../logic/focus_beats.dart';
 import 'focus_dial_presentation.dart';
 
+/// The app supplies a current-time visibility query; no navigation knowledge here.
+class TimerFeedbackVisibility {
+  bool Function(TimerMode) allows = (_) => false;
+}
+
+final timerFeedbackVisibilityProvider = Provider(
+  (ref) => TimerFeedbackVisibility(),
+);
+
 class FocusFeedback {
   FocusFeedback(this.ref);
   final Ref ref;
@@ -33,6 +42,7 @@ class FocusFeedback {
   void sample(DateTime now) {
     final data = ref.read(localDataProvider).data.focus, session = data.session;
     if (!_foreground ||
+        !ref.read(timerFeedbackVisibilityProvider).allows(data.mode) ||
         session == null ||
         session.status != TimerStatus.running) {
       reset();
@@ -68,7 +78,10 @@ class FocusFeedback {
 
   void completed(FocusCompletion event) {
     reset();
-    if (!_foreground) return;
+    if (!_foreground ||
+        !ref.read(timerFeedbackVisibilityProvider).allows(event.mode)) {
+      return;
+    }
     ref
         .read(feedbackServiceProvider)
         .play(
@@ -102,6 +115,7 @@ final focusFeedbackProvider = Provider<FocusFeedback>(
   },
   dependencies: [
     localDataProvider,
+    timerFeedbackVisibilityProvider,
     focusCompletionEventsProvider,
     feedbackServiceProvider,
     themePackProvider,

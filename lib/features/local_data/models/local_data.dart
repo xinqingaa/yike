@@ -7,7 +7,9 @@ class YikeData {
     required this.firstUsed,
     required this.focus,
     required this.habits,
+    this.backgroundReminders = false,
   });
+  final bool backgroundReminders;
   final String firstUsed;
   final FocusData focus;
   final List<HabitViewData> habits;
@@ -42,14 +44,19 @@ class YikeData {
       ),
     ],
   );
-  YikeData copyWith({FocusData? focus, List<HabitViewData>? habits}) =>
-      YikeData(
-        firstUsed: firstUsed,
-        focus: focus ?? this.focus,
-        habits: habits ?? this.habits,
-      );
+  YikeData copyWith({
+    FocusData? focus,
+    List<HabitViewData>? habits,
+    bool? backgroundReminders,
+  }) => YikeData(
+    firstUsed: firstUsed,
+    backgroundReminders: backgroundReminders ?? this.backgroundReminders,
+    focus: focus ?? this.focus,
+    habits: habits ?? this.habits,
+  );
   Map<String, dynamic> toJson() => {
     'firstUsed': firstUsed,
+    'backgroundReminders': backgroundReminders,
     'focus': focus.toJson(),
     'habits': habits.map((h) => h.toJson()).toList(),
   };
@@ -63,6 +70,7 @@ class YikeData {
     }
     return YikeData(
       firstUsed: first,
+      backgroundReminders: j['backgroundReminders'] as bool,
       focus: FocusData.fromJson(j['focus'] as Map<String, dynamic>),
       habits: List.unmodifiable(habits),
     );

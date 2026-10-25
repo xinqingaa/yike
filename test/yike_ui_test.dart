@@ -70,28 +70,29 @@ Future<ProviderContainer> pumpYike(
                 focus: FocusData(
                   mode: focus.mode,
                   countdown: focus.target,
-                  session: focus.ready
-                      ? null
-                      : FocusSession(
-                          id: 'fixture-session',
-                          mode: focus.mode,
-                          stage: focus.stage,
-                          status: focus.status,
-                          startedAt: now.subtract(
-                            Duration(milliseconds: elapsed),
-                          ),
-                          targetMs: focus.target * 1000,
-                          elapsedMs: elapsed,
-                          round: focus.round,
-                          longRest: false,
-                          days: focus.resting
-                              ? const {}
-                              : {'2026-10-16': elapsed},
-                          laps: focus.laps.map((v) => v * 1000).toList(),
-                          anchor: focus.status == TimerStatus.running
-                              ? now
-                              : null,
+                  sessions: {
+                    if (!focus.ready)
+                      focus.mode: FocusSession(
+                        id: 'fixture-session',
+                        mode: focus.mode,
+                        stage: focus.stage,
+                        status: focus.status,
+                        startedAt: now.subtract(
+                          Duration(milliseconds: elapsed),
                         ),
+                        targetMs: focus.target * 1000,
+                        elapsedMs: elapsed,
+                        round: focus.round,
+                        longRest: false,
+                        days: focus.resting
+                            ? const {}
+                            : {'2026-10-16': elapsed},
+                        laps: focus.laps.map((v) => v * 1000).toList(),
+                        anchor: focus.status == TimerStatus.running
+                            ? now
+                            : null,
+                      ),
+                  },
                 ),
               ),
         );
@@ -158,7 +159,7 @@ void main() {
       );
     }
   }
-  testWidgets('cancel mode switch restores mode and official tab indicator', (
+  testWidgets('switch preserves paused mode and moves official tab indicator', (
     tester,
   ) async {
     await pumpYike(tester);
@@ -168,8 +169,9 @@ void main() {
     await pumpPresentation(tester);
     await tester.tap(find.text('正计时'));
     await pumpPresentation(tester);
-    expect(find.text('切换计时模式'), findsOneWidget);
-    await tester.tap(find.byTooltip('关闭'));
+    expect(find.text('切换计时模式'), findsNothing);
+    expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 1);
+    await tester.tap(find.text('番茄钟'));
     await pumpPresentation(tester);
     expect(find.text('继续'), findsOneWidget);
     expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);

@@ -14,71 +14,35 @@ import 'yike_ui_test.dart' show pumpYike, navigateTab;
 import 'component_material_test.dart' show shell;
 
 void main() {
-  for (final dismissal in ['close', 'barrier', 'back']) {
+  for (final paused in [false, true]) {
     testWidgets(
-      '$dismissal cancels a mode request without moving the running panel',
+      'mode switch preserves ${paused ? 'paused' : 'running'} session without a modal',
       (tester) async {
         var now = DateTime.utc(2026, 10, 16, 12);
         final app = await pumpYike(tester, clock: () => now);
-        await tester.tap(find.text('开始专注'));
-        await pumpPresentation(tester);
+        final actions = app.read(focusActionsProvider);
+        actions.start();
+        if (paused) actions.pause();
+        final id = app.read(focusDataProvider).session!.id;
         await tester.tap(find.text('正计时'));
-        await tester.pump();
-        expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);
-        expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
-        await pumpPresentation(tester);
-        expect(find.text('取消'), findsNothing);
-        final end = tester.getRect(find.widgetWithText(CommonButton, '结束'));
-        final discard = tester.getRect(find.widgetWithText(CommonButton, '放弃'));
-        expect(end.left - discard.right, greaterThanOrEqualTo(12));
-        expect(end.height, lessThanOrEqualTo(44));
-        now = now.add(const Duration(seconds: 20));
-        app.read(clockPulseProvider.notifier).refresh();
-        await tester.pump();
-        switch (dismissal) {
-          case 'close':
-            await tester.tap(find.byTooltip('关闭'));
-          case 'barrier':
-            await tester.tapAt(const Offset(12, 100));
-          case 'back':
-            await tester.binding.handlePopRoute();
-        }
         await pumpPresentation(tester);
         expect(find.text('切换计时模式'), findsNothing);
-        expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
-        expect(app.read(focusViewProvider).status, TimerStatus.running);
-        expect(app.read(focusViewProvider).seconds, 1480);
-        expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);
-        expect(tester.takeException(), isNull);
-      },
-    );
-  }
-
-  for (final action in ['结束', '放弃']) {
-    testWidgets(
-      '$action commits exactly one mode transition after confirmation',
-      (tester) async {
-        final app = await pumpYike(
-          tester,
-          focus: const FocusViewData(status: TimerStatus.paused, seconds: 1480),
-        );
-        await tester.tap(find.text('正计时'));
-        await tester.tap(find.text('倒计时'), warnIfMissed: false);
-        await pumpPresentation(tester);
-        expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
-        expect(find.text('切换计时模式'), findsOneWidget);
-        await tester.tap(find.text(action));
-        await pumpPresentation(tester);
         expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);
-        expect(app.read(focusViewProvider).ready, isTrue);
+        actions.start();
+        now = now.add(const Duration(seconds: 20));
+        app.read(clockPulseProvider.notifier).refresh();
+        await tester.tap(find.text('番茄钟'));
+        await pumpPresentation(tester);
+        expect(app.read(focusDataProvider).session!.id, id);
+        expect(app.read(focusViewProvider).seconds, paused ? 1500 : 1480);
         expect(
-          app.read(focusRecordsProvider),
-          hasLength(action == '结束' ? 1 : 0),
+          app
+              .read(focusDataProvider)
+              .sessionFor(TimerMode.stopwatch)!
+              .elapsedMs,
+          20000,
         );
-        if (action == '结束') {
-          expect(app.read(focusRecordsProvider).single.seconds, 20);
-        }
-        expect(dialDigits('00:00'), findsOneWidget);
+        expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);
         expect(tester.takeException(), isNull);
       },
     );
@@ -86,7 +50,7 @@ void main() {
 
   for (final accept in [false, true]) {
     testWidgets(
-      'short record ${accept ? 'accepts' : 'cancels'} before committing a requested mode',
+      'explicit short finish ${accept ? 'accepts' : 'cancels'} after switching back',
       (tester) async {
         final app = await pumpYike(
           tester,
@@ -97,16 +61,18 @@ void main() {
         );
         await tester.tap(find.text('正计时'));
         await pumpPresentation(tester);
-        await tester.tap(find.text('结束'));
+        expect(find.text('记录这次短时专注？'), findsNothing);
+        await tester.tap(find.text('番茄钟'));
+        await pumpPresentation(tester);
+        app.read(focusActionsProvider).pause();
+        await pumpPresentation(tester);
+        await tester.tap(find.text('结束并记录'));
         await pumpPresentation(tester);
         expect(find.text('记录这次短时专注？'), findsOneWidget);
         expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
         await tester.tap(find.text(accept ? '仍然记录' : '暂不结束'));
         await pumpPresentation(tester);
-        expect(
-          app.read(focusViewProvider).mode,
-          accept ? TimerMode.stopwatch : TimerMode.pomodoro,
-        );
+        expect(app.read(focusViewProvider).mode, TimerMode.pomodoro);
         expect(app.read(focusRecordsProvider), hasLength(accept ? 1 : 0));
         expect(
           app.read(focusViewProvider).status,
@@ -296,7 +262,7 @@ void main() {
   });
 
   testWidgets(
-    'reduced motion keeps mode confirmation and theme updates functional',
+    'reduced motion keeps parallel switching and theme updates functional',
     (tester) async {
       tester.platformDispatcher.accessibilityFeaturesTestValue =
           const FakeAccessibilityFeatures(disableAnimations: true);
@@ -311,8 +277,8 @@ void main() {
       await pumpPresentation(tester);
       await tester.tap(find.text('倒计时'));
       await pumpPresentation(tester);
-      expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);
-      await tester.tap(find.byTooltip('关闭'));
+      expect(app.read(focusViewProvider).mode, TimerMode.countdown);
+      await tester.tap(find.text('正计时'));
       await pumpPresentation(tester);
       app.read(themePackProvider.notifier).select('yike/water');
       await pumpPresentation(tester);

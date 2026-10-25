@@ -25,14 +25,14 @@
 - `integration_test/experience_test.dart` 在 PB Phase4 iPhone 14 / iOS 18.6 Simulator 上三项主题流程通过。逻辑视口 390×844，原生截图 1170×2532。测试仅使用 FakeAppPrefs 内存数据，日期固定为 2026-10-23，不读写生产 `yike` 存储。
 - 采集三主题各 9 张原生截图，共 27 张。目视检查重点包括计时切换、时长滚轮、FlowSheet、习惯详情浅深模式、空周、日期明细、仅打卡周/月。检查中修正了周日期换行、打卡次数裁字、月历次数覆盖图形的问题。
 
-本机附件保存在忽略目录 `build/experience/`，清理 build 后需重新运行集成脚本采集。日志为该目录的 `verify.log`、`native.log` 与 `regression.log`。示例：
+本机附件保存在忽略目录 `build/experience/`，2026-10-25 用户验收通过后，专用采集脚本与截图已清理。日志为该目录的 `verify.log`、`native.log` 与 `regression.log`。示例：
 
-- [计时切换](../../build/experience/mechanical-mode-request.png)
-- [滚轮单位](../../build/experience/water-duration.png)
-- [习惯热力图](../../build/experience/sundial-new-habit-dark.png)
-- [回顾空周](../../build/experience/mechanical-empty-week.png)
-- [日期明细](../../build/experience/water-day-detail.png)
-- [仅打卡月历](../../build/experience/mechanical-checkin-month.png)
+- 计时切换（历史截图已清理）
+- 滚轮单位（历史截图已清理）
+- 习惯热力图（历史截图已清理）
+- 回顾空周（历史截图已清理）
+- 日期明细（历史截图已清理）
+- 仅打卡月历（历史截图已清理）
 
 ## 验证边界
 

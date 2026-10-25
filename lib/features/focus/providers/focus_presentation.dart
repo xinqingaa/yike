@@ -6,6 +6,7 @@ import '../../../theme/ts.dart';
 import '../../../common/identity.dart';
 import '../../local_data/local_data.dart';
 import '../focus_models.dart';
+import 'focus_feedback.dart';
 
 final focusDataProvider = Provider<FocusData>(
   (ref) => ref.watch(localDataProvider.select((s) => s.data.focus)),
@@ -58,6 +59,18 @@ final timingPreferencesProvider =
     );
 
 /// Commands update the single business snapshot; views only consume projections.
+enum FocusCommand {
+  pause,
+  resume,
+  lap,
+  record,
+  finish,
+  discard,
+  beginBreak,
+  again,
+  dismissPrompt,
+}
+
 class FocusActions {
   FocusActions(this.ref);
   final Ref ref;
@@ -72,7 +85,9 @@ class FocusActions {
     final result = ref
         .read(localDataProvider.notifier)
         .commitResult(ref.read(localDataProvider).data.copyWith(focus: next));
-    if (effective && result.accepted) {
+    if (effective &&
+        result.accepted &&
+        ref.read(timerFeedbackVisibilityProvider).allows(next.session!.mode)) {
       ref
           .read(feedbackServiceProvider)
           .play(
@@ -157,15 +172,74 @@ class FocusActions {
     _feedbackCommit(FocusEngine.again(data, now, identity), effective: true);
   }
 
-  void switchMode(TimerMode mode, {bool record = false}) {
-    var value = FocusEngine.advance(data, now);
-    if (record) {
-      if (FocusEngine.needsConfirmation(value)) return;
-      value = FocusEngine.finish(value, now);
-    } else {
-      value = FocusEngine.leave(value);
+  void switchMode(TimerMode mode) {
+    _commit(FocusEngine.advance(data, now).copyWith(mode: mode));
+  }
+
+  /// External affordances must carry the identity they actually displayed.
+  bool command(TimerMode mode, String expectedSessionId, FocusCommand command) {
+    final current = data;
+    final session = current.sessionFor(mode);
+    if (session?.id != expectedSessionId) return false;
+    final requiredStatus = switch (command) {
+      FocusCommand.pause || FocusCommand.lap => TimerStatus.running,
+      FocusCommand.resume => TimerStatus.paused,
+      FocusCommand.again || FocusCommand.beginBreak => TimerStatus.finished,
+      _ => null,
+    };
+    if (requiredStatus != null && session!.status != requiredStatus) {
+      return false;
     }
-    _commit(value.copyWith(mode: mode));
+    if (command == FocusCommand.record &&
+        session!.status == TimerStatus.running) {
+      return false;
+    }
+    final selected = current.mode;
+    final scoped = current.copyWith(mode: mode);
+    final next = switch (command) {
+      FocusCommand.pause => FocusEngine.pause(scoped, now),
+      FocusCommand.resume => FocusEngine.resume(scoped, now),
+      FocusCommand.lap => FocusEngine.lap(scoped, now),
+      FocusCommand.record => FocusEngine.record(scoped),
+      FocusCommand.finish => FocusEngine.finish(scoped, now),
+      FocusCommand.discard => FocusEngine.leave(
+        FocusEngine.advance(scoped, now),
+      ),
+      FocusCommand.beginBreak => FocusEngine.beginBreak(scoped, now, identity),
+      FocusCommand.again => FocusEngine.again(scoped, now, identity),
+      FocusCommand.dismissPrompt => scoped.copyWith(
+        session: scoped.session!.copyWith(promptShort: false),
+      ),
+    };
+    final changed = switch (command) {
+      FocusCommand.pause => next.session?.status == TimerStatus.paused,
+      FocusCommand.resume => next.session?.status == TimerStatus.running,
+      FocusCommand.lap =>
+        (next.session?.laps.length ?? 0) > session!.laps.length,
+      FocusCommand.beginBreak ||
+      FocusCommand.again => next.session?.id != session!.id,
+      _ => false,
+    };
+    final result = ref
+        .read(localDataProvider.notifier)
+        .commitResult(
+          ref
+              .read(localDataProvider)
+              .data
+              .copyWith(focus: next.copyWith(mode: selected)),
+        );
+    if (result.accepted &&
+        changed &&
+        ref.read(timerFeedbackVisibilityProvider).allows(mode)) {
+      ref
+          .read(feedbackServiceProvider)
+          .play(
+            FeedbackCue.light,
+            theme: ref.read(themePackProvider).id,
+            scope: mode.name,
+          );
+    }
+    return result.accepted;
   }
 
   void selectCountdown(int seconds) {
@@ -238,5 +312,10 @@ class FocusActions {
 
 final focusActionsProvider = Provider<FocusActions>(
   FocusActions.new,
-  dependencies: [localDataProvider, feedbackServiceProvider, themePackProvider],
+  dependencies: [
+    localDataProvider,
+    feedbackServiceProvider,
+    timerFeedbackVisibilityProvider,
+    themePackProvider,
+  ],
 );

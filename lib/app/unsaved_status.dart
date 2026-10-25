@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'status_layout.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -161,7 +162,12 @@ class _UnsavedBarState extends ConsumerState<_UnsavedBar>
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: EdgeInsets.all(ts.spacing.sm),
+        padding: EdgeInsets.fromLTRB(
+          ts.spacing.sm,
+          ts.spacing.sm + ref.watch(timerStatusInsetProvider),
+          ts.spacing.sm,
+          ts.spacing.sm,
+        ),
         child: AnimatedBuilder(
           animation: _animation,
           builder: (context, child) => IgnorePointer(

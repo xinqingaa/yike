@@ -10,6 +10,9 @@ class RootTabs extends LocalValue<int> {
   @override
   void set(int value) {
     if (value == state) return;
+    if (value != 1) {
+      ref.read(habitReminderTargetsProvider.notifier).set(const {});
+    }
     ref.read(rootNavigationEpochProvider.notifier).update((n) => n + 1);
     super.set(value);
   }
@@ -19,3 +22,8 @@ class RootTabs extends LocalValue<int> {
 }
 
 final rootTabProvider = NotifierProvider<RootTabs, int>(RootTabs.new);
+
+final habitReminderTargetsProvider =
+    NotifierProvider<LocalValue<Set<String>>, Set<String>>(
+      () => LocalValue(const {}),
+    );

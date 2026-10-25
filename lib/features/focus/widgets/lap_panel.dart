@@ -88,10 +88,10 @@ class _LapPanelState extends ConsumerState<LapPanel>
 
   void _lap() {
     final actions = ref.read(focusActionsProvider);
-    final before = ref.read(focusDataProvider).session;
+    final before = ref.read(focusDataProvider).sessionFor(TimerMode.stopwatch);
     if (before?.id != widget.sessionId) return;
-    actions.lap();
-    final after = ref.read(focusDataProvider).session;
+    actions.command(TimerMode.stopwatch, widget.sessionId, FocusCommand.lap);
+    final after = ref.read(focusDataProvider).sessionFor(TimerMode.stopwatch);
     if (after?.id != widget.sessionId ||
         after!.laps.length <= before!.laps.length) {
       return;
@@ -165,7 +165,9 @@ class _LapPanelState extends ConsumerState<LapPanel>
     final ts = TS.of(context);
     _bounce.duration = ts.motion.durationFast;
     final alive = ref.watch(
-      focusDataProvider.select((d) => d.session?.id == widget.sessionId),
+      focusDataProvider.select(
+        (d) => d.sessionFor(TimerMode.stopwatch)?.id == widget.sessionId,
+      ),
     );
     final value = ref
         .watch(focusDialPresentationProvider(TimerMode.stopwatch))
@@ -417,9 +419,15 @@ class _LapPanelState extends ConsumerState<LapPanel>
                             label: value.paused ? '继续' : '暂停',
                             kind: CommonButtonKind.accent,
                             size: CommonControlSize.lg,
-                            onPressed: value.paused
-                                ? ref.read(focusActionsProvider).resume
-                                : ref.read(focusActionsProvider).pause,
+                            onPressed: () => ref
+                                .read(focusActionsProvider)
+                                .command(
+                                  TimerMode.stopwatch,
+                                  widget.sessionId,
+                                  value.paused
+                                      ? FocusCommand.resume
+                                      : FocusCommand.pause,
+                                ),
                           ),
                         ),
                       ),

@@ -1,3 +1,4 @@
+import '../../../app/notifications/notification_settings.dart';
 import '../../../common/motion/content_transition.dart';
 import '../models/habit_view.dart';
 import '../../local_data/local_data.dart';
@@ -129,6 +130,7 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
             switchValue: draft.reminder,
             onSwitchChanged: (v) => _change(draft.copyWith(reminder: v)),
           ),
+          if (draft.reminder) const NotificationSettings(compact: true),
           MotionExpand(
             expanded: draft.reminder,
             child: CommonTextField(

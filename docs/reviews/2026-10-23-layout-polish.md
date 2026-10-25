@@ -28,12 +28,12 @@
 
 ## 视觉附件
 
-原生截图三主题各 11 张，共 33 张；宿主机副本与日志位于忽略目录 `build/polish/`。目视复核了数字/单位、网格与开始按钮、计圈三列及操作、明细的三列和固定翻日、浅深材质、日期反馈形状和 FlowSheet 无步骤点状态。截图中的样例是测试夹具，不是用户历史。
+原生截图三主题各 11 张，共 33 张；宿主机副本与日志原位于忽略目录 `build/polish/`；2026-10-25 用户确认清理，专用采集脚本与截图已删除。目视复核了数字/单位、网格与开始按钮、计圈三列及操作、明细的三列和固定翻日、浅深材质、日期反馈形状和 FlowSheet 无步骤点状态。截图中的样例是测试夹具，不是用户历史。
 
-- [机械倒计时](../../build/polish/mechanical-countdown.png)、[水位倒计时](../../build/polish/water-countdown.png)、[日影倒计时](../../build/polish/sundial-countdown.png)
-- [居中滚轮](../../build/polish/water-duration.png)、[计圈](../../build/polish/water-laps.png)
-- [每日记录](../../build/polish/mechanical-day-records.png)、[深色每日记录](../../build/polish/mechanical-day-records-dark.png)、[空日](../../build/polish/sundial-day-empty.png)
-- [周图按压](../../build/polish/water-week-pressed.png)、[月历按压](../../build/polish/sundial-month-pressed.png)、[FlowSheet 默认状态](../../build/polish/mechanical-flow-default.png)
+- 机械倒计时（历史截图已清理）、水位倒计时（历史截图已清理）、日影倒计时（历史截图已清理）
+- 居中滚轮（历史截图已清理）、计圈（历史截图已清理）
+- 每日记录（历史截图已清理）、深色每日记录（历史截图已清理）、空日（历史截图已清理）
+- 周图按压（历史截图已清理）、月历按压（历史截图已清理）、FlowSheet 默认状态（历史截图已清理）
 
 完整检查日志为 `verify.log`、`ds-theme.log`、`native.log`，定向几何测试日志为 `layout-tests.log`。清理 build 会移除这些本机附件，需要重新采集。
 

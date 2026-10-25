@@ -84,13 +84,17 @@ class LocalDataController extends Notifier<LocalDataState> {
     final previous = state.data.focus,
         next = FocusEngine.advance(previous, now);
     if (identical(previous, next)) return;
-    final completed =
-        previous.session?.status != TimerStatus.finished &&
-        next.session?.status == TimerStatus.finished;
+    final completed = TimerMode.values
+        .where(
+          (mode) =>
+              previous.sessionFor(mode)?.status != TimerStatus.finished &&
+              next.sessionFor(mode)?.status == TimerStatus.finished,
+        )
+        .length;
     commit(
       state.data.copyWith(focus: next),
-      persist: completed,
-      completions: state.completions + (completed ? 1 : 0),
+      persist: completed > 0,
+      completions: state.completions + completed,
     );
   }
 
