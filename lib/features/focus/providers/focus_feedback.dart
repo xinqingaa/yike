@@ -7,7 +7,6 @@ import '../../../common/feedback/feedback_service.dart';
 import '../../../theme/ts.dart';
 import '../focus_models.dart';
 import '../../local_data/local_data.dart';
-import '../logic/focus_projection.dart';
 import '../logic/focus_beats.dart';
 import 'focus_dial_presentation.dart';
 

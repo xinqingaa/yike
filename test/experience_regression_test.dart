@@ -10,7 +10,7 @@ import 'package:yike/features/focus/focus.dart';
 import 'package:yike/features/habits/habits.dart';
 import 'package:yike/theme/ts.dart';
 
-import 'yike_ui_test.dart' show pumpYike, navigateTab;
+import 'yike_ui_test.dart' show pumpYike, navigateTab, focusModeTab;
 import 'component_material_test.dart' show shell;
 
 void main() {
@@ -24,14 +24,14 @@ void main() {
         actions.start();
         if (paused) actions.pause();
         final id = app.read(focusDataProvider).session!.id;
-        await tester.tap(find.text('正计时'));
+        await tester.tap(focusModeTab('正计时'));
         await pumpPresentation(tester);
         expect(find.text('切换计时模式'), findsNothing);
         expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);
         actions.start();
         now = now.add(const Duration(seconds: 20));
         app.read(clockPulseProvider.notifier).refresh();
-        await tester.tap(find.text('番茄钟'));
+        await tester.tap(focusModeTab('番茄钟'));
         await pumpPresentation(tester);
         expect(app.read(focusDataProvider).session!.id, id);
         expect(app.read(focusViewProvider).seconds, paused ? 1500 : 1480);
@@ -59,10 +59,10 @@ void main() {
             seconds: 1495,
           ),
         );
-        await tester.tap(find.text('正计时'));
+        await tester.tap(focusModeTab('正计时'));
         await pumpPresentation(tester);
         expect(find.text('记录这次短时专注？'), findsNothing);
-        await tester.tap(find.text('番茄钟'));
+        await tester.tap(focusModeTab('番茄钟'));
         await pumpPresentation(tester);
         app.read(focusActionsProvider).pause();
         await pumpPresentation(tester);
@@ -270,15 +270,15 @@ void main() {
         tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
       );
       final app = await pumpYike(tester);
-      await tester.tap(find.text('正计时'));
+      await tester.tap(focusModeTab('正计时'));
       await pumpPresentation(tester);
       expect(app.read(focusViewProvider).mode, TimerMode.stopwatch);
       await tester.tap(find.text('开始计时'));
       await pumpPresentation(tester);
-      await tester.tap(find.text('倒计时'));
+      await tester.tap(focusModeTab('倒计时'));
       await pumpPresentation(tester);
       expect(app.read(focusViewProvider).mode, TimerMode.countdown);
-      await tester.tap(find.text('正计时'));
+      await tester.tap(focusModeTab('正计时'));
       await pumpPresentation(tester);
       app.read(themePackProvider.notifier).select('yike/water');
       await pumpPresentation(tester);

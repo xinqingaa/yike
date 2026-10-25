@@ -569,6 +569,18 @@ void main() {
       await tester.tap(find.byTooltip('关闭计圈'));
       await pumpPresentation(tester);
       await navigateTab(tester, '回顾');
+      // Floating timers cover part of the header until the user folds them.
+      if (find
+              .byKey(const ValueKey('timer-status-surface'))
+              .evaluate()
+              .isNotEmpty &&
+          find.byTooltip('统计').hitTestable().evaluate().isEmpty) {
+        await tester.drag(
+          find.byKey(const ValueKey('timer-status-surface')),
+          const Offset(0, -110),
+        );
+        await pumpPresentation(tester);
+      }
       await tester.tap(find.byTooltip('统计'));
       await pumpPresentation(tester);
       final scroll = find

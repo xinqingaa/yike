@@ -229,11 +229,7 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage> {
               ],
               onNavigate: (group, item) async {
                 if (item == 'notifications') {
-                  await AppSheet<void>().show(
-                    title: '通知提醒',
-                    material: CommonSurfaceMaterial.glass,
-                    child: const NotificationSettings(),
-                  );
+                  await openNotificationSettings();
                   return;
                 }
                 if (item == 'previewFinish') {

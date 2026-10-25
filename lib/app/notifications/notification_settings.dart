@@ -7,9 +7,19 @@ import '../../features/local_data/local_data.dart';
 import '../../theme/ts.dart';
 import 'notification_coordinator.dart';
 
+Future<void> openNotificationSettings() async {
+  await AppSheet<void>().show(
+    showHeader: false,
+    size: const SheetSizeConfig(height: SheetDimension.fraction(.5)),
+    material: CommonSurfaceMaterial.glass,
+    child: const NotificationSettings(),
+  );
+}
+
 class NotificationSettings extends ConsumerWidget {
   const NotificationSettings({super.key, this.compact = false});
   final bool compact;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(notificationCoordinatorProvider);
@@ -17,81 +27,135 @@ class NotificationSettings extends ConsumerWidget {
     final actions = ref.read(notificationCoordinatorProvider.notifier);
     final ts = TS.of(context);
     final enabled = data.backgroundReminders;
-    final unavailable = !enabled
-        ? '前台可提醒，后台未开启'
+    final summary = !enabled
+        ? '仅在应用内提醒'
         : !status.ready
-        ? '通知尚未准备就绪'
+        ? '正在准备提醒'
         : !status.access.allowed
-        ? '前台可提醒，系统通知未授权'
+        ? '需要系统授权'
         : !status.access.alert
-        ? '系统横幅已关闭，请检查系统设置'
+        ? '系统横幅已关闭'
         : Platform.isAndroid && !status.access.exact
-        ? '后台已开启；计时未获精确授权，可能延迟'
-        : '后台已开启；送达受系统设置影响';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (!compact)
-          CommonListCell(
-            title: '通知提醒',
-            switchValue: enabled,
-            onSwitchChanged: actions.setEnabled,
-          ),
-        Text(unavailable, style: ts.textStyle.caption),
-        if (compact)
-          CommonButton(
-            label: '后台提醒设置',
-            kind: CommonButtonKind.quiet,
-            onPressed: () => AppSheet<void>().show(
-              title: '通知提醒',
-              child: const NotificationSettings(),
+        ? '计时提醒可能延迟'
+        : '已开启后台提醒';
+    if (compact) {
+      return CommonListCell(
+        title: '后台提醒',
+        value: enabled ? '已开启' : '未开启',
+        navigation: true,
+        onNavigate: openNotificationSettings,
+      );
+    }
+    final habits = data.habits.where((h) => !h.archived).toList();
+    final queued = habits
+        .where(
+          (h) =>
+              h.reminder &&
+              enabled &&
+              status.access.allowed &&
+              (status.coverage[h.id]?.isNotEmpty ?? false),
+        )
+        .length;
+    final permissionAction = enabled && status.ready && !status.access.allowed;
+    final exactAction =
+        enabled &&
+        status.ready &&
+        status.access.allowed &&
+        Platform.isAndroid &&
+        !status.access.exact;
+    return SingleChildScrollView(
+      key: const ValueKey('notification-settings-content'),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: ts.spacing.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            CommonListCell(
+              title: '后台提醒',
+              description: summary,
+              switchValue: enabled,
+              onSwitchChanged: actions.setEnabled,
             ),
-          ),
-        if (!compact) ...[
-          if (enabled && Platform.isAndroid && !status.access.exact)
-            CommonButton(
-              label: '允许精确计时提醒',
-              kind: CommonButtonKind.quiet,
-              onPressed: actions.exactPermission,
-            ),
-          CommonButton(
-            label: '系统通知设置',
-            kind: CommonButtonKind.quiet,
-            onPressed: actions.openSettings,
-          ),
-          if (enabled && !status.access.sound)
-            Text('系统通知声音未启用', style: ts.textStyle.caption),
-          if (status.access.disabledChannels.isNotEmpty)
-            Text(
-              '已禁用渠道：${status.access.disabledChannels.join('、')}',
-              style: ts.textStyle.caption,
-            ),
-          if (status.error != null) ...[
-            Text(
-              status.error!,
-              style: ts.textStyle.caption.copyWith(color: ts.colors.error),
-            ),
-            CommonButton(
-              label: '重试通知',
-              kind: CommonButtonKind.quiet,
-              onPressed: actions.refresh,
-            ),
-          ],
-          if (enabled && status.ready) ...[
-            Text('逐习惯预约（按最近日期，最多 60 个请求）', style: ts.textStyle.caption),
-            for (final h in data.habits.where((h) => h.reminder && !h.archived))
-              Text(
-                '${h.name}：${status.coverage[h.id]?.isNotEmpty == true ? '${status.coverage[h.id]!.first} 至 ${status.coverage[h.id]!.last}，${status.coverage[h.id]!.length} 次' : '尚未排入'}',
-                style: ts.textStyle.caption,
+            if (permissionAction || exactAction)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: ts.spacing.md),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: CommonButton(
+                    label: permissionAction ? '前往授权' : '允许精确提醒',
+                    kind: CommonButtonKind.quiet,
+                    size: CommonControlSize.sm,
+                    onPressed: permissionAction
+                        ? actions.openSettings
+                        : actions.exactPermission,
+                  ),
+                ),
               ),
-            Text(
-              '未排入的习惯 ${data.habits.where((h) => h.reminder && !h.archived && !(status.coverage[h.id]?.isNotEmpty ?? false)).length} 个。长期不打开应用，不能保证持续提醒。',
-              style: ts.textStyle.caption,
+            CommonListCell(
+              title: '系统通知设置',
+              navigation: true,
+              onNavigate: actions.openSettings,
+              description:
+                  enabled &&
+                      status.ready &&
+                      status.access.allowed &&
+                      !status.access.sound
+                  ? '通知声音未启用'
+                  : null,
             ),
+            if (status.access.disabledChannels.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: ts.spacing.md),
+                child: Text(
+                  '已关闭：${status.access.disabledChannels.join('、')}',
+                  style: ts.textStyle.caption,
+                ),
+              ),
+            Divider(color: ts.colors.primarySoft, height: ts.spacing.md),
+            CommonListCell(
+              title: '习惯提醒',
+              value: habits.isEmpty ? '暂无习惯' : '$queued 已预约',
+            ),
+            for (final habit in habits)
+              CommonListCell(
+                key: ValueKey('notification-habit-${habit.id}'),
+                title: habit.name,
+                description: !habit.reminder
+                    ? '未开启提醒'
+                    : !enabled
+                    ? '后台提醒已关闭'
+                    : !status.ready
+                    ? '正在准备提醒'
+                    : !status.access.allowed
+                    ? '需要系统授权'
+                    : status.coverage[habit.id]?.isNotEmpty == true
+                    ? '${status.coverage[habit.id]!.first} — ${status.coverage[habit.id]!.last}'
+                    : '尚未排入预约',
+                value:
+                    habit.reminder &&
+                        enabled &&
+                        status.access.allowed &&
+                        (status.coverage[habit.id]?.isNotEmpty ?? false)
+                    ? '${status.coverage[habit.id]!.length} 次'
+                    : null,
+              ),
+            if (habits.any((h) => h.reminder))
+              Padding(
+                padding: EdgeInsets.all(ts.spacing.md),
+                child: Text('再次打开应用时更新预约。', style: ts.textStyle.caption),
+              ),
+            if (status.error != null)
+              CommonListCell(
+                title: '部分提醒未就绪',
+                description: status.error,
+                value: '重试',
+                navigation: true,
+                onNavigate: actions.refresh,
+              ),
           ],
-        ],
-      ],
+        ),
+      ),
     );
   }
 }

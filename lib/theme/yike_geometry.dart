@@ -1,6 +1,8 @@
 /// Artwork-space proportions. The PNG viewBoxes stay intact; clipping only
 /// exposes their declared process layers. All logical sizes come from TS.
 abstract final class YikeGeometry {
+  static const statusMaximumWidth = 420.0;
+  static const statusPillWidth = 88.0;
   static const lapPanelWidth = 1.0;
   static const lapBounce = .12;
   static const lapArc = 2.0;

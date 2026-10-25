@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,18 +14,15 @@ import '../features/focus/focus_models.dart';
 import '../features/focus/providers/focus_dial_presentation.dart';
 import '../router/router.dart';
 import '../theme/ts.dart';
+import '../theme/yike_geometry.dart';
+import '../theme/yike_motion.dart';
+import 'timer_status_progress.dart';
+import 'timer_status_state.dart';
 import 'navigation.dart';
 import 'status_layout.dart';
 
-class _StatusEntry {
-  _StatusEntry(this.session);
-  FocusSession session;
-  bool completed = false, exiting = false;
-  Timer? timeout;
-}
-
-/// One application host. Navigator keeps its full viewport; SafeArea consumers
-/// receive the measured status inset. Rows alone subscribe to timer seconds.
+/// A floating application host. Only other overlays observe its measured height;
+/// the navigator and page safe areas keep their original constraints.
 class TimerStatusBoundary extends ConsumerStatefulWidget {
   const TimerStatusBoundary({super.key, required this.child});
   final Widget child;
@@ -32,17 +31,38 @@ class TimerStatusBoundary extends ConsumerStatefulWidget {
       _TimerStatusBoundaryState();
 }
 
-class _TimerStatusBoundaryState extends ConsumerState<TimerStatusBoundary> {
-  final _entries = <String, _StatusEntry>{};
-  final _height = ValueNotifier<double>(0);
+class _TimerStatusBoundaryState extends ConsumerState<TimerStatusBoundary>
+    with SingleTickerProviderStateMixin {
+  final _status =
+      NotifierProvider.autoDispose<TimerStatusController, TimerStatusState>(
+        TimerStatusController.new,
+      );
+  TimerStatusController get _controller => ref.read(_status.notifier);
+  Map<String, TimerStatusEntry> get _entries => ref.read(_status).entries;
+  bool get _collapsed => ref.read(_status).collapsed;
+  bool get _dragging => ref.read(_status).dragging;
+  final _invalidCompletions = <String>{};
+  final _contentHeight = ValueNotifier<double>(0);
+  late final AnimationController _fold = AnimationController(
+    vsync: this,
+    duration: YikeMotion.statusFold,
+  );
+  void _setCollapsed(bool value) {
+    _controller.collapse(value);
+    _schedule();
+    final target = value ? 1.0 : 0.0;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _fold.value = target;
+    } else {
+      _fold.animateTo(target, curve: Curves.easeOutCubic);
+    }
+  }
+
   late final StreamSubscription<FocusCompletion> _events;
   late final AppLifecycleListener _lifecycle;
   bool _queued = false;
-  bool _active =
-      WidgetsBinding.instance.lifecycleState == null ||
-      WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
   bool get _foreground =>
-      _active &&
+      ref.read(_status).foreground &&
       (WidgetsBinding.instance.lifecycleState == null ||
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed);
   bool get _shown =>
@@ -73,7 +93,11 @@ class _TimerStatusBoundaryState extends ConsumerState<TimerStatusBoundary> {
     appRouteActivity.addListener(_schedule);
     _lifecycle = AppLifecycleListener(
       onStateChange: (state) {
-        _active = state == AppLifecycleState.resumed;
+        _controller.foreground(state == AppLifecycleState.resumed);
+        _fold.stop();
+        if (state == AppLifecycleState.resumed) {
+          _fold.value = _collapsed ? 1 : 0;
+        }
         _schedule();
       },
     );
@@ -82,25 +106,28 @@ class _TimerStatusBoundaryState extends ConsumerState<TimerStatusBoundary> {
 
   void _completed(FocusCompletion event) {
     final entry = _entries[event.sessionId];
-    if (entry == null || entry.exiting || !_shown || _current == event.mode) {
+    if (entry == null ||
+        entry.exiting ||
+        !_shown ||
+        _collapsed ||
+        _dragging ||
+        _fold.value > .01 ||
+        _current == event.mode) {
       return;
     }
-    entry.session = ref.read(focusDataProvider).sessionFor(event.mode)!;
-    entry.completed = true;
-    entry.timeout = Timer(const Duration(milliseconds: 980), () {
-      if (mounted && identical(_entries[event.sessionId], entry)) {
-        setState(() => entry.exiting = true);
-      }
-    });
+    _controller.complete(ref.read(focusDataProvider).sessionFor(event.mode)!);
     _schedule();
   }
 
   void _schedule() {
     if (!mounted) return;
     for (final entry in _entries.values.toList()) {
-      if (entry.completed && (!_shown || _current == entry.session.mode)) {
-        _entries.remove(entry.session.id);
-        entry.timeout?.cancel();
+      if (entry.completed &&
+          (!_shown ||
+              _collapsed ||
+              _dragging ||
+              _current == entry.session.mode)) {
+        _invalidCompletions.add(entry.session.id);
       }
     }
     if (_queued) return;
@@ -108,45 +135,20 @@ class _TimerStatusBoundaryState extends ConsumerState<TimerStatusBoundary> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _queued = false;
       if (!mounted) return;
-      final data = ref.read(focusDataProvider);
-      setState(() {
-        for (final entry in _entries.values.toList()) {
-          if (entry.completed && !_shown) {
-            _entries.remove(entry.session.id);
-            entry.timeout?.cancel();
-            continue;
-          }
-          final latest = data.sessionFor(entry.session.mode);
-          final eligible =
-              _current != entry.session.mode && latest?.id == entry.session.id;
-          if (entry.completed) {
-            if (!_shown || !eligible) {
-              entry.exiting = true;
-              entry.timeout?.cancel();
-            }
-          } else if (!eligible || latest?.status == TimerStatus.finished) {
-            entry.exiting = true;
-          } else {
-            entry.session = latest!;
-            entry.exiting = false;
-          }
-        }
-        for (final s in data.allSessions.values) {
-          if (s.mode != _current && s.status != TimerStatus.finished) {
-            _entries.putIfAbsent(s.id, () => _StatusEntry(s));
-          }
-        }
-      });
+      _controller.reconcile(
+        ref.read(focusDataProvider),
+        shown: _shown,
+        currentMode: _current,
+        folded: _collapsed || _dragging || _fold.value > .01,
+        invalidCompletions: Set.of(_invalidCompletions),
+      );
+      _invalidCompletions.clear();
     });
     WidgetsBinding.instance.ensureVisualUpdate();
   }
 
-  void _remove(_StatusEntry entry) {
-    if (!mounted || !entry.exiting) return;
-    setState(() {
-      _entries.remove(entry.session.id);
-      entry.timeout?.cancel();
-    });
+  void _remove(TimerStatusEntry entry) {
+    if (mounted) _controller.remove(entry.session.id);
   }
 
   void _open(FocusSession session) {
@@ -160,95 +162,295 @@ class _TimerStatusBoundaryState extends ConsumerState<TimerStatusBoundary> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context) && !_dragging) {
+      _fold.stop();
+      _fold.value = _collapsed ? 1 : 0;
+    }
+  }
+
+  @override
   void dispose() {
     unawaited(_events.cancel());
     _lifecycle.dispose();
     appRouteActivity.removeListener(_schedule);
-    for (final entry in _entries.values) {
-      entry.timeout?.cancel();
-    }
-    _height.dispose();
+    _fold.dispose();
+    _contentHeight.dispose();
     super.dispose();
+  }
+
+  Widget _expanded(List<TimerStatusEntry> entries, bool shown) {
+    final ts = TS.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: Semantics(
+        customSemanticsActions: {
+          const CustomSemanticsAction(label: '收起计时'): () => _setCollapsed(true),
+        },
+        child: _StatusMeasure(
+          onSize: (size) {
+            if (mounted) _contentHeight.value = size.height;
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ExcludeSemantics(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: ts.spacing.xs,
+                    bottom: ts.spacing.xxs,
+                  ),
+                  child: Center(
+                    child: Container(
+                      key: const ValueKey('timer-status-drag-handle'),
+                      width: ts.spacing.xl,
+                      height: ts.border.widthHairline * 3,
+                      decoration: BoxDecoration(
+                        color: ts.colors.onSurfaceMuted.withValues(alpha: .35),
+                        borderRadius: BorderRadius.circular(ts.radius.full),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              for (final entry in entries)
+                _TimerStatusRow(
+                  key: ValueKey(entry.session.id),
+                  entry: entry,
+                  open: () => _open(entry.session),
+                  onRemoved: () => _remove(entry),
+                  motionActive:
+                      shown && !_collapsed && !_dragging && !entry.exiting,
+                  interactive: () =>
+                      _shown &&
+                      !_collapsed &&
+                      !_dragging &&
+                      _fold.value < .01 &&
+                      !entry.exiting &&
+                      _current != entry.session.mode,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _capsule(int count) {
+    final ts = TS.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const ValueKey('timer-status-capsule'),
+        onTap: () => _setCollapsed(false),
+        child: Semantics(
+          button: true,
+          label: '展开计时，$count 项',
+          excludeSemantics: true,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CommonIcon(
+                name: CommonIconName.clock,
+                dimension: ts.sizing.iconSm,
+                tone: CommonIconTone.primary,
+              ),
+              SizedBox(width: ts.spacing.sm),
+              Text('$count', style: ts.textStyle.numericContent),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _surface(
+    double width,
+    double pillWidth,
+    List<TimerStatusEntry> entries,
+    bool shown,
+    bool reduced,
+  ) {
+    final ts = TS.of(context);
+    final expanded = TickerMode(
+      enabled: _foreground,
+      child: _expanded(entries, shown),
+    );
+    final capsule = _capsule(entries.where((e) => !e.exiting).length);
+    return ValueListenableBuilder<double>(
+      valueListenable: _contentHeight,
+      builder: (context, measuredHeight, _) => TweenAnimationBuilder<double>(
+        tween: Tween(end: measuredHeight),
+        duration: reduced ? Duration.zero : YikeMotion.statusResize,
+        builder: (context, height, _) => AnimatedBuilder(
+          animation: _fold,
+          builder: (context, _) {
+            final t = _fold.value;
+            return CommonGlassSurface(
+              borderRadius: BorderRadius.circular(
+                lerpDouble(ts.radius.md, ts.radius.full, t)!,
+              ),
+              child: ClipRect(
+                child: SizedBox(
+                  width: lerpDouble(width, pillWidth, t),
+                  height: lerpDouble(
+                    height,
+                    math.max(
+                      ts.sizing.touch,
+                      MediaQuery.textScalerOf(
+                                context,
+                              ).scale(ts.textStyle.numericContent.fontSize!) *
+                              (ts.textStyle.numericContent.height ?? 1.5) +
+                          ts.spacing.xs * 2,
+                    ),
+                    t,
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        width: width,
+                        child: IgnorePointer(
+                          ignoring: _collapsed || _dragging || t > .01,
+                          child: ExcludeFocus(
+                            excluding: _collapsed || _dragging,
+                            child: ExcludeSemantics(
+                              excluding: _collapsed || _dragging,
+                              child: Opacity(
+                                opacity: (1 - t * 2).clamp(0.0, 1.0),
+                                child: expanded,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          ignoring: !_collapsed || _dragging,
+                          child: ExcludeFocus(
+                            excluding: !_collapsed || _dragging,
+                            child: ExcludeSemantics(
+                              excluding: !_collapsed || _dragging,
+                              child: Opacity(
+                                opacity: ((t - .5) * 2).clamp(0.0, 1.0),
+                                child: capsule,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(_status);
     final ts = TS.of(context), media = MediaQuery.of(context);
-    final reduced = media.disableAnimations;
-    final shown = _shown;
+    final reduced = media.disableAnimations, shown = _shown;
     final entries = _entries.values.toList()
       ..sort((a, b) => a.session.mode.index.compareTo(b.session.mode.index));
+    final visible =
+        shown &&
+        entries.isNotEmpty &&
+        (!_collapsed || entries.any((entry) => !entry.exiting));
     return Stack(
       children: [
-        ValueListenableBuilder<double>(
-          valueListenable: _height,
-          child: widget.child,
-          builder: (context, height, child) => MediaQuery(
-            data: media.copyWith(
-              padding: media.padding.copyWith(top: media.padding.top + height),
-            ),
-            child: child!,
-          ),
-        ),
+        widget.child,
         Positioned(
           top: media.padding.top,
-          left: 0,
-          right: 0,
-          child: _StatusMeasure(
-            onSize: (size) {
-              if (mounted && _height.value != size.height) {
-                _height.value = size.height;
-                ref.read(timerStatusInsetProvider.notifier).set(size.height);
-              }
-            },
-            child: TickerMode(
-              enabled: _foreground,
-              child: IgnorePointer(
-                ignoring: !shown,
-                child: ExcludeFocus(
-                  excluding: !shown,
-                  child: ExcludeSemantics(
-                    excluding: !shown,
-                    child: _StatusResize(
-                      reduced: reduced,
-                      alignment: Alignment.topCenter,
-                      child: AnimatedOpacity(
-                        opacity: shown ? 1 : 0,
-                        duration: reduced
-                            ? Duration.zero
-                            : const Duration(milliseconds: 160),
-                        child: Align(
-                          heightFactor: shown && entries.isNotEmpty ? 1 : 0,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: ts.spacing.sm,
-                              vertical: ts.spacing.xs,
-                            ),
-                            child: CommonGlassSurface(
-                              borderRadius: BorderRadius.circular(ts.radius.md),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  for (final entry in entries)
-                                    _TimerStatusRow(
-                                      key: ValueKey(entry.session.id),
-                                      entry: entry,
-                                      open: () => _open(entry.session),
-                                      onRemoved: () => _remove(entry),
-                                      interactive: () =>
-                                          _shown &&
-                                          !entry.exiting &&
-                                          _current != entry.session.mode,
-                                    ),
-                                ],
+          left: ts.spacing.sm,
+          right: ts.spacing.sm,
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: YikeGeometry.statusMaximumWidth,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final pillWidth =
+                      (YikeGeometry.statusPillWidth +
+                              media.textScaler.scale(
+                                ts.textStyle.numericContent.fontSize!,
+                              ) -
+                              ts.textStyle.numericContent.fontSize!)
+                          .clamp(0.0, width);
+                  return _StatusMeasure(
+                    onSize: (size) {
+                      if (mounted) {
+                        ref
+                            .read(timerStatusInsetProvider.notifier)
+                            .set(size.height);
+                      }
+                    },
+                    child: IgnorePointer(
+                      ignoring: !visible,
+                      child: ExcludeFocus(
+                        excluding: !visible,
+                        child: ExcludeSemantics(
+                          excluding: !visible,
+                          child: AnimatedOpacity(
+                            opacity: visible ? 1 : 0,
+                            duration: reduced
+                                ? Duration.zero
+                                : YikeMotion.statusFade,
+                            child: Align(
+                              heightFactor: visible ? 1 : 0,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: ts.spacing.xs,
+                                ),
+                                child: GestureDetector(
+                                  key: const ValueKey('timer-status-surface'),
+                                  onVerticalDragStart: (_) {
+                                    _fold.stop();
+                                    _controller.drag(true);
+                                    _schedule();
+                                  },
+                                  onVerticalDragUpdate: (d) {
+                                    _fold.value =
+                                        (_fold.value -
+                                                d.delta.dy /
+                                                    YikeMotion.statusDragTravel)
+                                            .clamp(0.0, 1.0);
+                                  },
+                                  onVerticalDragCancel: () =>
+                                      _setCollapsed(_collapsed),
+                                  onVerticalDragEnd: (d) {
+                                    final velocity = d.primaryVelocity ?? 0;
+                                    _setCollapsed(
+                                      velocity < -250 ||
+                                          (velocity <= 250 &&
+                                              _fold.value >= .5),
+                                    );
+                                  },
+                                  child: _surface(
+                                    width,
+                                    pillWidth,
+                                    entries,
+                                    shown,
+                                    reduced,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ),
@@ -265,9 +467,11 @@ class _TimerStatusRow extends ConsumerStatefulWidget {
     required this.open,
     required this.onRemoved,
     required this.interactive,
+    required this.motionActive,
   });
+  final bool motionActive;
   final bool Function() interactive;
-  final _StatusEntry entry;
+  final TimerStatusEntry entry;
   final VoidCallback open, onRemoved;
   @override
   ConsumerState<_TimerStatusRow> createState() => _TimerStatusRowState();
@@ -277,8 +481,8 @@ class _TimerStatusRowState extends ConsumerState<_TimerStatusRow>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animation = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 240),
-    reverseDuration: const Duration(milliseconds: 220),
+    duration: YikeMotion.statusEnter,
+    reverseDuration: YikeMotion.statusExit,
   );
   @override
   void initState() {
@@ -347,13 +551,20 @@ class _TimerStatusRowState extends ConsumerState<_TimerStatusRow>
         : const ['番茄钟', '正计时', '倒计时'][s.mode.index];
     final completed = entry.completed;
     final time = timerDigits(view.seconds);
-    final label = completed
-        ? '$title · 已完成 ✓'
-        : '$title${s.mode == TimerMode.pomodoro && !s.resting ? ' · 第 ${s.round} 轮' : ''} · ${s.status == TimerStatus.paused
-              ? '已暂停'
-              : s.mode == TimerMode.stopwatch
-              ? '已用'
-              : '剩余'} $time';
+    final paused = s.status == TimerStatus.paused;
+    final detail = completed
+        ? s.resting
+              ? '休息结束'
+              : '已完成'
+        : s.mode == TimerMode.pomodoro && !s.resting
+        ? '第 ${s.round} 轮'
+        : null;
+    final label =
+        '$title，${completed
+            ? '已完成，'
+            : paused
+            ? '已暂停，'
+            : ''}${s.mode == TimerMode.stopwatch ? '已专注' : '剩余'} $time';
     return SizeTransition(
       sizeFactor: _animation,
       alignment: Alignment.topCenter,
@@ -373,53 +584,92 @@ class _TimerStatusRowState extends ConsumerState<_TimerStatusRow>
                   },
                   child: Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal: ts.spacing.md,
-                      vertical: ts.spacing.xs,
+                      horizontal: ts.spacing.smPlus,
+                      vertical: ts.spacing.xxs,
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Semantics(
-                                liveRegion: completed,
-                                child: Text(label, style: ts.textStyle.caption),
-                              ),
-                              SizedBox(height: ts.spacing.xs),
-                              TweenAnimationBuilder<double>(
-                                tween: Tween(
-                                  end: completed ? 1 : s.elapsedMs / s.limitMs,
+                    child: Semantics(
+                      key: ValueKey('timer-status-${s.mode.name}'),
+                      label: label,
+                      liveRegion: completed,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ExcludeSemantics(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text.rich(
+                                          TextSpan(
+                                            text: title,
+                                            children: [
+                                              if (detail != null)
+                                                TextSpan(
+                                                  text: ' · $detail',
+                                                  style: ts.textStyle.micro,
+                                                ),
+                                            ],
+                                          ),
+                                          style: ts.textStyle.bodySm,
+                                        ),
+                                      ),
+                                      SizedBox(width: ts.spacing.sm),
+                                      Text(
+                                        time,
+                                        style: ts.textStyle.numericContent,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                duration:
-                                    MediaQuery.disableAnimationsOf(context)
-                                    ? Duration.zero
-                                    : const Duration(milliseconds: 180),
-                                builder: (context, value, _) =>
-                                    CommonProgress(value: value * 100),
+                                SizedBox(height: ts.spacing.sm),
+                                ExcludeSemantics(
+                                  child: TimerStatusProgress(
+                                    session: s,
+                                    active: widget.motionActive,
+                                    completed: completed,
+                                    height: ts.border.widthHairline * 3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: ts.spacing.xs),
+                          if (completed)
+                            SizedBox(
+                              width: ts.sizing.touch,
+                              height: ts.sizing.touch,
+                              child: CommonIcon(
+                                name: CommonIconName.check,
+                                tone: CommonIconTone.primary,
+                                dimension: ts.sizing.iconSm,
                               ),
-                            ],
-                          ),
-                        ),
-                        if (!completed)
-                          CommonButton(
-                            label: s.status == TimerStatus.paused ? '继续' : '暂停',
-                            kind: CommonButtonKind.quiet,
-                            onPressed: () {
-                              if (!widget.interactive()) return;
-                              ref
-                                  .read(focusActionsProvider)
-                                  .command(
-                                    s.mode,
-                                    s.id,
-                                    s.status == TimerStatus.paused
-                                        ? FocusCommand.resume
-                                        : FocusCommand.pause,
-                                  );
-                            },
-                          ),
-                      ],
+                            )
+                          else
+                            CommonIconButton(
+                              icon: paused
+                                  ? Icons.play_arrow_rounded
+                                  : Icons.pause_rounded,
+                              label: '${paused ? '继续' : '暂停'}$title',
+                              size: CommonControlSize.sm,
+                              variant: CommonIconButtonVariant.text,
+                              tone: CommonIconButtonTone.primary,
+                              onPressed: () {
+                                if (!widget.interactive()) return;
+                                ref
+                                    .read(focusActionsProvider)
+                                    .command(
+                                      s.mode,
+                                      s.id,
+                                      paused
+                                          ? FocusCommand.resume
+                                          : FocusCommand.pause,
+                                    );
+                              },
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -457,23 +707,4 @@ class _StatusMeasureRender extends RenderProxyBox {
     final measured = size;
     WidgetsBinding.instance.addPostFrameCallback((_) => onSize(measured));
   }
-}
-
-class _StatusResize extends StatelessWidget {
-  const _StatusResize({
-    required this.reduced,
-    required this.child,
-    this.alignment = Alignment.topCenter,
-  });
-  final bool reduced;
-  final Widget child;
-  final Alignment alignment;
-  @override
-  Widget build(BuildContext context) => reduced
-      ? child
-      : AnimatedSize(
-          duration: const Duration(milliseconds: 200),
-          alignment: alignment,
-          child: child,
-        );
 }

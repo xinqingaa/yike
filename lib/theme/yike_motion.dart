@@ -1,5 +1,13 @@
 /// Flutter-owned motion geometry; durations and curves come from TS.motion.
 abstract final class YikeMotion {
+  static const statusFold = Duration(milliseconds: 260);
+  static const statusResize = Duration(milliseconds: 200);
+  static const statusFade = Duration(milliseconds: 160);
+  static const statusEnter = Duration(milliseconds: 240);
+  static const statusExit = Duration(milliseconds: 220);
+  static const statusSweep = Duration(seconds: 3);
+  static const statusPausedSweep = Duration(milliseconds: 2700);
+  static const statusDragTravel = 96.0;
   static const hourHold = Duration(milliseconds: 700);
   static const digitTravel = .35;
   static double digitTravelFor(String theme) => switch (theme) {

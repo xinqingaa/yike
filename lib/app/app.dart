@@ -51,7 +51,11 @@ class PbApp extends ConsumerWidget {
                 .overlayStyleFor(TS.of(context).colors.background),
             child: Pop.hostBuilder(
               context,
-              LocalDataBoundary(child: child ?? const SizedBox.shrink()),
+              _ApplicationOverlay(
+                child: LocalDataBoundary(
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
             ),
           ),
           initialRoute: AppRoutes.bootstrap,
@@ -60,4 +64,31 @@ class PbApp extends ConsumerWidget {
       },
     );
   }
+}
+
+/// App-level controls sit outside the Navigator; tooltips need an ancestor overlay.
+class _ApplicationOverlay extends StatefulWidget {
+  const _ApplicationOverlay({required this.child});
+  final Widget child;
+  @override
+  State<_ApplicationOverlay> createState() => _ApplicationOverlayState();
+}
+
+class _ApplicationOverlayState extends State<_ApplicationOverlay> {
+  late final OverlayEntry _entry = OverlayEntry(builder: (_) => widget.child);
+  @override
+  void didUpdateWidget(covariant _ApplicationOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _entry.markNeedsBuild();
+  }
+
+  @override
+  void dispose() {
+    _entry.remove();
+    _entry.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Overlay(initialEntries: [_entry]);
 }

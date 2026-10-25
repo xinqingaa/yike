@@ -31,6 +31,7 @@ abstract final class SheetPopup {
     String? title,
     required Widget child,
     bool showCloseButton = true,
+    bool showHeader = true,
     SheetDirection direction = SheetDirection.bottom,
     SheetSizeConfig size = const SheetSizeConfig(),
     SheetDragConfig drag = const SheetDragConfig(),
@@ -48,9 +49,10 @@ abstract final class SheetPopup {
         size: size,
         drag: drag,
         header:
-            direction == SheetDirection.bottom ||
-                title != null ||
-                showCloseButton
+            showHeader &&
+                (direction == SheetDirection.bottom ||
+                    title != null ||
+                    showCloseButton)
             ? SheetHeaderConfig(
                 padding: EdgeInsets.only(bottom: ts.spacing.sm),
                 titleWidget: themes.wrap(

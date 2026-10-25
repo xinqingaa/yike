@@ -133,9 +133,9 @@ AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay
 
 使用单个应用级常驻展示宿主组合最多三行计时状态；任何 AppPop 模态打开时隐藏并禁止交互，最后一层真实退场后恢复，不改变计时。unified_popups 2.2.1 的 `PopupHandle.pause/resume` 及 Host `Offstage/IgnorePointer` 支持挂起时保留内部状态，本地 `AppStatusPopup.suspend` 已封装该语义。
 
-宿主可以保活，但完成条不能常驻：可见行自然完成后拉满 / 标记、短停留并自动退场；新行、行增减、外壳高度、页面避让及模式转场须同步过渡。库 pause / resume 不包含这些动画，应在本地呈现层先完成受控淡出再挂起，交互在隐藏意图产生时立即关闭；恢复从最新运行 / 暂停集合呈现，不补播已错过的完成。持续时长与中断规则统一见 [动效规格](../product/motion.md#第五阶段站内状态条)，不能用重复开关弹层替代连续过渡。
+宿主可以保活，但完成条不能常驻：可见行自然完成后拉满 / 标记、短停留并自动退场；新行、行增减、悬浮外壳高度及模式转场须同步过渡，正文不参与避让。库 pause / resume 不包含这些动画，应在本地呈现层先完成受控淡出再挂起，交互在隐藏意图产生时立即关闭；恢复从最新运行 / 暂停集合呈现，不补播已错过的完成。持续时长与中断规则统一见 [动效规格](../product/motion.md#第五阶段站内状态条)，不能用重复开关弹层替代连续过渡。
 
-计时宿主使用应用 Stack / 安全区测量，与 `AppStatusPopup.show` 的 `yike-unsaved` key 独立；未创建另一份同 key 浮层，SDK 句柄仍留 overlay。状态条只用玻璃、进度、行点击与一个暂停 / 继续，不创建三个独立 Toast。应用边界统一协调顶部避让和未保存提示，feature 不拼独立 Overlay 或接管表单生命周期。
+计时宿主使用应用 Stack，定位于原系统安全区下；测量仅供其它浮层错开，与 `AppStatusPopup.show` 的 `yike-unsaved` key 独立；未创建另一份同 key 浮层，SDK 句柄仍留 overlay。状态条只用玻璃、进度、行点击与一个暂停 / 继续，不创建三个独立 Toast。应用边界只协调计时与未保存两类浮层，正文不增加顶部 inset，feature 不拼独立 Overlay 或接管表单生命周期。
 
 本模式计圈面板仍允许计时反馈，通用设置 / 编辑 / 确认层不允许；这与“所有模态期间状态条隐藏”是两条不同规则，模态深度不能独自承担反馈来源选择。详见 [第五阶段](../plan/stage5-notifications.md)。
 
@@ -152,3 +152,9 @@ AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay
 ## 第五阶段通用扩展
 
 AppSheet 的受控 `timerPanel` 用途只表示仍可允许其计时来源反馈的面板，不改变模态深度；嵌套通用层仍静默。Toast 可传局部 duration，习惯静默提示使用 3 秒，其它提示沿用主题时长。MotionList 可接收 scrollToStartToken，仅在外部导航定位身份变化时回列表顶部，维持行状态。AppDataCard.closeAll 由应用跳转边界使用，不把非模态查看卡当作模态。
+
+
+2026-10-25 UI 修订：`AppPop.sheet` / `AppSheet.show` 支持 `showHeader: false`，真正省略 header 及留白，默认 true 保留其它弹层行为。`CommonIconButton` 支持可选 Flutter `icon`，与策展资源 `name` 必须二选一，用于已有位图集中缺失的播放 / 暂停符号；触控区、主题、Tooltip 与可访问性共用原组件。原生成图标清单不修改。
+
+
+通知设置的两个入口统一调用 `openNotificationSettings`，传 `height: SheetDimension.fraction(.5)`，无 header，内部单一滚动容器展示全部未归档习惯。站内行复用公共图标按钮的 44px 触控区，进度嵌入同一行内；标题、轮次与时间同排，取消独立副标题；顶部保留紧凑细拖动条及少量留白，沿用父级手势，不添加独立状态。`TimerStatusProgress.height` 只控制绘制轨道厚度，不影响时间投影。习惯提醒选择复用 `CommonWheelPicker` 两列小时 / 分钟，更新 Provider 草稿，不能沿用全局设置滚轮的自动保存语义。

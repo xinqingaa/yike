@@ -6,6 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yike/app/app.dart';
+import 'package:yike/app/timer_status_progress.dart';
+import 'package:yike/common/overlay/sheet_header.dart';
+import 'package:yike/router/router.dart';
+import 'package:yike/theme/ts.dart';
+import 'package:yike/common/widgets.dart';
 import 'package:yike/app/navigation.dart';
 import 'package:yike/app/notifications/notification_plan.dart';
 import 'package:yike/app/notifications/notification_coordinator.dart';
@@ -18,9 +23,11 @@ import 'package:yike/features/focus/focus.dart';
 import 'package:yike/features/focus/focus_models.dart';
 import 'package:yike/features/focus/providers/focus_dial_presentation.dart';
 import 'package:yike/features/habits/habit_models.dart';
+import 'package:yike/features/habits/pages/habit_editor.dart';
 import 'package:yike/features/local_data/local_data.dart';
 import 'package:yike/storage/providers.dart';
 import 'support/fake_app_prefs.dart';
+import 'support/pump_presentation.dart';
 import 'support/fake_notifications.dart';
 
 void main() {
@@ -526,14 +533,14 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump();
-      expect(find.textContaining('番茄钟 · 第 1 轮 · 剩余'), findsOneWidget);
-      expect(find.textContaining('正计时 · 已用'), findsOneWidget);
-      expect(find.textContaining('倒计时 · 剩余'), findsNothing);
+      expect(find.byTooltip('暂停番茄钟'), findsOneWidget);
+      expect(find.byTooltip('暂停正计时'), findsOneWidget);
+      expect(find.byTooltip('暂停倒计时'), findsNothing);
       app.read(rootTabProvider.notifier).set(1);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump();
-      expect(find.textContaining('倒计时 · 剩余'), findsOneWidget);
+      expect(find.byTooltip('暂停倒计时'), findsOneWidget);
       // A modal boundary stays active until both actual dismissal futures finish.
       final outer = Completer<void>(), inner = Completer<void>();
       final activity = app.read(popupActivityProvider.notifier);
@@ -555,14 +562,325 @@ void main() {
       now = now.add(const Duration(seconds: 5));
       app.read(clockPulseProvider.notifier).refresh();
       await tester.pump();
-      expect(find.textContaining('已完成 ✓'), findsNWidgets(2));
+      expect(
+        find.byWidgetPredicate((w) => w is TimerStatusProgress && w.completed),
+        findsNWidgets(2),
+      );
       await tester.pump(const Duration(milliseconds: 1000));
       await tester.pump(const Duration(milliseconds: 250));
       await tester.pump();
-      expect(find.textContaining('已完成 ✓'), findsNothing);
+      expect(
+        find.byWidgetPredicate((w) => w is TimerStatusProgress && w.completed),
+        findsNothing,
+      );
       expect(
         app.read(focusDataProvider).sessionFor(TimerMode.countdown)!.status,
         TimerStatus.finished,
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      app.dispose();
+      await tester.pump();
+    },
+  );
+  testWidgets(
+    'floating timers keep page position, collapse by swipe and retain the capsule for new sessions',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      var now = start;
+      final app = ProviderContainer(
+        overrides: [
+          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          notificationAdapterProvider.overrideWithValue(FakeNotifications()),
+          clockProvider.overrideWithValue(() => now),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: app, child: const PbApp()),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      final anchor = find.textContaining('今天已专注');
+      final position = tester.getTopLeft(anchor);
+      final actions = app.read(focusActionsProvider);
+      actions.start();
+      actions.switchMode(TimerMode.stopwatch);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.getTopLeft(anchor), position);
+      await pumpPresentation(tester);
+      expect(find.byTooltip('暂停番茄钟').hitTestable(), findsOneWidget);
+      final surface = find.byKey(const ValueKey('timer-status-surface'));
+      final expandedWidth = tester.getSize(surface).width;
+      final handle = find.byKey(const ValueKey('timer-status-drag-handle'));
+      await tester.drag(handle, const Offset(0, -110));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final capsule = find.byKey(const ValueKey('timer-status-capsule'));
+      expect(tester.getSize(capsule).width, lessThan(expandedWidth / 2));
+      expect(find.byTooltip('暂停番茄钟').hitTestable(), findsNothing);
+      expect(find.byTooltip('设置').hitTestable(), findsOneWidget);
+      actions.start();
+      actions.switchMode(TimerMode.countdown);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(
+        find.descendant(of: capsule, matching: find.text('2')),
+        findsOneWidget,
+      );
+      expect(tester.getSize(capsule).width, lessThan(expandedWidth / 2));
+      expect(tester.getTopLeft(anchor), position);
+      await tester.tap(capsule);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.byTooltip('暂停番茄钟'));
+      await tester.pump();
+      expect(app.read(focusDataProvider).mode, TimerMode.countdown);
+      expect(
+        app.read(focusDataProvider).sessionFor(TimerMode.pomodoro)!.status,
+        TimerStatus.paused,
+      );
+      expect(find.byTooltip('继续番茄钟'), findsOneWidget);
+      expect(find.text('已暂停'), findsNothing);
+      expect(
+        tester
+            .getSize(find.byKey(const ValueKey('timer-status-pomodoro')))
+            .height,
+        lessThanOrEqualTo(50),
+      );
+      expect(tester.getTopLeft(anchor), position);
+      // Accessibility changes during the fold must settle without restarting it.
+      await tester.drag(surface, const Offset(0, -110));
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(capsule);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byTooltip('继续番茄钟').hitTestable(), findsOneWidget);
+      await tester.drag(surface, const Offset(0, -110));
+      await tester.pump();
+      now = start.add(const Duration(hours: 1));
+      app.read(clockPulseProvider.notifier).refresh();
+      await pumpPresentation(tester);
+      expect(
+        app.read(focusDataProvider).sessionFor(TimerMode.stopwatch)!.status,
+        TimerStatus.finished,
+      );
+      await tester.tap(capsule);
+      await pumpPresentation(tester);
+      expect(
+        find.byKey(const ValueKey('timer-status-stopwatch')),
+        findsNothing,
+      );
+      expect(find.byTooltip('继续番茄钟').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
+      await tester.pumpWidget(const SizedBox.shrink());
+      app.dispose();
+      await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'notification sheet stays half height and lists habits directly without a leading icon',
+    (tester) async {
+      final app = ProviderContainer(
+        overrides: [
+          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          notificationAdapterProvider.overrideWithValue(FakeNotifications()),
+          clockProvider.overrideWithValue(() => start),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: app, child: const PbApp()),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      app
+          .read(localDataProvider.notifier)
+          .commit(
+            app
+                .read(localDataProvider)
+                .data
+                .copyWith(
+                  habits: [
+                    const HabitViewData(
+                      id: 'read',
+                      name: '阅读提醒',
+                      created: '2026-10-24',
+                      reminder: true,
+                      reminderMinutes: 721,
+                    ),
+                    for (var i = 0; i < 12; i++)
+                      HabitViewData(
+                        id: 'off$i',
+                        name: '未开启的习惯$i',
+                        created: '2026-10-24',
+                      ),
+                  ],
+                ),
+          );
+      appNavigatorKey.currentState!.pushNamed(AppRoutes.settings);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.tap(find.text('通知提醒'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(AppSheetHeader), findsNothing);
+      final viewport = find.byKey(
+        const ValueKey('notification-settings-content'),
+      );
+      final rect = tester.getRect(viewport);
+      final screenHeight =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      expect(rect.height, lessThanOrEqualTo(screenHeight * .5));
+      expect(rect.height, greaterThan(screenHeight * .3));
+      expect(find.text('阅读提醒'), findsOneWidget);
+      expect(find.text('未开启的习惯0'), findsOneWidget);
+      final toggle = find.widgetWithText(CommonListCell, '后台提醒');
+      expect(tester.widget<CommonListCell>(toggle).leading, isNull);
+      await tester.tap(find.text('后台提醒'));
+      await pumpPresentation(tester);
+      expect(app.read(localDataProvider).data.backgroundReminders, isTrue);
+      expect(tester.getRect(viewport), rect);
+      expect(find.textContaining('2026-10-24 —'), findsOneWidget);
+      await tester.drag(viewport, const Offset(0, -500));
+      await pumpPresentation(tester);
+      expect(tester.getRect(viewport), rect);
+      await tester.ensureVisible(find.text('未开启的习惯10'));
+      await pumpPresentation(tester);
+      expect(find.text('未开启的习惯10').hitTestable(), findsOneWidget);
+      expect(tester.getRect(viewport), rect);
+      expect(tester.takeException(), isNull);
+      await tester.binding.handlePopRoute();
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpWidget(const SizedBox.shrink());
+      app.dispose();
+      await tester.pump();
+    },
+  );
+  testWidgets(
+    'floating rows fit narrow large text across themes and reduced motion',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 700);
+      tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      final app = ProviderContainer(
+        overrides: [
+          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          notificationAdapterProvider.overrideWithValue(FakeNotifications()),
+          clockProvider.overrideWithValue(() => start),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: app, child: const PbApp()),
+      );
+      await pumpPresentation(tester);
+      final actions = app.read(focusActionsProvider);
+      for (final mode in TimerMode.values) {
+        actions.switchMode(mode);
+        actions.start();
+      }
+      app.read(rootTabProvider.notifier).set(1);
+      for (final theme in ['yike/mechanical', 'yike/water', 'yike/sundial']) {
+        app.read(themePackProvider.notifier).select(theme);
+        await pumpPresentation(tester);
+        expect(find.byTooltip('暂停番茄钟').hitTestable(), findsOneWidget);
+        expect(find.byTooltip('暂停正计时').hitTestable(), findsOneWidget);
+        expect(find.byTooltip('暂停倒计时').hitTestable(), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+      app.dispose();
+      await tester.pump();
+    },
+  );
+  testWidgets(
+    'habit time wheels keep changes in the draft until Save and discard cancelled edits',
+    (tester) async {
+      final app = ProviderContainer(
+        overrides: [
+          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          notificationAdapterProvider.overrideWithValue(FakeNotifications()),
+          clockProvider.overrideWithValue(() => start),
+        ],
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: app, child: const PbApp()),
+      );
+      await pumpPresentation(tester);
+      const habit = HabitViewData(
+        id: 'time',
+        name: '阅读',
+        created: '2026-10-24',
+        reminder: true,
+        reminderMinutes: 1290,
+      );
+      app
+          .read(localDataProvider.notifier)
+          .commit(app.read(localDataProvider).data.copyWith(habits: [habit]));
+      final first = openHabitEditor(habit: habit);
+      await pumpPresentation(tester);
+      final picker = find.byKey(const ValueKey('habit-reminder-time'));
+      await tester.ensureVisible(picker);
+      await pumpPresentation(tester);
+      expect(
+        find.descendant(of: picker, matching: find.byType(EditableText)),
+        findsNothing,
+      );
+      var wheel = tester.widget<CommonWheelPicker>(picker);
+      expect(wheel.values, [21, 30]);
+      expect(wheel.columns.map((c) => c.options.length), [24, 60]);
+      await tester.drag(
+        find
+            .descendant(of: picker, matching: find.byType(ListWheelScrollView))
+            .first,
+        const Offset(0, -48),
+      );
+      await pumpPresentation(tester);
+      expect(tester.widget<CommonWheelPicker>(picker).values.first, isNot(21));
+      expect(
+        app.read(localDataProvider).data.habits.single.reminderMinutes,
+        1290,
+      );
+      await tester.binding.handlePopRoute();
+      await pumpPresentation(tester);
+      await first;
+      final second = openHabitEditor(habit: habit);
+      await pumpPresentation(tester);
+      await tester.ensureVisible(picker);
+      await pumpPresentation(tester);
+      expect(tester.widget<CommonWheelPicker>(picker).values, [21, 30]);
+      await tester.drag(
+        find
+            .descendant(of: picker, matching: find.byType(ListWheelScrollView))
+            .last,
+        const Offset(0, -48),
+      );
+      await pumpPresentation(tester);
+      wheel = tester.widget<CommonWheelPicker>(picker);
+      final selected = (wheel.values[0] as int) * 60 + (wheel.values[1] as int);
+      expect(selected, isNot(1290));
+      await tester.tap(find.byKey(const ValueKey('habit-save')));
+      await pumpPresentation(tester);
+      expect(await second, true);
+      expect(
+        app.read(localDataProvider).data.habits.single.reminderMinutes,
+        selected,
       );
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());

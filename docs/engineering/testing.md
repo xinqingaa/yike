@@ -76,26 +76,15 @@ Android 构建使用 Android SDK 自带的 CMake 3.22.1，不读取这条 PATH�
 
 ## 体验回归与原生截图
 
-`test/experience_regression_test.dart` 覆盖模式请求提交时机、关闭/遮罩/返回取消、短时确认、空周与仅打卡周、日期明细留白、全年方格、滚轮单位距离及整列手势、归档完成事实和减少动态效果；`theme_context_test.dart` 同时核对三种数字文字角色在主题插值中的连续性。
+`test/experience_regression_test.dart` 覆盖并行模式切换保留运行 / 暂停会话、显式结束的短时确认、空周与仅打卡周、日期明细留白、全年方格、滚轮单位距离及整列手势、归档完成事实和减少动态效果；`theme_context_test.dart` 同时核对三种数字文字角色在主题插值中的连续性。
 
-在移动设备运行可重复的三主题体验检查：
-
-```bash
-flutter test integration_test/experience_test.dart -d <device-id> --no-uninstall
-```
-
-测试使用 FakeAppPrefs 内存实例，不读写生产 `yike` 数据。每个主题进入计时切换、时长滚轮、FlowSheet、习惯详情浅深模式、空周、日期明细、仅打卡周与月历，输出 9 张原生截图；日志中的 `YIKE_SCREENSHOT=` 是设备临时目录路径。iOS Simulator 的绝对路径可在宿主机查看或复制，Android 需从测试应用临时目录取回。采集时需及时复制到宿主机，测试退出后设备临时目录可能被清理。截图需人工目视检查，不因脚本通过自动认定视觉接受；当前脚本的范围也不等于全部固定 Evidence Case。
-
+历史体验专用截图脚本已于 2026-10-25 随用户验收清理；长期行为覆盖留在 `test/experience_regression_test.dart`。需要新的设备视觉检查时按具体 UI 变更安排，不维持已过期的验收夹具。
 
 ## 布局精修回归
 
 `test/layout_polish_test.dart` 检查滚轮数字自身居中及大字体缩放、FlowSheet 可选进度不留空位、倒计时等宽选项和取消语义、右侧记圈数字基线、列表滚动与单入口、日期按压与无选择语义、手机安全区内操作、每日详情长列表与固定翻日。
 
-```bash
-flutter test integration_test/layout_polish_test.dart -d <移动设备 ID>
-```
-
-此脚本使用内存存储与固定日期，三主题各输出 11 张截图，覆盖倒计时、时长滚轮、计圈浅深、每日记录浅深、空日、周/月按压及关闭步骤指示的 FlowSheet；日志前缀为 `YIKE_POLISH_SCREENSHOT=`。按压截图使用设备事件来源，避免测试框架的彩色触点覆盖图形。截图应在运行期间复制到宿主机，再人工复核；最近一轮结果见 [布局与交互精修](../reviews/2026-10-23-layout-polish.md)。
+布局精修专用截图脚本已清理；保留上述长期 Widget 回归。历史验证范围见 [布局与交互精修](../reviews/2026-10-23-layout-polish.md)。
 
 ## 动效、时间与性能
 
@@ -110,14 +99,16 @@ profile 在移动真机记录场景、刷新率、样本数量、UI/raster 的 p
 `test/motion/` 检查变化位、同步裁切、暂停、事件实时可见性、同帧合并、列表身份与未保存浮层生命周期。运行中场景使用有界 pump；辅助方法 `test/support/pump_presentation.dart` 只推进呈现帧，不修改注入的业务时钟。
 
 ```bash
-flutter test integration_test/motion_test.dart -d <移动设备 ID> --no-uninstall
 flutter test integration_test/motion_profile_test.dart -d <真机 ID> --profile --dart-define=YIKE_PROFILE_DEVICE=<设备型号>
 ```
 
-原生过程脚本使用内存存储，每主题/动态效果偏好采集七张过程画面，日志前缀为 `YIKE_MOTION_SCREENSHOT=`。原生截图与过程断言分开评价；本轮范围见 [实施记录](../reviews/2026-10-23-motion-implementation.md)。profile 脚本要求 profile 模式与设备名称，记录刷新率、125 帧热身、样本量、UI/raster p50/p90/p99 及超预算帧。连续表盘、主题切换、计圈与导航独立采样；相同设备和场景比较前后，不将采样入口本身写成性能已通过。
+原生动效专用截图脚本已随验收清理，历史范围见 [实施记录](../reviews/2026-10-23-motion-implementation.md)。可复用的真机性能采样工具保留；profile 脚本要求 profile 模式与设备名称，记录刷新率、125 帧热身、样本量、UI/raster p50/p90/p99 及超预算帧。连续表盘、主题切换、计圈与导航独立采样；相同设备和场景比较前后，不将采样入口本身写成性能已通过。
 
 ## 记圈、回顾与统计回归
 
 长期测试：`test/features/review/review_statistics_test.dart` 验证跨日去重/本期最长/开始小时、同期及短月、当前目标参考与趋势窗口；`test/stage34_ui_test.dart` 验证三主题圈控制/完成保留、飞行并发/零圈拒绝/减少动态效果、筛选与返回、筛选时图形位置稳定、日期点击/长按均查看同一 Menu，卡内入口再进入 Sheet、专注卡时长与次数同行、统计二级 Tab 与图表滚动保留、类型环点击联动、统计习惯完成格查看与详情卡一致、无边框铺满色块、数据卡滚动关闭、窄屏大字体。`test/feedback_service_test.dart` 检查查看触感的总开关、可选习惯 scope 和前后台门控。
 
-阶段 3、4 的临时预览入口与原生验收脚本已在用户验收后删除，长期回归留在上述测试。仍有 17 处历史截图断链和 3 项既有设置测试失败，阶段验收不代表全量门禁通过。
+阶段 3、4 的临时预览入口与原生验收脚本已在用户验收后删除，长期回归留在上述测试。2026-10-25 清理第五阶段临时材料和旧体验 / 布局 / 动效专用截图采集脚本，移除 17 处历史截图失效链接。长期通知 / 反馈回归位于 `test/stage5_notifications_test.dart`、`test/feedback_service_test.dart`，必要替身保留。原生 MMKV、进程重启与性能采样属于可复用工程工具，继续保留。上轮仍有 7 项基线复现的旧测试失败，见 [记录](../plan/stage5-notifications.md#上轮自动化结果)，阶段验收不代表全量门禁通过。
+
+
+2026-10-25 站内提示 UI 修订：`test/stage5_notifications_test.dart` 增加不占位、上滑胶囊 / 点击展开、新会话保留收起、暂停图标隔离、收起期间完成不闪回、三主题窄屏大字和无 header 预约详情回归。持续扫光使用有界呈现泵，不用 `pumpAndSettle` 等待静止；页面模式选择应限定顶部 Tab，浮层中同名标题不作为 Tab 目标。原生手感、光效与性能仍由设备验证，不从 Widget 断言推断。

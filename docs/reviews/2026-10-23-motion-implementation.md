@@ -38,7 +38,7 @@
 
 ## iOS 原生过程
 
-设备为 PB Phase4 iPhone 14，iOS 18.6 Simulator，390×844 逻辑尺寸、1170×2532 截图，debug 构建。[原生过程脚本](../../integration_test/motion_test.dart) 使用独立内存存储，不读写生产 MMKV。
+设备为 PB Phase4 iPhone 14，iOS 18.6 Simulator，390×844 逻辑尺寸、1170×2532 截图，debug 构建。原生过程脚本（`integration_test/motion_test.dart`，2026-10-25 用户确认后已清理） 使用独立内存存储，不读写生产 MMKV。
 
 三主题 × 正常/减少动态效果共六组原生过程全部通过，覆盖计圈、暂停、倒计时到点、快速打卡取消重做、根导航、回顾翻期/周月、浅深主题、未保存浮层与模态挂起恢复。每组采集七张分时画面，共 42 张；采集时点配合脚本断言使用，截图本身不证明精确动画相位。原生脚本完成后再复制到 `build/motion-verification/`；该目录为本机生成证据，不承载规范或提交资源。
 

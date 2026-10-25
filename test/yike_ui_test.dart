@@ -19,6 +19,11 @@ import 'package:yike/storage/providers.dart';
 import 'package:yike/storage/app_prefs.dart';
 import 'support/fake_app_prefs.dart';
 
+Finder focusModeTab(String title) => find.descendant(
+  of: find.byType(CommonPrimaryTabs),
+  matching: find.text(title),
+);
+
 Future<ProviderContainer> pumpYike(
   WidgetTester tester, {
   Size size = const Size(390, 844),
@@ -167,11 +172,11 @@ void main() {
     await pumpPresentation(tester);
     await tester.tap(find.text('暂停'));
     await pumpPresentation(tester);
-    await tester.tap(find.text('正计时'));
+    await tester.tap(focusModeTab('正计时'));
     await pumpPresentation(tester);
     expect(find.text('切换计时模式'), findsNothing);
     expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 1);
-    await tester.tap(find.text('番茄钟'));
+    await tester.tap(focusModeTab('番茄钟'));
     await pumpPresentation(tester);
     expect(find.text('继续'), findsOneWidget);
     expect(tester.widget<TabBar>(find.byType(TabBar)).controller!.index, 0);
@@ -184,11 +189,11 @@ void main() {
     await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.pomodoro);
     // A drag can now adjust time; it must not change the selected mode.
-    await tester.tap(find.text('正计时'));
+    await tester.tap(focusModeTab('正计时'));
     await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.stopwatch);
     expect(dialDigits('00:00'), findsOneWidget);
-    await tester.tap(find.text('倒计时'));
+    await tester.tap(focusModeTab('倒计时'));
     await pumpPresentation(tester);
     expect(container.read(focusViewProvider).mode, TimerMode.countdown);
     expect(find.byKey(const ValueKey('countdown-edit')), findsOneWidget);

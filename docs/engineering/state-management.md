@@ -44,3 +44,6 @@ Future 返回后检查 mounted 和请求身份；新请求取代旧请求时旧�
 FocusData 持有番茄本次覆盖、倒计时本次草稿及选中槽；待开始派生读数按有效选中项约束，常用 1 必填，所选槽为空回退首槽。设置修改通过同一快照更新，待开始读数缩至新上限；活动会话固定目标和量程不随偏好改变。“再计”复制上一轮目标和量程并创建新身份。
 
 表盘连续输入与惯性只在局部 State 中，每次收束以模式、基值和上限校验后提交。草稿不能成为第二套计时事实；设置面板依然通过 TimingPreferencesController 修改同一快照。
+
+
+站内计时条使用实例级 autoDispose `TimerStatusController` 管理不可变条目、收起、拖动意图和前后台呈现状态；完成寿命 Timer 由 Notifier 持有并在销毁时取消。Widget 不用 `setState` 更新这些状态。动画控制器、一次性事件失效身份和排帧标记仍是局部生命周期资源；高度测量缓存由 ValueNotifier / ValueListenableBuilder 驱动，仅用于尺寸过渡，不把每帧测量或扫光相位写入业务 Provider。习惯编辑直接在 Provider 草稿的 `reminderMinutes` 中保留滚轮选择，不再维护一份字符串时间 / TextEditingController；保存 / 取消仍遵循表单提交规则。通知设置为纯 ConsumerWidget，从事实派生完整列表，无展开状态。

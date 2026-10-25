@@ -278,7 +278,7 @@ void main() {
   });
 
   testWidgets(
-    'editor provider validates raw time and retries one draft identity',
+    'editor provider validates wheel time bounds and retries one draft identity',
     (tester) async {
       final disk = FaultPrefs();
       final app = await pumpYike(tester, preferences: disk);
@@ -288,14 +288,13 @@ void main() {
       final controller = app.read(editor.notifier);
       final initial = app.read(editor).draft;
       controller.change(initial.copyWith(name: '读书', reminder: true));
-      controller.changeTime('25:99');
-      expect(controller.submit(), false);
-      expect(app.read(editor).timeError, isNotNull);
+      expect(controller.changeReminderTime(25, 99), isFalse);
+      expect(app.read(editor).draft.reminderMinutes, initial.reminderMinutes);
       expect(
         app.read(habitsProvider).where((h) => h.id == initial.id),
         isEmpty,
       );
-      controller.changeTime('21:30');
+      expect(controller.changeReminderTime(21, 30), isTrue);
       disk.failWrite = true;
       expect(controller.submit(), false);
       expect(

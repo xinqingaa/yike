@@ -7,9 +7,8 @@ import '../models/habit_view.dart';
 import 'habits_presentation.dart';
 
 class HabitEditorState {
-  const HabitEditorState(this.draft, this.timeText, {this.submitted = false});
+  const HabitEditorState(this.draft, {this.submitted = false});
   final HabitViewData draft;
-  final String timeText;
   final bool submitted;
 
   String? get nameError => draft.name.trim().characters.length > 30
@@ -17,17 +16,6 @@ class HabitEditorState {
       : submitted && !validHabitName(draft.name)
       ? '写一个习惯名称'
       : null;
-
-  int? get reminderMinutes {
-    final parts = timeText.split(':');
-    final h = parts.length == 2 ? int.tryParse(parts.first) : null;
-    final m = parts.length == 2 ? int.tryParse(parts.last) : null;
-    return h != null && m != null && h >= 0 && h <= 23 && m >= 0 && m <= 59
-        ? h * 60 + m
-        : null;
-  }
-
-  String? get timeError => reminderMinutes == null ? '输入有效时间，例如 21:00' : null;
 }
 
 class HabitEditorController extends Notifier<HabitEditorState> {
@@ -43,36 +31,27 @@ class HabitEditorController extends Notifier<HabitEditorState> {
           name: '',
           created: dayId(ref.read(todayProvider)),
         );
-    final minutes = draft.reminderMinutes;
-    return HabitEditorState(
-      draft,
-      '${(minutes ~/ 60).toString().padLeft(2, '0')}:${(minutes % 60).toString().padLeft(2, '0')}',
-    );
+    return HabitEditorState(draft);
   }
 
-  void change(HabitViewData draft) => state = HabitEditorState(
-    draft,
-    state.timeText,
-    submitted: state.submitted,
-  );
+  void change(HabitViewData draft) =>
+      state = HabitEditorState(draft, submitted: state.submitted);
 
-  void changeTime(String value) =>
-      state = HabitEditorState(state.draft, value, submitted: state.submitted);
+  bool changeReminderTime(int hours, int minutes) {
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return false;
+    change(state.draft.copyWith(reminderMinutes: hours * 60 + minutes));
+    return true;
+  }
 
   bool submit() {
-    state = HabitEditorState(state.draft, state.timeText, submitted: true);
-    if (state.nameError != null ||
-        (state.draft.reminder && state.timeError != null)) {
+    state = HabitEditorState(state.draft, submitted: true);
+    if (state.nameError != null) {
       return false;
     }
     return ref
         .read(habitsProvider.notifier)
         .save(
-          state.draft.copyWith(
-            name: normalizeHabitName(state.draft.name),
-            reminderMinutes:
-                state.reminderMinutes ?? state.draft.reminderMinutes,
-          ),
+          state.draft.copyWith(name: normalizeHabitName(state.draft.name)),
           create: original == null,
         );
   }

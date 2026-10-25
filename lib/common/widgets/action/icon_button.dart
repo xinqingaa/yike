@@ -17,7 +17,8 @@ enum CommonIconButtonVariant { tonal, flat, outlined, text }
 class CommonIconButton extends StatelessWidget {
   const CommonIconButton({
     super.key,
-    required this.name,
+    this.name,
+    this.icon,
     required this.label,
     this.onPressed,
     this.size = CommonControlSize.md,
@@ -27,9 +28,12 @@ class CommonIconButton extends StatelessWidget {
     this.disabled = false,
     this.quarterTurns = 0,
     this.material = CommonSurfaceMaterial.solid,
-  });
+  }) : assert((name == null) != (icon == null));
 
-  final CommonIconName name;
+  final CommonIconName? name;
+
+  /// Flutter-owned symbols absent from the curated bitmap set.
+  final IconData? icon;
   final String label;
   final VoidCallback? onPressed;
   final CommonControlSize size;
@@ -103,11 +107,13 @@ class CommonIconButton extends StatelessWidget {
             )
           : RotatedBox(
               quarterTurns: quarterTurns,
-              child: CommonIcon(
-                name: name,
-                dimension: _iconSize(ts),
-                color: foreground,
-              ),
+              child: icon != null
+                  ? Icon(icon, size: _iconSize(ts), color: foreground)
+                  : CommonIcon(
+                      name: name!,
+                      dimension: _iconSize(ts),
+                      color: foreground,
+                    ),
             ),
     );
     if (material == CommonSurfaceMaterial.glass) {

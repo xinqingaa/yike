@@ -32,11 +32,9 @@ class HabitEditor extends ConsumerStatefulWidget {
 class _HabitEditorState extends ConsumerState<HabitEditor> {
   late final _editor = habitEditorProvider(widget.habit);
   late final _name = TextEditingController(text: ref.read(_editor).draft.name);
-  late final _time = TextEditingController(text: ref.read(_editor).timeText);
   @override
   void dispose() {
     _name.dispose();
-    _time.dispose();
     super.dispose();
   }
 
@@ -128,19 +126,52 @@ class _HabitEditorState extends ConsumerState<HabitEditor> {
           CommonListCell(
             title: '提醒',
             switchValue: draft.reminder,
-            onSwitchChanged: (v) => _change(draft.copyWith(reminder: v)),
+            onSwitchChanged: (v) {
+              FocusManager.instance.primaryFocus?.unfocus();
+              _change(draft.copyWith(reminder: v));
+            },
           ),
           if (draft.reminder) const NotificationSettings(compact: true),
           MotionExpand(
             expanded: draft.reminder,
-            child: CommonTextField(
-              controller: _time,
+            child: CommonWheelPicker(
+              key: const ValueKey('habit-reminder-time'),
               label: '提醒时间',
-              showLabel: true,
-              keyboardType: TextInputType.datetime,
-              errorText: editor.timeError,
-              onChanged: (value) =>
-                  ref.read(_editor.notifier).changeTime(value),
+              columns: [
+                CommonWheelColumn(
+                  id: 'hour',
+                  label: '小时',
+                  unit: '时',
+                  numeric: true,
+                  options: [
+                    for (var h = 0; h < 24; h++)
+                      CommonWheelOption(
+                        value: h,
+                        label: h.toString().padLeft(2, '0'),
+                      ),
+                  ],
+                ),
+                CommonWheelColumn(
+                  id: 'minute',
+                  label: '分钟',
+                  unit: '分',
+                  numeric: true,
+                  options: [
+                    for (var m = 0; m < 60; m++)
+                      CommonWheelOption(
+                        value: m,
+                        label: m.toString().padLeft(2, '0'),
+                      ),
+                  ],
+                ),
+              ],
+              values: [draft.reminderMinutes ~/ 60, draft.reminderMinutes % 60],
+              onChanged: (values) {
+                FocusManager.instance.primaryFocus?.unfocus();
+                ref
+                    .read(_editor.notifier)
+                    .changeReminderTime(values[0] as int, values[1] as int);
+              },
             ),
           ),
           SizedBox(height: ts.spacing.lg),

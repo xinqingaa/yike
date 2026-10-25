@@ -6,7 +6,6 @@ import 'package:yike/common/motion/rolling_digits.dart';
 import 'package:yike/common/widgets/yike/dial.dart';
 import 'package:yike/features/focus/focus.dart';
 import 'package:yike/features/focus/focus_models.dart';
-import 'package:yike/features/focus/logic/focus_projection.dart';
 import 'package:yike/features/habits/habits.dart';
 import 'package:yike/theme/ts.dart';
 import '../support/pump_presentation.dart';
