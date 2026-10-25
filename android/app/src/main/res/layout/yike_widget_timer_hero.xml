@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/timer_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <LinearLayout android:id="@+id/timer_body" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+            <TextView android:id="@+id/timer_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:maxLines="1" android:ellipsize="end" android:includeFontPadding="false"/>
+            <TextView android:id="@+id/timer_time" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="2dp" android:textSize="44sp" android:fontFamily="monospace" android:textStyle="bold" android:maxLines="1" android:includeFontPadding="false" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="24sp" android:autoSizeMaxTextSize="44sp" android:autoSizeStepGranularity="1sp"/>
+            <TextView android:id="@+id/timer_detail" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:maxLines="1" android:ellipsize="end" android:includeFontPadding="false"/>
+        </LinearLayout>
+        <ImageView android:id="@+id/timer_action" android:layout_width="48dp" android:layout_height="48dp" android:padding="12dp" android:src="@android:drawable/ic_media_pause" android:contentDescription="暂停"/>
+    </LinearLayout>
+    <ImageView android:id="@+id/timer_progress" android:scaleType="fitXY" android:layout_width="match_parent" android:layout_height="5dp" android:layout_marginTop="7dp" android:importantForAccessibility="no"/>
+</LinearLayout>
