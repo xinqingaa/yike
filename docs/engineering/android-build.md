@@ -1,89 +1,95 @@
-# Android 构建与签名
+# Android 构建与发布
 
-当前发布目标为 arm64 Android 手机，应用 ID 保持 `com.protobridge.yike`。统一入口固定 release 模式、按 ABI 拆包、分离 Dart 调试符号，并归档 APK、R8 mapping 与包含大小 / SHA-256 的构建清单。iOS 配置不在此流程修改。
+发布目标为 arm64 Android 手机，应用 ID 为 `com.protobridge.yike`。本地与 CI 共用 [构建入口](../../tool/build-android.mjs)，固定 release 构建模式、ABI 拆包及 Dart 调试符号分离。工具版本和升级位置见 [开发环境](development-environment.md)。
 
-## 本地构建
+## 云端手动打包
 
-需要 Flutter 3.44.0 / Dart 3.12.0、Node.js 22、JDK 17 或兼容版本，以及 Android SDK 36、NDK 28.2.13676358、CMake 3.22.1。版本与当前已验证工具链一致，升级时重新验证。入口执行带锁文件校验的依赖解析；不要手动改写生成的插件注册文件。
+进入 [Android build · 打包与蒲公英发布](https://github.com/xinqingaa/yike/actions/workflows/android-build.yml)，点击 **Run workflow**，选择 `main` 与操作后运行：
+
+| 操作 | 签名 | 结果 |
+| --- | --- | --- |
+| 发布到蒲公英（默认） | 长期 release 签名 | 完整检查、构建，通过后上传并确认发布 |
+| 只构建正式 APK | 长期 release 签名 | 完整检查、构建，不上传 |
+| 只构建内测 APK | runner 临时 debug 签名 | 完整检查、构建，不上传，仅供构建核验 |
+
+这是单选下拉框，不需要另外选择签名或勾选发布。运行使用所选分支的已推送代码，不包含本机未提交或未推送的修改。重跑旧运行仍使用旧提交；要构建新代码，从 main 新建运行。
+
+[工作流配置](../../.github/workflows/android-build.yml) 的触发规则：
+
+| 触发 | 执行内容 |
+| --- | --- |
+| main push / PR 创建或更新 | 完整客户端检查；全部变更为 Markdown 时只检查文档、不安装 Flutter |
+| 手动运行 | 始终完整检查并构建 APK；选择发布时才上传 |
+| 本地 commit、没有 PR 的普通分支 push | 不触发此工作流 |
+
+一次 push 包含多个 commit 时，按这次推送后的代码检查一次，不逐个 commit 构建。PR 更新可能独立触发对应检查。普通推送不会打包或更新蒲公英；手动检查与构建并行，发布须等待二者成功。连续推送会取消同组旧自动检查，手动运行不被自动推送取消，蒲公英发布独立串行。
+
+## Secrets 与长期签名
+
+仓库 Settings → Secrets and variables → Actions 中配置 Repository secrets：
+
+| Secret | 内容 | 使用场景 |
+| --- | --- | --- |
+| ANDROID_KEYSTORE_BASE64 | 原长期 keystore 文件完整的 Base64 编码 | 正式构建 |
+| ANDROID_STORE_PASSWORD | `key.properties` 的 storePassword | 正式构建 |
+| ANDROID_KEY_ALIAS | `key.properties` 的 keyAlias | 正式构建 |
+| ANDROID_KEY_PASSWORD | `key.properties` 的 keyPassword | 正式构建 |
+| PGYER_API_KEY | 蒲公英账户 API Key，不是账户 ID 或 appKey | 蒲公英发布 |
+| PGYER_INSTALL_PASSWORD | 可选安装密码；未设置则为公开链接安装 | 蒲公英发布 |
+
+Secrets 仅在相应步骤通过环境变量读取，不写入应用、日志或 artifact。正式构建临时还原 keystore，结束时清除；preview 不读取正式签名。更新凭证在 GitHub Secrets 中替换，不能通过运行日志读回验证。
+
+没有签名时，首次在本机运行 `node tool/create-android-signing.mjs`。生成器使用 JDK keytool，默认写入用户目录 `.config/yike/signing/yike-release.jks` 和 `key.properties`，设置私有权限；任意文件已存在时拒绝覆盖，不输出密码。安全备份两个文件，后续版本与新电脑沿用原密钥，不因换设备重新生成。
+
+## 本地构建与版本
 
 ```bash
-# 生成长期使用的发布签名，仅首次执行。
-node tool/create-android-signing.mjs
-
-# 正式签名构建。
+# 正式签名构建
 node tool/build-android.mjs
 
-# 使用本机 debug key 的 release 模式内测包。
+# 使用本机 debug key 的 release 模式内测包
 node tool/build-android.mjs --preview
 
-# 覆盖 pubspec 中的版本；同一签名更新时构建号应递增。
-node tool/build-android.mjs --build-name 1.0.0 --build-number 2
+# 显式指定版本与递增构建号，示例值须按实际分发版本调整
+node tool/build-android.mjs --build-name 1.0.1 --build-number 20
 ```
 
-签名生成器调用 JDK 的 keytool；通过 `JAVA_HOME` 选择 JDK。默认将 `yike-release.jks` 和 `key.properties` 保存到用户主目录下的 `.config/yike/signing/`，设置私有权限，不输出密码。两个文件已有任意一个时拒绝覆盖；必须安全备份二者，后续版本沿用同一份签名。
+签名文件按优先级选择：`YIKE_ANDROID_KEY_PROPERTIES`、`android/key.properties`、用户目录 `.config/yike/signing/key.properties`。也可设置 `YIKE_ANDROID_STORE_FILE`、`YIKE_ANDROID_STORE_PASSWORD`、`YIKE_ANDROID_KEY_ALIAS`、`YIKE_ANDROID_KEY_PASSWORD`，环境变量字段优先。相对 storeFile 以 `android/` 为基准；正式签名缺失时失败，不自动退回 debug key。
 
-构建入口按以下优先级选择签名配置：`YIKE_ANDROID_KEY_PROPERTIES` 指定的文件、`android/key.properties`、用户目录 `.config/yike/signing/key.properties`。也可通过四个环境变量提供签名：`YIKE_ANDROID_STORE_FILE`、`YIKE_ANDROID_STORE_PASSWORD`、`YIKE_ANDROID_KEY_ALIAS`、`YIKE_ANDROID_KEY_PASSWORD`；环境变量字段优先于文件。相对 storeFile 路径以 `android/` 为基准。正式构建缺少签名时失败，不自动退回 debug key。`--preview` 显式使用本机 debug key。
+应用版本默认读取 `pubspec.yaml` 的 `version`；云端使用 `GITHUB_RUN_NUMBER` 作为 Flutter 构建号。一次推送检查也会占用运行编号，因此发布号有间隔是正常的。ABI 拆包会调整 APK 内的 versionCode，清单 `flutterBuildNumber` 仅记录传给 Flutter 的原始值；更新前核对 APK 的实际 versionCode 高于已分发包。不要随意切换拆包规则或重置运行编号，重跑同一 run 不视为新版本。
 
-产物位于 `build/releases/android/release/` 或 `preview/`，包括带版本 / 架构 / 签名模式的 APK、`symbols/` 与 `manifest.json`。目录不提交 Git；保留与已分发版本对应的符号文件用于崩溃还原。Flutter 的 ABI 拆包规则会调整 APK 内的 versionCode，清单中的 flutterBuildNumber 只记录传给 Flutter 的原始构建号；不要在拆包和非拆包流程间任意切换。
+## 产物与蒲公英
 
-## 已固化的体积优化
+本地产物位于 `build/releases/android/release/` 或 `preview/`，包含版本化 APK、`manifest.json`（大小、SHA-256、签名模式、ABI）及 `symbols/` 下的 Dart 符号、存在时的 R8 mapping。构建入口使用 `flutter pub get --enforce-lockfile`，不手动修改生成的插件文件。
 
-- 只为 arm64 构建并拆包，排除第三方插件夹带的其它架构库；不适用于 32 位手机和 x86 模拟器。
-- 分离 Dart 调试符号，保留 R8 默认代码 / 资源缩减和图标字体裁剪。
-- `android/gradle.properties` 中的 `NO_XIPH_LIBS=true` 使用 flutter_soloud 4.1.7 的正式开关，不打包 Opus / Ogg / Vorbis / FLAC 库。现有 9 个效果音均为 PCM WAV；增加这些格式或流式音频能力时须重新评估该设置。
-- Gradle 堆上限 4 GB、Metaspace 1 GB、最多两个 worker，限制云端并发内存占用。
+云端在运行页面的 Artifacts 下载产物，保留 30 天。已分发版本需要自行长期保留 APK、清单和符号，用于回溯及崩溃还原；keystore 不在 artifact 中。Gradle 缓存按构建配置、wrapper 与 pubspec.lock 区分，首次构建仍需下载和转换依赖。上传 / 下载 Action 固定提交 SHA，版本与内部运行时见 [环境说明](development-environment.md#环境版本与配置位置)。
 
-2026-10-26 调研构建：原配置约 37.89 MB，拆包 / 分离符号后 28.87 MB，再裁剪编解码器后 27.14 MB。这些是当时版本的实际 APK 文件大小，不作为未来版本保证值；图片尚未转换或压缩。正式交付以本次构建清单和设备验证为准。
+[蒲公英脚本](../../tool/publish-pgyer.mjs) 先校验正式包清单、大小和 SHA-256，再获取临时凭证、上传 APK、每 5 秒查询最终状态，最多等待 5 分钟。拒绝 preview 包或不匹配文件，只上传 APK，不上传符号及密钥。返回成功并核对包名、平台、版本及大小后，Summary 提供下载链接和二维码，并归档 `pgyer-release.json`。
 
-## GitHub Actions
+每次“发布到蒲公英”都会构建本次正式包；当前没有单独的“发布已有构建”入口。检查通过不等于发布，上传请求成功也不等于最终发布成功。
 
-[Android 工作流](../../.github/workflows/android-build.yml) 在 main 推送、PR 和手动运行时执行。普通 main 推送 / PR 自动运行客户端检查，不构建 APK；变更全部为 Markdown 文档时只检查文档，不安装 Flutter。手动运行始终执行完整客户端检查与 APK 构建；检查和构建独立运行，发布 job 同时依赖二者成功，检查失败不会上传。
+## 体积优化与安装
 
-APK 构建仅手动触发。云端 preview 使用 runner 临时 debug key，只用于构建核验，不能保证覆盖本机安装包或前次云端包。手动运行选择“发布到蒲公英”或“只构建正式 APK”时自动使用 release 签名，并在仓库 Actions Secrets 设置：
+- 只为 arm64 构建，不适用于 32 位手机和 x86 模拟器。
+- 分离 Dart 调试符号，使用 release 默认 R8 / 资源缩减与图标字体裁剪。
+- `android/gradle.properties` 的 `NO_XIPH_LIBS=true` 裁剪 flutter_soloud 的 Opus / Ogg / Vorbis / FLAC；现有九段音效是 PCM WAV，增加这些格式或流式音频时重新评估。
+- Gradle 堆上限 4 GB、Metaspace 1 GB、最多两个 worker。
 
-| Secret | 内容 |
+当前优化基线 APK 约 27.14 MB；大小随版本变化，以清单为准，图片尚未另做格式转换或压缩。蒲公英以二进制口径显示时约 25.9 MB。
+
+覆盖更新要求同包名、同长期签名及更高 versionCode。原 debug 包无法直接被正式签名包覆盖；先安排数据备份 / 迁移，不自动卸载或清理手机。云端 preview 使用临时 debug key，不能保证覆盖本机或前次云端包。日常分发使用长期正式签名。
+
+构建验证与装机行为分开；变更涉及音效、通知、小部件、存储或签名时，按 [测试规范](testing.md) 验证受影响行为和覆盖更新。
+
+## 故障处理
+
+| 现象 | 检查与处理 |
 | --- | --- |
-| ANDROID_KEYSTORE_BASE64 | 长期 keystore 文件的完整 Base64 编码 |
-| ANDROID_STORE_PASSWORD | key.properties 中的 storePassword |
-| ANDROID_KEY_ALIAS | key.properties 中的 keyAlias |
-| ANDROID_KEY_PASSWORD | key.properties 中的 keyPassword |
+| Client checks 失败 | 展开实际失败步骤；纯文档检查可在本机运行 `node tool/check-docs.mjs`，完整检查运行 `node tool/verify.mjs` |
+| 正式签名恢复 / 构建失败 | 核对四项签名 Secrets、Base64 完整性和密钥身份；不要把值贴进聊天或日志 |
+| SDK / NDK / CMake 或插件构建失败 | 比对 [环境配置](development-environment.md#环境版本与配置位置)，检查失败日志，不直接混用本机升级后的工具链 |
+| 上传失败或查询超时 | 先到蒲公英后台核对是否已经发布，再决定重试；token / 上传不自动重试，避免重复发布 |
+| 无法覆盖安装 | 核对包名、证书及 APK 实际 versionCode；不通过卸载规避数据问题 |
+| 修改配置后重跑仍旧失败 | 从 main 新建 Run workflow，旧运行重跑不会更新其代码版本 |
 
-不要把签名、密码或 API Key 放入仓库、聊天、日志或构建 artifact。云端正式包应使用与本机相同的长期 keystore。工作流用运行编号作为构建号；首次配置时核对它高于已分发版本，重跑同一 run 不视为新版本。
-
-构建成功后在 Actions 页面下载 artifact，保留 30 天；长期归档需另行备份。产物上传使用 upload-artifact 7.0.2，下载使用 download-artifact 8.0.2，均固定提交 SHA 并原生运行于 Node.js 24；客户端脚本仍使用 Node.js 22。升级 Action 时需验证正式包跨 job 下载与蒲公英发布。Gradle 缓存按构建配置、wrapper 与 pubspec.lock 区分，复用依赖下载和转换结果；首次运行仍需建立缓存。
-
-## 蒲公英发布
-
-在同一仓库的 Actions Secrets 中配置 `PGYER_API_KEY`，值为蒲公英账户 API Key，不需要账号 ID 或 appKey。可选配置 `PGYER_INSTALL_PASSWORD`：有值时按密码安装发布，没有时为公开链接安装。安装密码和 API Key 都只通过发布步骤的环境变量读取，不写入应用、日志或 artifact。
-
-日常小改动可直接提交 main，较大功能使用临时功能分支，通过 PR 检查与验收后合并；不维护长期 dev 或专门打包分支。需要手机安装或下载 APK 时，打开仓库 Actions → Android build → Run workflow，分支选择 main，“选择操作”保持默认“发布到蒲公英”，点击 Run workflow 即可。发布会自动使用正式签名，不再需要分别选择 signing 和勾选发布。完整客户端检查与签名构建均通过后，自动下载本次正式包、上传并等待蒲公英完成发布。成功后的 job Summary 包含下载链接和二维码，另行归档 `pgyer-release.json`。
-
-| 手动操作 | 签名 | 是否上传 |
-| --- | --- | --- |
-| 发布到蒲公英（默认） | release | 检查与构建通过后上传 |
-| 只构建正式 APK | release | 否 |
-| 只构建内测 APK | preview / runner debug key | 否 |
-
-普通推送 / PR 不构建 APK，也不发布蒲公英。旧版页面曾允许 preview 签名与发布勾选同时存在，运行 #5（40263787489）因此在参数检查阶段被拦截；已用单选操作消除该无效组合。旧失败运行重跑会继续使用旧提交的配置；修订上线后请从 main 新建一次运行。
-
-[发布脚本](../../tool/publish-pgyer.mjs) 使用三步流程：获取临时上传凭证、上传 APK、每 5 秒查询最终发布状态，最多等待 5 分钟。上传前校验正式包清单、字节数与 SHA-256，拒绝 preview 包和不匹配文件；只向蒲公英上传 APK，不上传符号或签名文件。返回发布成功后再次核对包名、平台、版本和大小，才输出下载地址。安装密码不会出现在成功记录中。
-
-token / 上传请求不自动重试，避免网络响应丢失时重复发布；状态超时或网络失败后先到蒲公英后台确认结果，再决定是否重跑。手动发布不会被普通推送取消，并以独立并发组串行发布，避免两个版本同时更新下载入口。
-
-发布逻辑的本地模拟回归由 `node --test tool/publish-pgyer.test.mjs` 执行，覆盖成功、等待、拒绝、超时、文件篡改、错误包身份和凭证不回显；已加入统一检查。模拟回归不会调用真实蒲公英接口，真实联调以工作流记录为准。
-
-## 安装与验证边界
-
-原有安装包使用 debug 签名。正式 key 签名的同包名 APK 无法直接覆盖它；不要直接卸载旧应用，应先安排本地记录的备份 / 迁移。本机 preview 使用原 debug key 时可尝试覆盖，但仍需核对构建号和设备安装结果。构建脚本不自动安装、卸载或清理手机数据。
-
-构建不证明真机行为。分发前验证冷启动、三主题音效 / 试听、后台通知音、通知点击、四种桌面组件、MMKV 数据恢复及同签名版本覆盖升级。统一客户端检查入口与原生验证步骤见 [测试规范](testing.md)。
-
-2026-10-26 初始构建验证：统一入口成功生成 release / preview 两份约 27.14 MB 的 APK，包内 versionCode 为 2001；正式包通过 apksigner 校验且证书与新长期 keystore 一致，preview 证书与原本机 debug APK 一致。已检查仅含 arm64 库、已排除 Xiph 库、SHA-256 与构建清单一致，Dart 符号及 R8 mapping 已归档；缺失签名和覆盖已有密钥均被拒绝。未安装 / 卸载手机应用。
-
-初始统一检查的文档、格式及静态分析通过，完整测试曾停于 macOS objective_c hook 链接。主机后续已切到可用的 Xcode 27.1，本轮恢复完整测试并复现历史 7 项失败；核对产品规范后只修订过期测试：分秒滚轮 / 自动保存、必填常用项与滚动定位、日期卡片进入明细、最近一年语义文案。相关三文件 41 项回归通过，未修改产品 UI 或业务代码。当前全量门禁与云端联调状态见 [已知缺口](../known-gaps.md)。
-
-2026-10-26 云端真实联调完成：工作流已通过 PR #1 合入 main，手动运行 #4（40262613858）的客户端检查、正式签名构建和蒲公英发布全部成功。Android versionCode 为 2004，APK 27,135,431 字节（约 27.14 MB，蒲公英下载页以二进制口径显示约 25.9 MB）；包内仅含 arm64 原生库、没有 Xiph 编解码器，云端 APK 的证书与本机长期密钥一致，SHA-256 与发布回执一致。蒲公英下载页已确认版本 1.0.0 和安装入口；当前为公开链接安装，未配置安装密码。云端已归档本次 APK / 符号 / mapping / 清单 / 发布回执，下载入口可从该运行 Summary 获取；用户手机尚未安装或卸载。
-
-2026-10-26 默认发布入口复测：运行 #5 的失败确认为 preview 签名与发布勾选冲突，未开始编译或调用蒲公英 API；已改为单个 operation 选项。修订后的运行 #7（40264328853）通过不提供 inputs 的 dispatch 触发，客户端检查、正式构建和蒲公英发布均成功，证明默认操作自动选择正式签名并发布。浏览器已核对 main 的 Run workflow 表单只显示一个操作下拉框，默认“发布到蒲公英”。本次版本仍为 1.0.0，Android versionCode 2007，APK 27,135,435 字节；发布回执与符号等继续按本次运行归档，公开下载入口保持同一个应用短链接。
-
-2026-10-26 产物 Action 升级复测：upload-artifact 7.0.2 / download-artifact 8.0.2 均固定提交 SHA，运行 #10（40274975907）客户端检查、正式构建、跨 job 产物下载和蒲公英发布全部成功。构建与发布 job 的 annotations 均为 0，原 Node.js 20 弃用警告消除。发布回执记录版本 1.0.0、Android versionCode 2010、APK 27,135,435 字节，公开下载入口不变；本次未执行手机安装或真机功能验证。
+本地发布逻辑模拟回归为 `node --test tool/publish-pgyer.test.mjs`，已纳入统一检查，不调用真实蒲公英 API。触发真实发布仍需用户明确授权。

@@ -5,6 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
 const generated = new Set(['.git', '.dart_tool', 'build', 'node_modules', 'Pods', '.symlinks', 'ephemeral', '.fvm']);
+const operationalLinks = new Set([
+  'https://github.com/xinqingaa/yike/actions/workflows/android-build.yml',
+]);
 function markdownFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (generated.has(entry.name)) return [];
@@ -44,9 +47,9 @@ function check(file, href) {
   links++;
   const fail = (reason) => errors.push(`${path.relative(root, file)}: ${reason}: ${href}`);
   if (/^[a-z][\w+.-]*:/i.test(href) || href.startsWith('//')) {
-    // Rare necessary external references must identify a fixed GitHub file version.
-    if (/^https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[a-f0-9]{40}\/.+/i.test(href)) external.add(href);
-    else fail('external link; prefer a local explanation or fixed GitHub commit');
+    // Project operation pages are exact exceptions; reference files stay pinned.
+    if (operationalLinks.has(href) || /^https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[a-f0-9]{40}\/.+/i.test(href)) external.add(href);
+    else fail('external link; use an approved operation page or fixed GitHub commit');
     return;
   }
   if (path.isAbsolute(href) || /^[a-z]:[\\/]/i.test(href)) { fail('absolute file link'); return; }

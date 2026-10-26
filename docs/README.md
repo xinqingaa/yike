@@ -1,62 +1,37 @@
 # 一刻文档
 
-当前以 Flutter 独立迭代为主。先读 [工作流](workflow.md) 与 [已知缺口](known-gaps.md)，再按任务阅读；普通开发不读取原型/Vue 源码或调用 ProtoBridge MCP。产品介绍与运行方式见 [根 README](../README.md)。
+本索引按产品能力和工程职责组织文档。项目运行与打包入口见 [README](../README.md)，Agent 入口见 [AGENTS](../AGENTS.md)。
 
 ## 产品与体验
 
 | 文档 | 职责 |
 | --- | --- |
-| [产品](product/product.md) | 定位、范围、页面职责与核心路径 |
-| [逻辑与交互](product/logic-and-interactions.md) | 状态机、数据事实、保存恢复、统计与动作结果 |
-| [UI](product/ui-design.md) | 页面结构、滚动、三主题、布局与可访问性 |
-| [动效](product/motion.md) | 触发、过程、事件身份、中断、重播与减少动态效果 |
+| [产品](product/product.md) | 定位、页面职责、核心使用路径与范围 |
+| [逻辑与交互](product/logic-and-interactions.md) | 计时、打卡、统计、声音、提醒与外部动作 |
+| [UI](product/ui-design.md) | 页面、图形、原生组件及可访问性 |
+| [动效](product/motion.md) | 事件、过程、中断、表盘手感与减少动态效果 |
 
-## 工程规范
+## 开发与工程
 
 | 文档 | 职责 |
 | --- | --- |
-| [架构](engineering/architecture.md) | 分层、依赖、模块公开 API 与功能落点 |
-| [状态管理](engineering/state-management.md) | Riverpod、草稿、控制器、异步与一次性反馈 |
-| [运行时](engineering/runtime.md) | 生命周期、时间、可见性、资源与性能 |
-| [存储](engineering/storage.md) | AppPrefs、快照、错误、重试与版本 |
-| [组件](engineering/components.md) | 公开 UI、弹层、扩展准则与受控语义 |
-| [主题](engineering/theme.md) | TS、类型化设计量、插值与视口适配 |
-| [资源](engineering/assets.md) | 导入资源与 Flutter 自有资源的维护 |
-| [路由](engineering/routing.md) | 根导航、页面栈、面板、返回与参数 |
-| [测试](engineering/testing.md) | 独立客户端检查、行为、原生、动效与 profile |
-| [Android 构建](engineering/android-build.md) | 包体优化、内测 / 正式签名、构建产物与 GitHub Actions |
+| [开发环境](engineering/development-environment.md) | 本地与 CI 工具链、安装、换设备、版本升级 |
+| [Android 构建与发布](engineering/android-build.md) | 手动打包、正式签名、Secrets、蒲公英、产物与故障处理 |
+| [架构](engineering/architecture.md) | 分层、依赖与模块公开 API |
+| [状态管理](engineering/state-management.md) | Provider、草稿、命令、异步与反馈 |
+| [运行时](engineering/runtime.md) | 时间、生命周期、音频、通知与性能 |
+| [存储](engineering/storage.md) | AppPrefs、快照格式、错误、重试与重置 |
+| [组件](engineering/components.md) | 通用 UI、弹层及交互约束 |
+| [主题](engineering/theme.md) | TS、设计量、插值及适配 |
+| [资源](engineering/assets.md) | 图片、声音、品牌图标及生成入口 |
+| [路由](engineering/routing.md) | 页面栈、面板、返回及外部目标 |
+| [原生组件与实时活动](engineering/system-surfaces.md) | 平台能力、展示协议、外部命令与降级 |
+| [测试](engineering/testing.md) | 工程检查、长期回归、原生存储及性能采样 |
 
-## 协作与状态
+## 协作与当前问题
 
-[工作流](workflow.md) 维护阅读、授权与交付要求。[已知缺口](known-gaps.md) 只维护当前未解决项及验证边界。产品规则变更随仓库版本维护。
+[工作流](workflow.md) 维护任务、Git 授权及文档规则；[已知缺口](known-gaps.md) 列出具体问题和测量边界。产品和工程规则由对应主文档维护，必要的设计理由随规则说明。
 
-## 决策记录
+## 专项入口
 
-- [Flutter 独立迭代](decisions/2026-10-23-flutter-development.md)
-- [动效事件与重播](decisions/2026-10-23-motion-policy.md)
-- [秒级时长与统一有效范围](decisions/2026-10-24-duration-rules.md)
-- [三模式并行与前后台提醒](decisions/2026-10-24-parallel-timers-notifications.md)
-- [小部件与实时活动补充决策](decisions/2026-10-25-widgets-live-activity.md)
-- [品牌 Logo 与平台启动图](decisions/2026-10-25-brand-logo.md)
-- [Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md)
-
-决策记录说明日期、已决定的行为和原因；具体规格仍在所属产品/工程文档维护。
-
-- [记圈与回顾统计联合实施](decisions/2026-10-24-laps-review.md)
-
-[六阶段计划](plan/README.md) 记录实施范围：第一至五阶段已完成并获用户验收。第一、二阶段验收后的常用项、设置入口与试听已合入；第三、四阶段的临时验收脚本、专用截图与交接说明已清理。第五阶段已接入并行计时、状态条、当前模式反馈及习惯前后台提醒，2026-10-25 已完成并获用户验收，含最终 UI 与拖动条，临时材料已清理；第六阶段已于同日制定连续实施计划，并确认 Android 中尺寸三模式、习惯顺序、实时活动开关 / 完成保留 / 后台限制及锁屏单行内容，随后获用户授权连续实施，原生接入及相关回归已完成；随后 Android 真机反馈的布局与尺寸修订已获批准并接入，最终构建通过，233 项测试通过、7 项历史失败；设备断开，最终安装与集中真机视觉仍待完成，验证边界见阶段文档。
-
-[Apple 研究与页面精修最终指令](decisions/2026-10-23-page-refinement.md) 记录研究与用户接管后的最终修改范围；当前工作区已按该指令修订，用户要求不运行测试，尚无修订后验收结论。[前轮复审提案](reviews/2026-10-23-motion-audit-and-polish-proposal.md) 只保留研究背景，不作为当前实施规格。
-
-[动效与布局连续性实施记录](reviews/2026-10-23-motion-implementation.md) 记录六批代码接入、工程检查、iOS 原生过程和待测边界；[原实施计划](reviews/2026-10-23-motion-implementation-plan.md) 保留批准范围与验收矩阵。
-
-## 历史评审
-
-- [首次页面交付](reviews/2026-10-22-layer-1.md)
-- [布局、主题与交互修复](reviews/2026-10-22-repair.md)
-- [弹层自查](reviews/2026-10-22-popup-audit.md)
-- [本地业务自检](reviews/2026-10-22-layer-2.md)
-- [Flutter 体验修复](reviews/2026-10-23-flutter-experience.md)
-- [布局与交互精修](reviews/2026-10-23-layout-polish.md)
-
-历史结论保留当时的范围，不自动成为当前全量验收。原型迁移、固定证据与外部 DS 工作仅在用户明确要求时读取 [ProtoBridge 专项](integrations/proto-bridge.md)。
+仅在用户明确要求原型迁移、固定证据核对或 DS 同步时使用 [ProtoBridge 专项](integrations/proto-bridge.md)；日常 Flutter 迭代不进入该流程。

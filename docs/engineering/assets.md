@@ -63,4 +63,16 @@ Android 包含各密度传统图标、自适应前景/背景、单色图标、�
 `tool/synth-sounds.mjs` 使用 Node 内置模块生成 `asset/yike/sound/{mechanical|water|sundial}-{tick|chime|finish}.wav`，共 9 个文件，16 位 PCM、44.1kHz、单声道，每段小于 150KB。来源为本仓库原创程序合成，无外部采样；以固定公式与包络可重复生成。资源已在 pubspec 登记，由 common/feedback 的类型化主题映射消费。它们不属于导入基线，不运行 DS 同步；合成脚本是产品资源维护工具，用户验收后保留。
 
 
-第五阶段系统通知复用上述 finish 音源：Android 原始资源位于 `android/app/src/main/res/raw/{mechanical|water|sundial}_finish.wav`，iOS 为 `ios/Runner/{mechanical|water|sundial}_finish.caf`（由同源 WAV 转为 PCM CAF，加入 Runner 资源）。修改源声音时同步更新这两套平台资源，不能只替换 Flutter asset。通知小图标为 `android/app/src/main/res/drawable/ic_notification.xml`；后台声音最终受系统权限、渠道、静音 / 专注模式控制，构建不证明听感或触感通过。
+系统通知复用上述 finish 音源：Android 原始资源位于 `android/app/src/main/res/raw/{mechanical|water|sundial}_finish.wav`，iOS 为 `ios/Runner/{mechanical|water|sundial}_finish.caf`（由同源 WAV 转为 PCM CAF，加入 Runner 资源）。修改源声音时同步更新这两套平台资源，不能只替换 Flutter asset。通知小图标为 `android/app/src/main/res/drawable/ic_notification.xml`；后台声音最终受系统权限、渠道、静音 / 专注模式控制，构建不证明听感或触感通过。
+
+### 主题音色
+
+每个主题一套三段音效，共 9 个文件。这三段音色相互统一，所以对用户来说就是“每个主题一个提示音”。
+
+| 主题 | tick（计时每秒、拨动整秒刻度） | chime（间隔、打卡、拨动整分钟刻度） | finish（完成） |
+| --- | --- | --- | --- |
+| 机械 | 短促的金属擒纵声，约 25ms | 两声清脆的咔嗒 | 厨房定时器式的短铃，约 0.9s |
+| 水位 | 轻柔的水滴“噗”，拨动复用相同音高 | 较深的一滴水落下并带一点回响 | 连续三滴水加上涟漪的余韵，约 1.2s |
+| 日影 | 木质轻叩，音量很低 | 低沉的木鱼声 | 柔和的铃声，约 1.5s |
+
+首版音效由仓库内的脚本合成，保证可用而且没有版权问题。文件名和格式固定，之后可以用专业录制的音效直接替换，不需要改代码。

@@ -1,6 +1,6 @@
 # 工程架构
 
-一刻采用按 feature 组织的 Flutter 客户端架构，Riverpod 管理业务与页面状态，AppPrefs 隔离本地存储。架构围绕现有专注、习惯和回顾演进；新增抽象应解决实际职责、复用或测试问题。
+一刻采用按 feature 组织的 Flutter 客户端架构，Riverpod 管理业务与页面状态，AppPrefs 隔离本地存储。专注、习惯和回顾各自拥有业务规则，应用层负责组合；抽象应解决实际职责、复用或测试问题。
 
 ## 目录与依赖
 
@@ -33,7 +33,7 @@ lib/
 
 ## 一刻模块划分
 
-| 模块 | 当前职责 | 公开入口 |
+| 模块 | 职责 | 公开入口 |
 | --- | --- | --- |
 | focus | 会话模型、计时规则、偏好、专注历史与页面 | `focus.dart`、`focus_models.dart` |
 | habits | 习惯模型、打卡、详情、编辑与管理 | `habits.dart`、`habit_models.dart` |
@@ -43,7 +43,7 @@ lib/
 | home | 组合三个根页面 | 根命名路由 |
 | launch | 品牌展示 | 应用启动流程 |
 
-`LocalDataController` 目前拥有组合业务快照；计时规则留在 FocusEngine，习惯规则留在 habits，统计由记录派生。它不继续吸收 UI、动效或所有 feature 的业务规则。只有出现独立数据源、明显性能问题或职责冲突时，再评估拆分 Repository/协调器。
+`LocalDataController` 拥有组合业务快照；计时规则留在 FocusEngine，习惯规则留在 habits，统计由记录派生。UI、动效与 feature 规则分别由各自模块维护。只有出现独立数据源、明显性能问题或职责冲突时，再评估拆分 Repository/协调器。
 
 ## 状态管理
 
@@ -65,15 +65,15 @@ lib/
 
 先明确用户动作、事实变化、失败结果及可观察行为，再选择所属 feature 和复用接口。栈级页面更新路由常量、注册与参数解析；面板和页面内模式使用各自导航边界。以相关纯规则、Provider、Widget 或原生测试验证用户行为。
 
-新增依赖前检查 Flutter SDK、现有能力与包的公开 API；说明引入目的、平台支持和生命周期，不用新包复制已有基础设施。依赖变更提交 `pubspec.yaml` 与锁文件，生成目录不提交。构建与检查方式见 [测试](testing.md)。
+新增依赖前检查 Flutter SDK、现有能力与包的公开 API；说明引入目的、平台支持和生命周期，不用新包复制已有基础设施。依赖变更同步更新 `pubspec.yaml` 与锁文件，生成目录不提交。构建与检查方式见 [测试](testing.md)。
 
-重要产品取舍或跨模块边界变化写入简短决策记录；小范围实现细节直接在代码与所属规范维护。
+产品取舍和跨模块边界的规则及必要理由直接写入所属主文档，与代码共同维护。
 
 ## 声音与震动
 
-`common/feedback` 拥有类型化 cue、独立播放器接口及可替换的反馈服务，不依赖 feature。`app/feedback_boundary.dart` 在业务数据可读取后组合偏好与前后台状态，并预加载音效。focus 的纯 `focus_beats` 计算节拍边界，应用级 `focusFeedbackProvider` 消费 250ms 时钟与既有完成事件；FocusActions 与 HabitsPresentation 只在有效操作被接受时发出反馈。FeedbackService 只维护总开关及通用 scope → FeedbackOptions 映射，不认识 feature；事件携带来源 scope，声音句柄按来源记录以支持局部停止。模式与打卡各自持有配置，总开关不改写局部值。反馈错误不传播到业务命令，结束或后台不补播。服务不依赖根 Tab 可见性，视觉仍使用原有 MotionGate。
+`common/feedback` 拥有类型化 cue、独立播放器接口及可替换的反馈服务，不依赖 feature。`app/feedback_boundary.dart` 在业务数据可读取后组合偏好与前后台状态，并预加载音效。focus 的纯 `focus_beats` 计算节拍边界，应用级 `focusFeedbackProvider` 消费 250ms 时钟与既有完成事件；FocusActions 与 HabitsPresentation 只在有效操作被接受时发出反馈。FeedbackService 只维护总开关及通用 scope → FeedbackOptions 映射，不认识 feature；事件携带来源 scope，声音句柄按来源记录以支持局部停止。模式与打卡各自持有配置，总开关不改写局部值。反馈错误不传播到业务命令，结束或后台不补播。服务仅处理来源配置与应用生命周期，视觉可见性由 MotionGate 管理。
 
-第五阶段实现：在应用 / focus 协调层组合当前路由、根 Tab、所选模式与弹层用途，仅向当前模式开放计时反馈，不把业务页面知识放进通用反馈服务；已替换原跨 Tab 计时反馈。本模式计圈允许、通用模态静默，状态条对全部模态隐藏；不能直接复用会统一关闭计圈反馈的通用 MotionGate 作为完整声触条件。状态条使用 feature 公开投影，系统适配仍不依赖 feature。具体规则见 [运行时](runtime.md#第五阶段可见性规则)。
+应用 / focus 协调层组合路由、根 Tab、所选模式与弹层用途，决定允许计时反馈的来源；通用反馈服务不依赖业务页面。本模式计圈面板允许反馈，通用模态静默，状态条在所有模态期间隐藏。声触门控和视觉 MotionGate 各自处理对应条件，状态条消费 feature 公开投影，系统适配不依赖 feature。具体规则见 [运行时](runtime.md#计时反馈可见性规则)。
 
 表盘纯映射、吸附与阻尼规则位于 focus/logic，输入与局部 Ticker 位于 focus/widgets；FocusActions 只接受合法最终时长，FocusEngine / FocusProjection 共享 3599 秒上限。设置编辑通过类型化路由参数自动展开既有面板，feature 不跨导入私有页面。完成音试听由通用服务提供声音专用 API，页面不直接操作音频引擎。
 
@@ -81,7 +81,7 @@ lib/
 
 `review/models/review_period.dart` 表达周期与可选类型，回顾 Provider 与统计实例分别拥有选择。`review/logic/review_statistics.dart` 的纯查询消费 focus 公开的同一日期分片与会话身份；原始开始小时通过现有分片 view 的 time 保留，不新增第二套统计事实、持久化字段或依赖。圈面板复用 FocusActions、FocusSession 与既有秒级投影，装饰控制器只在面板实例存在。
 
-FeedbackService.select 的可选 scope 支持只受总开关控制的回顾查看与沿用 habits 局部门控的习惯查看；不创建 review 偏好、不绕过服务调用系统触感。AppDataCard、ChartValue 与 CommonYearGrid 的公开职责见 [组件](components.md#第三四阶段扩展)。
+FeedbackService.select 的可选 scope 支持只受总开关控制的回顾查看与沿用 habits 局部门控的习惯查看；不创建 review 偏好、不绕过服务调用系统触感。AppDataCard、ChartValue 与 CommonYearGrid 的公开职责见 [组件](components.md#数据卡与统计组件)。
 
 习惯详情与统计习惯完成格共用 habits 公开的 `HabitDayTarget` 与 `habitDayColor`；习惯状态、完成时间、当周进度与局部触感门控由同一组件提供，review 不复制该卡规则。习惯详情的年格布局使用 `CommonYearGrid`，不自建滚动和星期月份排布。
 
@@ -99,4 +99,4 @@ Android 使用最小 MethodChannel / AlarmManager 接收桥：发布前读取原
 
 Swift WidgetKit / ActivityKit 与 Kotlin RemoteViews 只读取原子展示缓存，不读取 MMKV 或独立结算。外部动作通过 URL / PendingIntent 打开主应用，校准后验证代次、会话、阶段、预期状态及状态转换 token，保存消费回执后调用 `FocusActions.commandResult`。状态 token 只保留在本进程，旧进程按钮只定位应用并提示状态更新。命令是否接受、业务是否保存及原生展示是否成功分别表达。
 
-`app/external_targets.dart` 统一通知与组件的查看目标，延迟跨越读取阻断、启动页及模态草稿；命令消费不等待导航。没有增加业务状态机、后台 isolate、常驻服务或依赖包，接入范围与验证见 [第六阶段](../plan/stage6-widgets-live-activity.md#实施与集中核验结果)。
+`app/external_targets.dart` 统一通知与组件的查看目标，延迟跨越读取阻断、启动页及模态草稿；命令消费不等待导航。没有增加业务状态机、后台 isolate、常驻服务或依赖包，接入范围与验证见 [原生组件与实时活动](system-surfaces.md)。

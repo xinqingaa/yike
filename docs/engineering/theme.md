@@ -13,7 +13,7 @@ Text('标题', style: ts.textStyle.title);
 
 一刻在设置页选择机械、水位或日影表盘，并独立选择浅色、深色或跟随系统。默认机械、跟随系统；选择作用于页面、组件及弹层，并经 AppPrefs 恢复。`themePackProvider` 与 `themeModeProvider` 是唯一选择状态；组件通过最近的 TS ThemeExtension 读取。
 
-当前主题包是首轮迁移留下的生成基线。普通 Flutter 迭代可在类型化本地扩展点增加设计量；不改写生成包、导入清单或既有映射身份。只有明确的外部 DS 同步任务才使用 [DS Target Sync Skill](../../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。主题的组件键也参与解析；资源按模式选择，仅输出高分辨率图片，组件明确设置逻辑尺寸。
+主题包、导入清单与映射身份由生成工具维护；本地设计量通过类型化扩展点提供。机械主题的正文 / 数字字重 400、标题 / 标签字重 500 直接维护在对应字体 value 中，不叠加排版覆盖层；这项本地字体维护不涉及外部 DS。其它生成值遵守同步边界，只有明确的外部 DS 任务才使用 [DS Target Sync Skill](../../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。主题组件键参与解析；图片资源按明暗模式选择，并由组件指定逻辑尺寸。
 
 `proto-bridge.themes.json` 记录选择范围、主题与模式矩阵、源摘要和解析值。同步门禁同时核对生成的 Dart 内容和这个矩阵，不能只凭 accessor 存在或源端 fingerprint 声明主题已落地。仅显式固定 Handoff 专项需要使用其固定主题表，不读取 active/latest。
 
