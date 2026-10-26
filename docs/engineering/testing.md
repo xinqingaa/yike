@@ -8,7 +8,9 @@
 node tool/verify.mjs
 ```
 
-依次执行本地文档链接/锚点检查、`flutter pub get`、Dart 格式门禁、`flutter analyze` 和完整 `flutter test`。本地映射测试验证导入基线的可访问性，不读取外部 Producer。已在入口执行的检查不必重复运行；定位时可单独运行 `node tool/check-docs.mjs`、`flutter analyze` 或指定测试文件。
+依次执行本地文档链接/锚点检查、蒲公英发布脚本的 Node 模拟回归、`flutter pub get`、Dart 格式门禁、`flutter analyze` 和完整 `flutter test`。本地映射测试验证导入基线的可访问性，不读取外部 Producer。已在入口执行的检查不必重复运行；定位时可单独运行 `node tool/check-docs.mjs`、`flutter analyze` 或指定测试文件。
+
+静态分析排除 `build/**` 生成目录，避免历史临时审计脚本进入源码门禁。Android APK 的本地 / 云端构建、签名与产物核验见 [Android 构建与签名](android-build.md)。
 
 只改文档运行文档检查并核对内容；公共组件、路由、Theme 或运行机制变化执行完整检查。`tool/ds-sync.mjs` 和 `tool/ds-theme.mjs` 仅用于用户明确要求的外部 DS 专项，依赖外部 Producer，不属于日常客户端门禁。不要为文档检查运行改写生成资源的同步命令。
 
@@ -108,7 +110,7 @@ flutter test integration_test/motion_profile_test.dart -d <真机 ID> --profile 
 
 长期测试：`test/features/review/review_statistics_test.dart` 验证跨日去重/本期最长/开始小时、同期及短月、当前目标参考与趋势窗口；`test/stage34_ui_test.dart` 验证三主题圈控制/完成保留、飞行并发/零圈拒绝/减少动态效果、筛选与返回、筛选时图形位置稳定、日期点击/长按均查看同一 Menu，卡内入口再进入 Sheet、专注卡时长与次数同行、统计二级 Tab 与图表滚动保留、类型环点击联动、统计习惯完成格查看与详情卡一致、无边框铺满色块、数据卡滚动关闭、窄屏大字体。`test/feedback_service_test.dart` 检查查看触感的总开关、可选习惯 scope 和前后台门控。
 
-阶段 3、4 的临时预览入口与原生验收脚本已在用户验收后删除，长期回归留在上述测试。2026-10-25 清理第五阶段临时材料和旧体验 / 布局 / 动效专用截图采集脚本，移除 17 处历史截图失效链接。长期通知 / 反馈回归位于 `test/stage5_notifications_test.dart`、`test/feedback_service_test.dart`，必要替身保留。原生 MMKV、进程重启与性能采样属于可复用工程工具，继续保留。上轮仍有 7 项基线复现的旧测试失败，见 [记录](../plan/stage5-notifications.md#上轮自动化结果)，阶段验收不代表全量门禁通过。
+阶段 3、4 的临时预览入口与原生验收脚本已在用户验收后删除，长期回归留在上述测试。2026-10-25 清理第五阶段临时材料和旧体验 / 布局 / 动效专用截图采集脚本，移除 17 处历史截图失效链接。长期通知 / 反馈回归位于 `test/stage5_notifications_test.dart`、`test/feedback_service_test.dart`，必要替身保留。原生 MMKV、进程重启与性能采样属于可复用工程工具，继续保留。历史 7 项基线失败见 [记录](../plan/stage5-notifications.md#上轮自动化结果)；2026-10-26 CI 接入时已核对现行规则并修复过期测试操作 / 断言，全套 240 项 Flutter 测试通过。历史阶段记录不改写，阶段验收与本次工程检查分别报告。
 
 
 2026-10-25 站内提示 UI 修订：`test/stage5_notifications_test.dart` 增加不占位、上滑胶囊 / 点击展开、新会话保留收起、暂停图标隔离、收起期间完成不闪回、三主题窄屏大字和无 header 预约详情回归。持续扫光使用有界呈现泵，不用 `pumpAndSettle` 等待静止；页面模式选择应限定顶部 Tab，浮层中同名标题不作为 Tab 目标。原生手感、光效与性能仍由设备验证，不从 Widget 断言推断。

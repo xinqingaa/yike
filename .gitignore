@@ -33,6 +33,12 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Android release credentials, including copies outside android/.
+*.jks
+*.keystore
+*.p12
+key.properties
+
 # Symbolication related
 app.*.symbols
 

@@ -14,6 +14,7 @@ function run(command, args) {
 }
 
 await run(process.execPath, [path.join(projectRoot, 'tool/check-docs.mjs')]);
+await run(process.execPath, ['--test', path.join(projectRoot, 'tool/publish-pgyer.test.mjs')]);
 await run('flutter', ['pub', 'get']);
 await run('dart', ['format', '--output=none', '--set-exit-if-changed', 'lib', 'test', 'integration_test']);
 await run('flutter', ['analyze']);

@@ -28,6 +28,8 @@ flutter run -d <device-id>
 
 需要 Flutter SDK，Dart 版本须满足 `pubspec.yaml` 中的 `^3.12.0`。iOS 使用 Xcode 与 CocoaPods。完整检查和设备验证见 [测试与视觉验证](docs/engineering/testing.md)。
 
+Android APK 使用 `node tool/build-android.mjs --preview` 构建内测版；正式签名、体积优化和 GitHub Actions 配置见 [Android 构建与签名](docs/engineering/android-build.md)。
+
 iOS 原生构建会调用 PATH 中的 CMake。换设备时下载官方 macOS 通用包 4.4.4，核对 SHA-256 后解压到用户目录，再把最后一行写入该设备的 shell 配置（如 `~/.zshrc`）。新开终端后运行。不要再安装第二份。
 
 ```bash
