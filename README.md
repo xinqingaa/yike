@@ -55,7 +55,7 @@ node tool/verify.mjs
 
 ## Android 打包与发布
 
-进入 [Android build · 打包与蒲公英发布](https://github.com/xinqingaa/yike/actions/workflows/android-build.yml)，点击 **Run workflow**，选择 `main` 和所需操作：
+进入 [Client checks](https://github.com/xinqingaa/yike/actions/workflows/android-build.yml)。Actions 列表里的这个名称只表示客户端检查；打包需点击 **Run workflow**，选择 `main` 和所需操作：
 
 | 操作 | 结果 |
 | --- | --- |

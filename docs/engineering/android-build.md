@@ -4,7 +4,7 @@
 
 ## 云端手动打包
 
-进入 [Android build · 打包与蒲公英发布](https://github.com/xinqingaa/yike/actions/workflows/android-build.yml)，点击 **Run workflow**，选择 `main` 与操作后运行：
+进入 [Client checks](https://github.com/xinqingaa/yike/actions/workflows/android-build.yml)。Actions 列表使用这个名称，push 与 PR 只出现客户端检查。打包需点击 **Run workflow**，选择 `main` 与操作后运行：
 
 | 操作 | 签名 | 结果 |
 | --- | --- | --- |

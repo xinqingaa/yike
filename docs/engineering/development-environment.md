@@ -32,7 +32,9 @@ flutter devices
 flutter run -d <device-id>
 ```
 
-CMake 是 flutter_soloud 的 iOS 原生构建依赖，CocoaPods 脚本直接调用 PATH 中的 `cmake`。已有可用版本时先检查，不重复安装。以下为本项目使用的官方 macOS 通用包方案：
+CMake 是 flutter_soloud 的 iOS 原生构建依赖。CocoaPods 脚本不读取 `~/.zshrc`，只在 `/opt/homebrew/bin`、`/usr/local/bin` 以及进程已经继承的 PATH 中查找 `cmake`。官方包若只解压到 `~/.local/opt`，Xcode 脚本阶段仍然报未安装。`/opt/homebrew/bin/cmake` 或 `/usr/local/bin/cmake` 已能运行时先检查，不重复安装。`build/` 里的解压目录不会被脚本使用。Android CMake 3.22.1 由 SDK 提供，不能代替这条 PATH。
+
+以下为本项目使用的官方 macOS 通用包方案。Apple Silicon 的 Homebrew 目录可写时链接到 `/opt/homebrew/bin`；否则改为 `/usr/local/bin`。
 
 ```bash
 mkdir -p "$HOME/.local/opt"
@@ -40,11 +42,11 @@ curl -fL -o /tmp/cmake-4.4.4-macos-universal.tar.gz \
   https://github.com/Kitware/CMake/releases/download/v4.4.4/cmake-4.4.4-macos-universal.tar.gz
 echo "4b7b73704b1db9b374e5c9ab8e17ac6148b817b6396ee75cd94a852cbac9d305  /tmp/cmake-4.4.4-macos-universal.tar.gz" | shasum -a 256 -c -
 tar -xzf /tmp/cmake-4.4.4-macos-universal.tar.gz -C "$HOME/.local/opt"
-export PATH="$HOME/.local/opt/cmake-4.4.4-macos-universal/CMake.app/Contents/bin:$PATH"
+ln -sfn "$HOME/.local/opt/cmake-4.4.4-macos-universal/CMake.app/Contents/bin/cmake" /opt/homebrew/bin/cmake
 cmake --version
 ```
 
-摘要来自该版本发布的 `cmake-4.4.4-SHA-256.txt`。将 export 行写入自己的 shell 配置（如 `~/.zshrc`），新开终端后核对；避免重复添加 PATH。Android CMake 独立于这条 PATH。打开 `ios/Runner.xcworkspace` 配置本机可用的签名；Xcode 许可、开发者账号和证书由用户管理，不自动变更账户或替用户接受许可。
+摘要来自该版本发布的 `cmake-4.4.4-SHA-256.txt`。打开 `ios/Runner.xcworkspace` 配置本机可用的签名；Xcode 许可、开发者账号和证书由用户管理，不自动变更账户或替用户接受许可。
 
 ## 换设备
 

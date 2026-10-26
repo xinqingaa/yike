@@ -8,7 +8,7 @@
 node tool/verify.mjs
 ```
 
-依次执行本地文档链接/锚点检查、蒲公英发布脚本的 Node 模拟回归、`flutter pub get`、Dart 格式门禁、`flutter analyze` 和完整 `flutter test`。本地映射测试验证导入基线的可访问性，不读取外部 Producer。已在入口执行的检查不必重复运行；定位时可单独运行 `node tool/check-docs.mjs`、`flutter analyze` 或指定测试文件。
+依次执行本地文档链接/锚点检查、蒲公英发布脚本的 Node 模拟回归、`flutter pub get`、Dart 格式报告、`flutter analyze` 和完整 `flutter test`。格式命令使用 `dart format --output=none`，只在日志里列出未格式化的文件，不改写源码，也不因此让检查失败。本地映射测试验证导入基线的可访问性，不读取外部 Producer。已在入口执行的检查不必重复运行；定位时可单独运行 `node tool/check-docs.mjs`、`flutter analyze` 或指定测试文件。
 
 静态分析排除 `build/**` 生成目录，避免构建产物进入源码门禁。Android APK 的本地 / 云端构建、签名与产物核验见 [Android 构建与发布](android-build.md)。
 
