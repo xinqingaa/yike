@@ -24,6 +24,7 @@
 | [资源](engineering/assets.md) | 导入资源与 Flutter 自有资源的维护 |
 | [路由](engineering/routing.md) | 根导航、页面栈、面板、返回与参数 |
 | [测试](engineering/testing.md) | 独立客户端检查、行为、原生、动效与 profile |
+| [Android 构建](engineering/android-build.md) | 包体优化、内测 / 正式签名、构建产物与 GitHub Actions |
 
 ## 协作与状态
 

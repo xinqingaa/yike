@@ -325,7 +325,7 @@ void main() {
               as BoxDecoration;
       await tester.ensureVisible(find.byType(CommonHeatmap));
       await pumpPresentation(tester);
-      final ts = TS.of(tester.element(find.bySemanticsLabel('最近365天完成 1 次')));
+      final ts = TS.of(tester.element(find.bySemanticsLabel('最近一年完成 1 次')));
       expect(decoration('2026-10-14').color, ts.colors.primary);
       expect(decoration('2026-10-15').color, ts.heatmapArchived);
       expect(decoration('2026-10-13').color, ts.heatmapEmpty);

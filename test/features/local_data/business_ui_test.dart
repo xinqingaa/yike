@@ -21,7 +21,7 @@ import 'local_data_test.dart' show FaultPrefs;
 
 void main() {
   testWidgets(
-    'failed timing save keeps the sheet and retries the same configuration',
+    'failed timing auto-save keeps the sheet and retries the same configuration',
     (tester) async {
       final disk = FaultPrefs();
       var app = await pumpYike(tester, preferences: disk);
@@ -29,23 +29,26 @@ void main() {
       await pumpPresentation(tester);
       await tester.tap(find.text('专注时长'));
       await pumpPresentation(tester);
+      disk.failWrite = true;
+      final old = disk.values[PrefsKey.snapshot.storageKey];
       await tester.tap(
         find.descendant(
-          of: find.byType(ListWheelScrollView).at(1),
+          of: find.byType(ListWheelScrollView).first,
           matching: find.text('26'),
         ),
       );
       await pumpPresentation(tester);
-      disk.failWrite = true;
-      final old = disk.values[PrefsKey.snapshot.storageKey];
-      await tester.tap(find.text('确认'));
-      await pumpPresentation(tester);
       expect(find.byType(DurationSheetBody), findsOneWidget);
+      expect(find.text('确认'), findsNothing);
       expect(find.text('尚未保存，请重试；关闭后可能丢失'), findsOneWidget);
       expect(disk.values[PrefsKey.snapshot.storageKey], old);
       expect(app.read(timingPreferencesProvider).focusSeconds, 1560);
+      // Auto-save sheets close explicitly; the persistent status retries the
+      // already accepted value without changing the configuration again.
+      await tester.tap(find.byTooltip('关闭'));
+      await pumpPresentation(tester);
       disk.failWrite = false;
-      await tester.tap(find.text('确认'));
+      await tester.tap(find.text('重试保存'));
       await pumpPresentation(tester);
       expect(find.byType(DurationSheetBody), findsNothing);
       expect(app.read(localDataProvider).writeError, isNull);
@@ -284,6 +287,9 @@ void main() {
       await pumpPresentation(tester);
       expect(find.text('2 天'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('2026-10-16'));
+      await pumpPresentation(tester);
+      await tester.ensureVisible(find.text('查看当日记录'));
+      await tester.tap(find.text('查看当日记录'));
       await pumpPresentation(tester);
       expect(find.text('23:59'), findsOneWidget);
       expect(

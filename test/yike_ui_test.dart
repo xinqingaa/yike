@@ -14,6 +14,7 @@ import 'package:yike/common/clock.dart';
 import 'package:yike/features/focus/focus_models.dart';
 import 'package:yike/features/local_data/local_data.dart';
 import 'package:yike/features/home/pages/home_page.dart';
+import 'package:yike/features/settings/pages/settings_page.dart';
 import 'package:yike/features/habits/pages/habit_editor.dart';
 import 'package:yike/storage/providers.dart';
 import 'package:yike/storage/app_prefs.dart';
@@ -211,7 +212,8 @@ void main() {
       expect(tester.getSize(row).height, closeTo(53, 1));
       await tester.tap(find.text('专注时长'));
       await pumpPresentation(tester);
-      expect(find.text('确认'), findsOneWidget);
+      expect(find.byType(CommonWheelPicker), findsOneWidget);
+      expect(find.text('确认'), findsNothing);
       final title = find.text('专注时长').last;
       final start = tester.getTopLeft(title).dy;
       await tester.tap(find.byTooltip('关闭'));
@@ -222,7 +224,8 @@ void main() {
       final bounds = tester.getRect(row);
       await tester.tapAt(Offset(bounds.center.dx, bounds.center.dy));
       await pumpPresentation(tester);
-      expect(find.text('确认'), findsOneWidget);
+      expect(find.byType(CommonWheelPicker), findsOneWidget);
+      expect(find.text('确认'), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -236,7 +239,7 @@ void main() {
       await pumpPresentation(tester);
       await tester.ensureVisible(find.byType(CommonHeatmap));
       await pumpPresentation(tester);
-      expect(find.bySemanticsLabel('最近365天完成 0 次'), findsOneWidget);
+      expect(find.bySemanticsLabel('最近一年完成 0 次'), findsOneWidget);
       expect(container.read(habitsProvider).first.dates, isEmpty);
       await tester.tap(find.text('编辑'));
       await pumpPresentation(tester);
@@ -270,6 +273,9 @@ void main() {
       await tester.tap(find.text('月'));
       await pumpPresentation(tester);
       await tester.tap(find.bySemanticsLabel('2026-10-16'));
+      await pumpPresentation(tester);
+      await tester.ensureVisible(find.text('查看当日记录'));
+      await tester.tap(find.text('查看当日记录'));
       await pumpPresentation(tester);
       expect(find.text('08:50'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('day-previous')));
@@ -319,39 +325,79 @@ void main() {
     final container = await pumpYike(tester);
     await tester.tap(find.byTooltip('设置'));
     await pumpPresentation(tester);
-    await tester.ensureVisible(find.byTooltip('打开常用倒计时'));
+    final settingsScroll = find
+        .descendant(
+          of: find.byType(YikeSettingsPage),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('countdown/presets')),
+      250,
+      scrollable: settingsScroll,
+    );
+    await pumpPresentation(tester);
     await tester.tap(find.byTooltip('打开常用倒计时'));
     await pumpPresentation(tester);
     await tester.tap(find.byTooltip('打开常用 1'));
     await pumpPresentation(tester);
-    expect(find.text('清空此项'), findsOneWidget);
-    await tester.tap(find.text('清空此项'));
-    await pumpPresentation(tester);
-    expect(container.read(timingPreferencesProvider).presets.first, isNull);
-    await tester.tap(find.byTooltip('打开常用 1'));
-    await pumpPresentation(tester);
-    await tester.tap(find.text('保存'));
-    await pumpPresentation(tester);
-    expect(find.text('这个时长已在其它常用项中'), findsOneWidget);
-    expect(container.read(timingPreferencesProvider).presets.first, isNull);
+    expect(find.text('清空此项'), findsNothing);
+    expect(container.read(timingPreferencesProvider).presets.first, 180);
     await tester.tap(find.byTooltip('返回上一步'));
     await pumpPresentation(tester);
-    final done = find.text('完成');
-    final top = tester.getTopLeft(done).dy;
-    await tester.tap(done);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 120));
-    expect(tester.getTopLeft(done).dy - top, greaterThan(30));
+    await tester.tap(find.byTooltip('打开常用 2'));
     await pumpPresentation(tester);
-    await tester.ensureVisible(find.byTooltip('打开短时记录确认阈值'));
+    await tester.tap(find.text('清空此项'));
+    await pumpPresentation(tester);
+    expect(container.read(timingPreferencesProvider).presets, [
+      180,
+      null,
+      600,
+      1200,
+    ]);
+    await tester.tap(find.byTooltip('打开常用 2'));
+    await pumpPresentation(tester);
+    final minutes = find.descendant(
+      of: find.byKey(const ValueKey('wheel-column-minute')),
+      matching: find.byType(ListWheelScrollView),
+    );
+    await tester.tap(find.descendant(of: minutes, matching: find.text('04')));
+    await pumpPresentation(tester);
+    expect(container.read(timingPreferencesProvider).presets[1], 240);
+    await tester.tap(find.descendant(of: minutes, matching: find.text('03')));
+    await pumpPresentation(tester);
+    expect(find.text('这个时长已在其它常用项中'), findsOneWidget);
+    expect(container.read(timingPreferencesProvider).presets, [
+      180,
+      240,
+      600,
+      1200,
+    ]);
+    await tester.tap(find.byTooltip('返回上一步'));
+    await pumpPresentation(tester);
+    await tester.tap(find.byTooltip('关闭'));
+    await pumpPresentation(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('feedback/threshold')),
+      -250,
+      scrollable: settingsScroll,
+    );
+    await pumpPresentation(tester);
     await tester.tap(find.byTooltip('打开短时记录确认阈值'));
     await pumpPresentation(tester);
     await tester.tap(find.byTooltip('自定义时长'));
     await pumpPresentation(tester);
     expect(find.text('自定义时长'), findsOneWidget);
-    await tester.tap(find.text('确认'));
+    final seconds = find.descendant(
+      of: find.byKey(const ValueKey('wheel-column-second')),
+      matching: find.byType(ListWheelScrollView),
+    );
+    await tester.tap(find.descendant(of: seconds, matching: find.text('11')));
     await pumpPresentation(tester);
-    expect(container.read(timingPreferencesProvider).threshold, 10);
+    expect(container.read(timingPreferencesProvider).threshold, 11);
+    await tester.tap(find.byTooltip('关闭'));
+    await pumpPresentation(tester);
+    expect(container.read(timingPreferencesProvider).threshold, 11);
     expect(tester.takeException(), isNull);
   });
   for (final size in [const Size(320, 640), const Size(768, 1024)]) {
