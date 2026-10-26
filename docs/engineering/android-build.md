@@ -37,9 +37,9 @@ node tool/build-android.mjs --build-name 1.0.0 --build-number 2
 
 ## GitHub Actions
 
-[Android 工作流](../../.github/workflows/android-build.yml) 在 main 推送、PR 和手动运行时执行。统一客户端检查和原生构建独立运行，方便检查失败时仍下载构建诊断；发布 job 同时依赖二者成功，检查失败不会上传。普通推送 / PR 只构建内测包。
+[Android 工作流](../../.github/workflows/android-build.yml) 在 main 推送、PR 和手动运行时执行。普通 main 推送 / PR 自动运行客户端检查，不构建 APK；变更全部为 Markdown 文档时只检查文档，不安装 Flutter。手动运行始终执行完整客户端检查与 APK 构建；检查和构建独立运行，发布 job 同时依赖二者成功，检查失败不会上传。
 
-推送 / PR 默认构建 preview，不读取正式签名。云端 preview 使用 runner 临时 debug key，只用于构建核验，不能保证覆盖本机安装包或前次云端包。手动运行选择“发布到蒲公英”或“只构建正式 APK”时自动使用 release 签名，并在仓库 Actions Secrets 设置：
+APK 构建仅手动触发。云端 preview 使用 runner 临时 debug key，只用于构建核验，不能保证覆盖本机安装包或前次云端包。手动运行选择“发布到蒲公英”或“只构建正式 APK”时自动使用 release 签名，并在仓库 Actions Secrets 设置：
 
 | Secret | 内容 |
 | --- | --- |
@@ -56,7 +56,7 @@ node tool/build-android.mjs --build-name 1.0.0 --build-number 2
 
 在同一仓库的 Actions Secrets 中配置 `PGYER_API_KEY`，值为蒲公英账户 API Key，不需要账号 ID 或 appKey。可选配置 `PGYER_INSTALL_PASSWORD`：有值时按密码安装发布，没有时为公开链接安装。安装密码和 API Key 都只通过发布步骤的环境变量读取，不写入应用、日志或 artifact。
 
-打开仓库 Actions → Android build → Run workflow，分支选择 main，“选择操作”保持默认“发布到蒲公英”，点击 Run workflow 即可。发布会自动使用正式签名，不再需要分别选择 signing 和勾选发布。完整客户端检查与签名构建均通过后，自动下载本次正式包、上传并等待蒲公英完成发布。成功后的 job Summary 包含下载链接和二维码，另行归档 `pgyer-release.json`。
+日常小改动可直接提交 main，较大功能使用临时功能分支，通过 PR 检查与验收后合并；不维护长期 dev 或专门打包分支。需要手机安装或下载 APK 时，打开仓库 Actions → Android build → Run workflow，分支选择 main，“选择操作”保持默认“发布到蒲公英”，点击 Run workflow 即可。发布会自动使用正式签名，不再需要分别选择 signing 和勾选发布。完整客户端检查与签名构建均通过后，自动下载本次正式包、上传并等待蒲公英完成发布。成功后的 job Summary 包含下载链接和二维码，另行归档 `pgyer-release.json`。
 
 | 手动操作 | 签名 | 是否上传 |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ node tool/build-android.mjs --build-name 1.0.0 --build-number 2
 | 只构建正式 APK | release | 否 |
 | 只构建内测 APK | preview / runner debug key | 否 |
 
-普通推送 / PR 始终为 preview 构建，不受手动操作默认值影响。旧版页面曾允许 preview 签名与发布勾选同时存在，运行 #5（40263787489）因此在参数检查阶段被拦截；已用单选操作消除该无效组合。旧失败运行重跑会继续使用旧提交的配置；修订上线后请从 main 新建一次运行。
+普通推送 / PR 不构建 APK，也不发布蒲公英。旧版页面曾允许 preview 签名与发布勾选同时存在，运行 #5（40263787489）因此在参数检查阶段被拦截；已用单选操作消除该无效组合。旧失败运行重跑会继续使用旧提交的配置；修订上线后请从 main 新建一次运行。
 
 [发布脚本](../../tool/publish-pgyer.mjs) 使用三步流程：获取临时上传凭证、上传 APK、每 5 秒查询最终发布状态，最多等待 5 分钟。上传前校验正式包清单、字节数与 SHA-256，拒绝 preview 包和不匹配文件；只向蒲公英上传 APK，不上传符号或签名文件。返回发布成功后再次核对包名、平台、版本和大小，才输出下载地址。安装密码不会出现在成功记录中。
 

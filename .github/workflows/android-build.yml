@@ -29,18 +29,47 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Determine check scope
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          DIFF_HEAD: ${{ github.sha }}
+        run: |
+          python3 - <<'PYTHON'
+          import os, subprocess
+          base = os.environ.get('DIFF_BASE', '')
+          docs_only = False
+          if os.environ['EVENT_NAME'] != 'workflow_dispatch' and base and set(base) != {'0'}:
+              files = subprocess.check_output([
+                  'git', 'diff', '--name-only', '-z', base, os.environ['DIFF_HEAD'],
+              ]).decode().split('\0')
+              files = [name for name in files if name]
+              docs_only = bool(files) and all(name.endswith('.md') for name in files)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'docs_only={str(docs_only).lower()}\n')
+          print('Documentation checks only' if docs_only else 'Full client checks')
+          PYTHON
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+      - name: Check documentation
+        if: steps.scope.outputs.docs_only == 'true'
+        run: node tool/check-docs.mjs
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        if: steps.scope.outputs.docs_only != 'true'
         with:
           flutter-version: '3.44.0'
           channel: stable
           cache: true
       - run: node tool/verify.mjs
+        if: steps.scope.outputs.docs_only != 'true'
 
   build:
     name: Build arm64 APK
+    if: github.event_name == 'workflow_dispatch'
     # Keep build artifacts for diagnosis even when Client checks fail.
     # Publication is a separate job gated by both build and Client checks.
     runs-on: ubuntu-22.04
