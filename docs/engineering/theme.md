@@ -21,7 +21,7 @@ Text('标题', style: ts.textStyle.title);
 
 `ts.colors`、`ts.textStyle`、`ts.spacing`、`ts.sizing`、`ts.radius`、`ts.opacity`、`ts.motion`、`ts.elevation`、`ts.border`、`ts.layout`、`ts.layer`、`ts.effect`、`ts.assets` 是组件使用入口。具体设计量只放在主题目录；页面和公共组件不得另建平行常量或复制颜色数值。本地几何与动效节拍分别维护在 `YikeGeometry`、`YikeMotion`；它们不冒充导入 Contract 的 Token。
 
-`protoBridgeTokenSnapshot(ts)` 接收明确的上下文主题，用于调试和映射验证。`proto-bridge.target.json` 维护 当前可绑定主题键的精确 accessor。映射有效仅说明落点可访问；组件的视觉、状态和实际消费仍需单独验证。
+`protoBridgeTokenSnapshot(ts)` 接收明确的上下文主题，用于调试和映射验证。`proto-bridge.target.json` 维护可绑定主题键的精确 accessor。映射有效仅说明落点可访问；组件的视觉、状态和实际消费仍需单独验证。
 
 `transparent` / `none` 是绑定字面量，不建立 Token accessor。资源未提供时由组件按 Contract 回退。Flutter 用逻辑像素、比例、Curve、BoxShadow 表达 Web 对应语义。相对字距保留为类型化 AppLetterSpacing，在使用处按实际字号解析；不把 em 直接当作像素。CSS 内阴影、滤镜饱和度和连续字重使用明确的平台翻译，不宣称逐像素一致。
 
@@ -35,13 +35,13 @@ Material Theme 和 TS 使用同一主题包。`TS.lerp` 与 `theme_interpolation
 
 `proto-bridge.themes.json.artwork` 按所属包登记主题图形：`source` 仅记录 PBWork 来源包、相对 DS glyphs/ 的源文件标识和源摘要；`raster` 与 `layers` 记录 Flutter PNG 路径、viewBox、逻辑尺寸及专注过程变体关联。SVG 原稿只在 PBWork 维护，Flutter 同步只生成 PNG，不复制 SVG。
 
-PNG 按原始画布与主题 size.plot 中较大的宽度、3 倍像素密度计算。相同状态图层通过 `layerAsset` 显式共用，元数据指向唯一 PNG。资源按主题包选择范围同步；同步资源不代表已完成业务表盘动画。
+PNG 按原始画布与主题 size.plot 中较大的宽度、3 倍像素密度计算。相同状态图层通过 `layerAsset` 显式共用，元数据指向唯一 PNG。资源按主题包选择范围同步，业务表盘动画由 Flutter 呈现层实现。
 
 资源来源、目录和精确复用见 [资源规范](assets.md)。显式 DS 专项的同步检查读取源文件及摘要，检查 Flutter 元数据与 PNG 尺寸；普通客户端检查只验证本地基线，不访问外部源码。
 
 ## 视口与文字适配
 
-应用的准备、失败重试与正式页面共用 `AppViewport`，以既有手机设计基准 390×844 初始化 flutter_screenutil。`AppMetrics` 在初始化后捕获不可变的转换因子，窗口尺寸变化时重建 Theme。类型化主题包保留 Producer 原始数值；TS 在消费层转换一次，组件直接使用 TS，不再追加 `.w`、`.h`、`.r` 或 `.sp`。
+应用的准备、失败重试与正式页面共用 `AppViewport`，以手机设计基准 390×844 初始化 flutter_screenutil。`AppMetrics` 在初始化后捕获不可变的转换因子，窗口尺寸变化时重建 Theme。类型化主题包保留 Producer 原始数值；TS 在消费层转换一次，组件直接使用 TS，不再追加 `.w`、`.h`、`.r` 或 `.sp`。
 
 横向边界与宽度使用 `.w`，纵向控件和面板高度使用 `.h`；圆角、等比图形、通用间距、边框与阴影使用 `.r`；字号使用 `.sp`。长宽和等比缩放因子有上下限，字号的视口因子不超过 1，避免大窗口持续放大文字。具体边界与文字角色上限唯一维护在 `lib/theme/app_metrics.dart`。字体行高倍数、字重、比例、行数、动画时间及真实屏幕/锚点坐标不缩放；相对字距按转换后的字号解析。
 
@@ -51,6 +51,6 @@ Flutter 的正文、标签与标题使用 Target 的紧凑文字档位上限，�
 
 ## Flutter 自有扩展
 
-新增本地能力先复用现有 TS 设计量；新的跨组件颜色/尺寸按语义增加类型化本地主题属性，并在浅深模式和插值中验证。几何比例、幅度和节拍可进入本地 YikeGeometry/YikeMotion。生成文件与 proto-bridge 清单只在显式同步中更新，普通组件调整不要求先修改外部平台。
+新增本地能力先复用现有 TS 设计量；新的跨组件颜色/尺寸按语义增加类型化本地主题属性，并在浅深模式和插值中验证。几何比例、幅度和节拍可进入本地 YikeGeometry/YikeMotion。除本页规定的机械字体本地维护项外，生成文件与 proto-bridge 清单只在显式同步中更新；普通组件使用本地扩展点。
 
 类型环与图例使用本地 `AppChartColors`，通过 `ts.chartTypeColors` 读取三种类型颜色；三主题共用，按浅深模式提供颜色。该配色是 Flutter 产品扩展，不改写生成主题包。

@@ -37,7 +37,7 @@ Future 返回后检查 mounted 和请求身份；新请求取代旧请求时旧�
 
 不可见或减少动态效果时直接呈现最终结果；已经错过的反馈不排队补播。中途撤销、暂停或更换对象时取消旧动画并承接新状态。具体体验见 [动效](../product/motion.md)，运行条件见 [运行时](runtime.md)。
 
-专注表盘由单个按模式派生的展示 Provider 组合会话与视图。该展示以会话身份和 FocusViewData 判断相等：引擎仍按 250ms 推进用时和切日，表盘 Ticker 从锚点投影连续进度，界面在可见秒、状态或圈数变化时重建。完成转换在 feature Provider 内同步发送，不保存可重播的完成事件队列。打卡及撤销反馈由 habits Provider 在提交结果已接受时生成；页面不再读回快照猜测动作是否生效。CommitResult 区分拒绝、仅内存校准、接受但保存失败、已保存；保留的 bool 接口仍表达保存结果。习惯编辑 Provider 统一拥有草稿、原始提醒时间、校验和提交，Widget 只持有输入控制器。
+专注表盘由单个按模式派生的展示 Provider 组合会话与视图。该展示以会话身份和 FocusViewData 判断相等：引擎按 250ms pulse 校准用时和切日，表盘 Ticker 从锚点投影连续进度，界面在可见秒、状态或圈数变化时重建。完成转换在 feature Provider 内同步发送，不保存可重播的完成事件队列。打卡及撤销反馈由 habits Provider 在提交结果已接受时生成；页面通过命令结果判断动作是否生效。CommitResult 区分拒绝、仅内存校准、接受但保存失败、已保存；bool 返回值表达保存结果。习惯编辑 Provider 统一拥有草稿、原始提醒时间、校验和提交，Widget 只持有输入控制器。
 
 ## 本次时长与常用项
 
@@ -45,5 +45,4 @@ FocusData 持有番茄本次覆盖、倒计时本次草稿及选中槽；待开�
 
 表盘连续输入与惯性只在局部 State 中，每次收束以模式、基值和上限校验后提交。草稿不能成为第二套计时事实；设置面板依然通过 TimingPreferencesController 修改同一快照。
 
-
-站内计时条使用实例级 autoDispose `TimerStatusController` 管理不可变条目、收起、拖动意图和前后台呈现状态；完成寿命 Timer 由 Notifier 持有并在销毁时取消。Widget 不用 `setState` 更新这些状态。动画控制器、一次性事件失效身份和排帧标记仍是局部生命周期资源；高度测量缓存由 ValueNotifier / ValueListenableBuilder 驱动，仅用于尺寸过渡，不把每帧测量或扫光相位写入业务 Provider。习惯编辑直接在 Provider 草稿的 `reminderMinutes` 中保留滚轮选择，不再维护一份字符串时间 / TextEditingController；保存 / 取消仍遵循表单提交规则。通知设置为纯 ConsumerWidget，从事实派生完整列表，无展开状态。
+站内计时条使用实例级 autoDispose `TimerStatusController` 管理不可变条目、收起、拖动意图和前后台呈现状态；完成寿命 Timer 由 Notifier 持有并在销毁时取消。Widget 不用 `setState` 更新这些状态。动画控制器、一次性事件失效身份和排帧标记仍是局部生命周期资源；高度测量缓存由 ValueNotifier / ValueListenableBuilder 驱动，仅用于尺寸过渡，不把每帧测量或扫光相位写入业务 Provider。习惯编辑直接在 Provider 草稿的 `reminderMinutes` 中保留滚轮选择，时间值使用整数分钟而非平行字符串状态；保存 / 取消遵循表单提交规则。通知设置为纯 ConsumerWidget，从事实派生完整列表，无展开状态。

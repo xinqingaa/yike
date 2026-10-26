@@ -1,6 +1,6 @@
 # 静态资源
 
-Flutter 静态资源统一放在 `asset/`，按职责归属分目录。`base/` 用于共享基础资源，`yike/` 用于当前产品。沿用既有归属，不能根据文件名猜来源，也不建立重复的 `assets/icons/`、`assets/themes/` 或原稿参考目录。
+Flutter 静态资源统一放在 `asset/`，按职责归属分目录。`base/` 用于共享基础资源，`yike/` 用于一刻专属资源。文件按归属维护，不能根据文件名猜来源，也不建立重复的 `assets/icons/`、`assets/themes/` 或原稿参考目录。
 
 ```text
 asset/
@@ -8,14 +8,14 @@ asset/
   yike/icons/        yike 专属图标
   yike/artwork/      yike 主题图形与状态图层
   yike/sound/        Flutter 自有三主题短音效
-  yike/brand/        用户选定 Logo 派生的品牌、图标与启动屏输入
+  yike/brand/        Logo 派生的品牌、图标与启动屏输入
 ```
 
 同一目录内按资源用途扩展 `images/` 等子目录，不按页面另存公共资源，不在多个归属下复制同一文件。新增文件须同时登记 `pubspec.yaml`；禁止把整个原型目录复制进应用资源包。
 
 ## 导入基线
 
-以下规则只约束导入清单管理的文件，Flutter 自有新增资源按下文维护。导入基线中的 DS SVG 仍在 PBWork 维护。同步过程读取其原始 SVG，转换成 PNG 后写入所属目录，Flutter 不保留 SVG。同步图标和图形通过导出器维护，不手工补 PNG、枚举或另一套参考原稿；具体操作见 [DS Target Sync Skill](../../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。
+以下规则只约束导入清单管理的文件，Flutter 自有新增资源按下文维护。导入基线中的 DS SVG 在 PBWork 维护。同步过程读取其原始 SVG，转换成 PNG 后写入所属目录，Flutter 不保留 SVG。同步图标和图形通过导出器维护，不手工补 PNG、枚举或另一套参考原稿；具体操作见 [DS Target Sync Skill](../../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。
 
 `proto-bridge.icons.json` 的 owner 决定图标归属：`shared` 对应 `base`，原型 ID 对应同名目录；文件路径和 Dart 资源映射同时生成。主题资源由实际拥有该资源的主题包归属决定，公共基础包对应 base，原型主题包对应其原型 ID。消费者使用生成路径，不从枚举名或文件名前缀拼接路径。
 
@@ -37,7 +37,7 @@ PNG 的像素尺寸与界面逻辑尺寸分开：组件通过主题指定显示�
 
 ## 品牌图标与启动屏
 
-用户选定的原图为根目录 `logo.png`，保留原图以便追溯。`tool/prepare_brand.dart` 从浅色展示底板中提取标识，保留主体纹理和柿色，生成 `asset/yike/brand/` 中的 11 份输入。深色版本提亮灰色主体，Android 单色和 iOS 着色版本只使用同一轮廓。原图中的展示圆角不烘焙到应用图标，圆角和自适应遮罩交由系统处理。
+品牌原图为根目录 `logo.png`，Y 轮廓、灰色主体与柿色上臂构成标识。`tool/prepare_brand.dart` 从浅色展示底板中提取标识，保留主体纹理和柿色，生成 `asset/yike/brand/` 中的 11 份输入。深色版本提亮灰色主体，Android 单色和 iOS 着色版本只使用同一轮廓。原图中的展示圆角不烘焙到应用图标，圆角和自适应遮罩交由系统处理。
 
 重新生成时运行：
 
@@ -54,14 +54,13 @@ Android 包含各密度传统图标、自适应前景/背景、单色图标、�
 
 ## 专项固定资源核对
 
-页面采集只固定资源身份、源摘要、使用信息和截图，正常路径不再重复归档 DS 原文件；页面可见图像实际加载失败仍使对应 Case 失败。消费页面 Evidence 时，图标信息可在节点 props 的 name/icons 中读取，表盘的 props.artwork 分开保留 declared、sourceDigest 与实际 image views。配合本地生成清单选择已有 PNG，不从 URL 或截图猜资源。
+页面采集只固定资源身份、源摘要、使用信息和截图，正常路径仅记录资源引用；页面可见图像实际加载失败仍使对应 Case 失败。消费页面 Evidence 时，图标信息可在节点 props 的 name/icons 中读取，表盘的 props.artwork 分开保留 declared、sourceDigest 与实际 image views。配合本地生成清单选择已有 PNG，不从 URL 或截图猜资源。
 
-固定版本不匹配时记录同步缺口，不以相似图代替。逐资产实际使用核验与历史原稿恢复的限制见 [专项说明](../integrations/proto-bridge.md)；旧归档 Blob 保持原有固定读取兼容。
+固定版本不匹配时记录同步缺口，不以相似图代替。逐资产实际使用核验与历史原稿恢复的限制见 [专项说明](../integrations/proto-bridge.md)；归档 Blob 按固定引用读取。
 
 ## 仓库内合成音效
 
-`tool/synth-sounds.mjs` 使用 Node 内置模块生成 `asset/yike/sound/{mechanical|water|sundial}-{tick|chime|finish}.wav`，共 9 个文件，16 位 PCM、44.1kHz、单声道，每段小于 150KB。来源为本仓库原创程序合成，无外部采样；以固定公式与包络可重复生成。资源已在 pubspec 登记，由 common/feedback 的类型化主题映射消费。它们不属于导入基线，不运行 DS 同步；合成脚本是产品资源维护工具，用户验收后保留。
-
+`tool/synth-sounds.mjs` 使用 Node 内置模块生成 `asset/yike/sound/{mechanical|water|sundial}-{tick|chime|finish}.wav`，共 9 个文件，16 位 PCM、44.1kHz、单声道，每段小于 150KB。来源为本仓库原创程序合成，无外部采样；以固定公式与包络可重复生成。资源在 pubspec 登记，由 common/feedback 的类型化主题映射消费。它们不属于导入基线，不运行 DS 同步；合成脚本负责可重复生成这些音效。
 
 系统通知复用上述 finish 音源：Android 原始资源位于 `android/app/src/main/res/raw/{mechanical|water|sundial}_finish.wav`，iOS 为 `ios/Runner/{mechanical|water|sundial}_finish.caf`（由同源 WAV 转为 PCM CAF，加入 Runner 资源）。修改源声音时同步更新这两套平台资源，不能只替换 Flutter asset。通知小图标为 `android/app/src/main/res/drawable/ic_notification.xml`；后台声音最终受系统权限、渠道、静音 / 专注模式控制，构建不证明听感或触感通过。
 
@@ -75,4 +74,4 @@ Android 包含各密度传统图标、自适应前景/背景、单色图标、�
 | 水位 | 轻柔的水滴“噗”，拨动复用相同音高 | 较深的一滴水落下并带一点回响 | 连续三滴水加上涟漪的余韵，约 1.2s |
 | 日影 | 木质轻叩，音量很低 | 低沉的木鱼声 | 柔和的铃声，约 1.5s |
 
-首版音效由仓库内的脚本合成，保证可用而且没有版权问题。文件名和格式固定，之后可以用专业录制的音效直接替换，不需要改代码。
+音效由仓库脚本合成，无外部采样。替换音源时保持文件名与格式，并同步更新 Flutter 和原生通知资源。

@@ -145,16 +145,14 @@ AppPop.status 封装统一库的完全自定义能力，SDK 句柄留在 overlay
 
 `AppDataCard` 在 overlay 内封装 Pop.menu 和私有句柄；feature 通过 DataCardTarget 提供锚点、内容与操作。数据卡是非模态查看层，透明穿透滚动，用 TapRegion 处理外点关闭，页面在滚动/选择变化时关闭；路由、Tab 不可见与后台同样关闭。锚点摆放与避边由统一库处理，不另建几何算法。宽度用本地 dataCardWidth，默认 260，并支持缩放/插值。
 
-`CommonPressableSurface` 支持可选 onLongPress；短按与长按均使用现有主题反馈。`CommonMonthCalendar.dayInteractionBuilder` 将日期视觉与 FocusNode 一起交给调用方，在同一个 CommonPressableSurface 上处理点击与长按，避免嵌套命中区域；方向键与默认日期选择行为保持，不增加选中事实。CommonYearGrid 共用年度日期排布与横向滚动，习惯详情和最近一年专注都使用它。CommonHeatmap 提供周数据、标签和语义，格子由调用方组合。CommonHeatmapBlock 绘制无边框实色格。习惯年格的创建前、未来和周对齐占位用 heatmapOutside；专注年格的周对齐占位与零时长同一档主色。调用方决定格子是否响应。
+`CommonPressableSurface` 支持可选 onLongPress；短按与长按使用同一主题反馈。`CommonMonthCalendar.dayInteractionBuilder` 将日期视觉与 FocusNode 一起交给调用方，在同一个 CommonPressableSurface 上处理点击与长按，避免嵌套命中区域；方向键与默认日期选择行为保持，不增加选中事实。CommonYearGrid 共用年度日期排布与横向滚动，习惯详情和最近一年专注都使用它。CommonHeatmap 提供周数据、标签和语义，格子由调用方组合。CommonHeatmapBlock 绘制无边框实色格。习惯年格的创建前、未来和周对齐占位用 heatmapOutside；专注年格的周对齐占位与零时长同一档主色。调用方决定格子是否响应。
 
-日期查看统一使用 DataCardTarget，在同一 CommonPressableSurface 上将 onPressed/onLongPress 接到同一个 show；每日记录 Sheet 仅由专注日期卡中的明确入口打开；返回优先关闭当前 Menu，关闭后再返回来源页面。热力图默认与查看状态均使用无边框色块，键盘焦点仍沿用公共按压组件的可访问性反馈。
+日期查看统一使用 DataCardTarget，在同一 CommonPressableSurface 上将 onPressed/onLongPress 接到同一个 show；每日记录 Sheet 仅由专注日期卡中的明确入口打开；返回优先关闭当前 Menu，关闭后再返回来源页面。热力图默认与查看状态均使用无边框色块，键盘焦点使用公共按压组件的可访问性反馈。
 
 ## 状态条与通知组件
 
 AppSheet 的受控 `timerPanel` 用途只表示仍可允许其计时来源反馈的面板，不改变模态深度；嵌套通用层仍静默。Toast 可传局部 duration，习惯静默提示使用 3 秒，其它提示沿用主题时长。MotionList 可接收 scrollToStartToken，仅在外部导航定位身份变化时回列表顶部，维持行状态。AppDataCard.closeAll 由应用跳转边界使用，不把非模态查看卡当作模态。
 
-
 `AppPop.sheet` / `AppSheet.show` 支持 `showHeader: false`，真正省略 header 及留白，默认 true 显示 header。`CommonIconButton` 支持可选 Flutter `icon`，与策展资源 `name` 必须二选一，用于已有位图集中缺失的播放 / 暂停符号；触控区、主题、Tooltip 与可访问性共用原组件。原生成图标清单不修改。
-
 
 通知设置的两个入口统一调用 `openNotificationSettings`，传 `height: SheetDimension.fraction(.5)`，无 header，内部单一滚动容器展示全部未归档习惯。站内行复用公共图标按钮的 44px 触控区，进度嵌入同一行内；标题、轮次与时间同排，状态通过读数和图标表达；顶部细拖动条使用父级手势与同一控制状态。`TimerStatusProgress.height` 只控制绘制轨道厚度，不影响时间投影。习惯提醒选择复用 `CommonWheelPicker` 两列小时 / 分钟，更新 Provider 草稿，不能沿用全局设置滚轮的自动保存语义。

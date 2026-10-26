@@ -10,7 +10,7 @@ node tool/verify.mjs
 
 依次执行本地文档链接/锚点检查、蒲公英发布脚本的 Node 模拟回归、`flutter pub get`、Dart 格式门禁、`flutter analyze` 和完整 `flutter test`。本地映射测试验证导入基线的可访问性，不读取外部 Producer。已在入口执行的检查不必重复运行；定位时可单独运行 `node tool/check-docs.mjs`、`flutter analyze` 或指定测试文件。
 
-静态分析排除 `build/**` 生成目录，避免历史临时审计脚本进入源码门禁。Android APK 的本地 / 云端构建、签名与产物核验见 [Android 构建与发布](android-build.md)。
+静态分析排除 `build/**` 生成目录，避免构建产物进入源码门禁。Android APK 的本地 / 云端构建、签名与产物核验见 [Android 构建与发布](android-build.md)。
 
 只改文档运行文档检查并核对内容；公共组件、路由、Theme 或运行机制变化执行完整检查。`tool/ds-sync.mjs` 和 `tool/ds-theme.mjs` 仅用于用户明确要求的外部 DS 专项，依赖外部 Producer，不属于日常客户端门禁。不要为文档检查运行改写生成资源的同步命令。
 
@@ -74,11 +74,9 @@ Flutter、Java、Android SDK / NDK / CMake、Xcode 与 CocoaPods 的版本和准
 
 需要设备视觉检查时按具体变更安排，必要临时夹具验证完成后清理，长期行为回归保留。
 
-## 布局精修回归
+## 布局回归
 
 `test/layout_polish_test.dart` 检查滚轮数字自身居中及大字体缩放、FlowSheet 可选进度不留空位、倒计时等宽选项和取消语义、右侧记圈数字基线、列表滚动与单入口、日期按压与无选择语义、手机安全区内操作、每日详情长列表与固定翻日。
-
-上述长期 Widget 回归检查当前规则，不依赖旧验收附件。
 
 ## 动效、时间与性能
 
@@ -108,4 +106,4 @@ flutter test integration_test/motion_profile_test.dart -d <真机 ID> --profile 
 
 `test/stage6_system_surfaces_test.dart`、`test/navigation_surfaces_test.dart` 检查共享投影、外部意图、身份及重置边界。原生系统展示仍需按 [组件维护要求](system-surfaces.md#原生维护与验证) 观察尺寸、连续时间、冷启动及按钮目标；Flutter 替身不能证明系统刷新或后台送达。
 
-修改音效、权限、通知、小部件或存储后，集中检查受影响的真机场景，不重新组织六阶段整体验收。覆盖更新另核对同签名和递增 APK versionCode。临时截图和验收流水不作为长期规范，保留可复用的 MMKV、进程重启和性能采样工具。
+音效、权限、通知、小部件或存储变更按受影响的真机场景验证；覆盖更新核对同签名和递增 APK versionCode。MMKV、进程重启和性能采样使用可复用工具，测试过程与产品规范分开。

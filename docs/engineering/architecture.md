@@ -79,7 +79,7 @@ lib/
 
 ## 回顾与统计
 
-`review/models/review_period.dart` 表达周期与可选类型，回顾 Provider 与统计实例分别拥有选择。`review/logic/review_statistics.dart` 的纯查询消费 focus 公开的同一日期分片与会话身份；原始开始小时通过现有分片 view 的 time 保留，不新增第二套统计事实、持久化字段或依赖。圈面板复用 FocusActions、FocusSession 与既有秒级投影，装饰控制器只在面板实例存在。
+`review/models/review_period.dart` 表达周期与可选类型，回顾 Provider 与统计实例分别拥有选择。`review/logic/review_statistics.dart` 的纯查询消费 focus 公开的同一日期分片与会话身份；原始开始小时从分片 view 的 time 读取，统计不维护独立事实源。圈面板复用 FocusActions、FocusSession 与既有秒级投影，装饰控制器只在面板实例存在。
 
 FeedbackService.select 的可选 scope 支持只受总开关控制的回顾查看与沿用 habits 局部门控的习惯查看；不创建 review 偏好、不绕过服务调用系统触感。AppDataCard、ChartValue 与 CommonYearGrid 的公开职责见 [组件](components.md#数据卡与统计组件)。
 
@@ -99,4 +99,4 @@ Android 使用最小 MethodChannel / AlarmManager 接收桥：发布前读取原
 
 Swift WidgetKit / ActivityKit 与 Kotlin RemoteViews 只读取原子展示缓存，不读取 MMKV 或独立结算。外部动作通过 URL / PendingIntent 打开主应用，校准后验证代次、会话、阶段、预期状态及状态转换 token，保存消费回执后调用 `FocusActions.commandResult`。状态 token 只保留在本进程，旧进程按钮只定位应用并提示状态更新。命令是否接受、业务是否保存及原生展示是否成功分别表达。
 
-`app/external_targets.dart` 统一通知与组件的查看目标，延迟跨越读取阻断、启动页及模态草稿；命令消费不等待导航。没有增加业务状态机、后台 isolate、常驻服务或依赖包，接入范围与验证见 [原生组件与实时活动](system-surfaces.md)。
+`app/external_targets.dart` 统一通知与组件的查看目标，延迟跨越读取阻断、启动页及模态草稿；命令消费不等待导航。平台适配只消费投影与统一命令，协议和验证要求见 [原生组件与实时活动](system-surfaces.md)。

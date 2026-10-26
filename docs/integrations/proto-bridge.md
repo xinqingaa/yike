@@ -6,7 +6,7 @@ Producer Contract 决定职责、状态、布局、Token 槽和可观察行为�
 
 ## 组件索引
 
-当前登记的 componentId 均有 Dart 公开入口。`resolved` 证明声明、导入、定义和使用可定位，不代表已经完成某份业务 Evidence 的视觉验收。
+登记的 componentId 对应 Dart 公开入口。`resolved` 证明声明、导入、定义和使用可定位，不代表已经完成某份业务 Evidence 的视觉验收。
 
 | Evidence | Target | import |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ Target 适配器只提供目标上下文，不把 Target 事实写入 Evidence�
 
 仅要求评估时先给方案；已批准的实施范围持续有效，不为同一专项重新要求批准。专项完成后报告固定引用、风险、状态/交互覆盖、Target validation、五维 Review 完整度及原生验证边界。
 
-历史固定证据不能被 Producer 当前源码或 active/latest 替换。获批准的 Flutter 产品变化不需要修改历史 Evidence；记录差异及其决策即可。外部工具限制不会阻断无关客户端开发。
+历史固定证据不能被 Producer 当前源码或 active/latest 替换。Flutter 产品变化直接维护产品与工程规则；固定 Evidence 独立保存，专项核对时说明差异。外部工具限制不会阻断无关客户端开发。
 
 ## 本地专项协议
 
@@ -117,6 +117,6 @@ Target 适配器只提供目标上下文，不把 Target 事实写入 Evidence�
 
 DS 同步先记录源版本、Schema、Contract、role、Token/Theme、组件及图标的变化范围；再核对职责、状态、布局、visual anatomy 与 Token binding，使用 Flutter 公开 API 实现。主题和图标来自同一已选定源范围；导入的 Dart/PNG/清单只经导出工具更新。精确路径与颜色策略在本仓库 [资源规范](../engineering/assets.md) 维护，不要求先阅读 Producer 图标说明。
 
-当前专用导出入口是 Producer 根目录的 `scripts/export-flutter-themes.mjs` 与 `scripts/export-flutter-icons.mjs`，支持 `--prototype <id>` 和 `--target <directory>`。它们是显式同步使用的外部工具，不是本文的文档依赖；源目录经本地 `.pb-scaffold.json` 配置定位，缺失时只影响该专项。
+专用导出入口为 Producer 根目录的 `scripts/export-flutter-themes.mjs` 与 `scripts/export-flutter-icons.mjs`，支持 `--prototype <id>` 和 `--target <directory>`。它们是显式同步使用的外部工具，不是本文的文档依赖；源目录经本地 `.pb-scaffold.json` 配置定位，缺失时只影响该专项。
 
 同步后核对实际生成实现、资源尺寸、模式矩阵、完整映射与本地检查，记录 pending reason 和平台近似。批次仍有 drift 时保持 pending，不为了消除差异只更新 fingerprint。源端已发生与本页不符的协议变化时报告具体差异并修订本地适配规则，不暗中追随外部文档或分支。

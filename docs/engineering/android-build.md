@@ -66,16 +66,16 @@ node tool/build-android.mjs --build-name 1.0.1 --build-number 20
 
 [蒲公英脚本](../../tool/publish-pgyer.mjs) 先校验正式包清单、大小和 SHA-256，再获取临时凭证、上传 APK、每 5 秒查询最终状态，最多等待 5 分钟。拒绝 preview 包或不匹配文件，只上传 APK，不上传符号及密钥。返回成功并核对包名、平台、版本及大小后，Summary 提供下载链接和二维码，并归档 `pgyer-release.json`。
 
-每次“发布到蒲公英”都会构建本次正式包；当前没有单独的“发布已有构建”入口。检查通过不等于发布，上传请求成功也不等于最终发布成功。
+每次“发布到蒲公英”都会构建本次正式包；发布操作不提供单独的历史产物选择。检查通过不等于发布，上传请求成功也不等于最终发布成功。
 
 ## 体积优化与安装
 
 - 只为 arm64 构建，不适用于 32 位手机和 x86 模拟器。
 - 分离 Dart 调试符号，使用 release 默认 R8 / 资源缩减与图标字体裁剪。
-- `android/gradle.properties` 的 `NO_XIPH_LIBS=true` 裁剪 flutter_soloud 的 Opus / Ogg / Vorbis / FLAC；现有九段音效是 PCM WAV，增加这些格式或流式音频时重新评估。
+- `android/gradle.properties` 的 `NO_XIPH_LIBS=true` 裁剪 flutter_soloud 的 Opus / Ogg / Vorbis / FLAC；九段主题音效采用 PCM WAV，增加这些格式或流式音频时重新评估。
 - Gradle 堆上限 4 GB、Metaspace 1 GB、最多两个 worker。
 
-当前优化基线 APK 约 27.14 MB；大小随版本变化，以清单为准，图片尚未另做格式转换或压缩。蒲公英以二进制口径显示时约 25.9 MB。
+体积参考值为 APK 约 27.14 MB；大小随版本变化，以清单为准，图片尚未另做格式转换或压缩。蒲公英以二进制口径显示时约 25.9 MB。
 
 覆盖更新要求同包名、同长期签名及更高 versionCode。原 debug 包无法直接被正式签名包覆盖；先安排数据备份 / 迁移，不自动卸载或清理手机。云端 preview 使用临时 debug key，不能保证覆盖本机或前次云端包。日常分发使用长期正式签名。
 
