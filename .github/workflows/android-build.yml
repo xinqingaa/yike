@@ -6,15 +6,14 @@ on:
     branches: [main]
   workflow_dispatch:
     inputs:
-      signing:
-        description: Signing mode (release requires Android signing secrets)
+      operation:
+        description: 选择操作；发布自动使用正式签名，未设置安装密码时为公开链接安装
         type: choice
-        options: [preview, release]
-        default: preview
-      publish_to_pgyer:
-        description: Publish to Pgyer (public download unless PGYER_INSTALL_PASSWORD is set)
-        type: boolean
-        default: false
+        options:
+          - 发布到蒲公英
+          - 只构建正式 APK
+          - 只构建内测 APK
+        default: 发布到蒲公英
 
 permissions:
   contents: read
@@ -47,14 +46,9 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 35
     env:
-      SIGNING_MODE: ${{ inputs.signing || 'preview' }}
+      SIGNING_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.operation != '只构建内测 APK' && 'release' || 'preview' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Validate publication mode
-        if: inputs.publish_to_pgyer && inputs.signing != 'release'
-        run: |
-          echo 'Pgyer publication requires signing=release.' >&2
-          exit 1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
@@ -62,6 +56,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            android/**/*.gradle*
+            android/gradle/wrapper/gradle-wrapper.properties
+            pubspec.lock
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: '3.44.0'
@@ -111,7 +110,7 @@ jobs:
   publish:
     name: Publish to Pgyer
     needs: [verify, build]
-    if: github.event_name == 'workflow_dispatch' && inputs.publish_to_pgyer
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == '发布到蒲公英'
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     concurrency:
