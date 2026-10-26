@@ -37,7 +37,7 @@ class CommonWheelPicker extends StatefulWidget {
     this.label,
     this.visibleRows = 5,
     this.disabled = false,
-  });
+  }) : assert(visibleRows > 0 && visibleRows <= 5 && visibleRows % 2 == 1);
   final List<CommonWheelColumn> columns;
   final List<Object> values;
   final ValueChanged<List<Object>>? onChanged;

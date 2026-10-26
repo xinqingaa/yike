@@ -1,5 +1,9 @@
 /// Flutter-owned motion geometry; durations and curves come from TS.motion.
 abstract final class YikeMotion {
+  static const settingsGlassTravel = 180.0;
+  static const auditionTick = Duration(seconds: 1);
+  static const auditionTicks = Duration(seconds: 5);
+  static const auditionSingle = Duration(milliseconds: 1400);
   static const statusFold = Duration(milliseconds: 260);
   static const statusResize = Duration(milliseconds: 200);
   static const statusFade = Duration(milliseconds: 160);

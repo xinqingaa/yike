@@ -133,7 +133,7 @@ void main() {
         () => localDataPrefs.codec.decode(jsonEncode(broken)),
         throwsA(isA<UnsupportedPrefsVersion>()),
       );
-      broken['schemaVersion'] = 3;
+      broken['schemaVersion'] = 4;
       final slots = broken['data']['focus']['sessions'] as List;
       slots.add(slots.first);
       expect(
@@ -729,6 +729,11 @@ void main() {
       appNavigatorKey.currentState!.pushNamed(AppRoutes.settings);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
+      await Scrollable.ensureVisible(
+        tester.element(find.text('通知提醒')),
+        alignment: .3,
+      );
+      await pumpPresentation(tester);
       await tester.tap(find.text('通知提醒'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));

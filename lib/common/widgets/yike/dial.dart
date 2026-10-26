@@ -17,6 +17,7 @@ class YikeDial extends StatefulWidget {
     this.digits,
     this.caption,
     this.hint,
+    this.semanticLabel,
     this.progress = 25 / 60,
     this.paused = false,
     this.resting = false,
@@ -32,7 +33,7 @@ class YikeDial extends StatefulWidget {
     this.wavePhase = 0,
     this.frame,
   });
-  final String? digits, caption, hint;
+  final String? digits, caption, hint, semanticLabel;
   final double progress;
   final bool paused, resting, completed, countdown, brand;
   final double? width;
@@ -292,7 +293,9 @@ class _YikeDialState extends State<YikeDial>
         .fold<double>(0, (v, e) => v + e.value);
     return Semantics(
       image: true,
-      label: brand ? '一刻表盘' : [digits, caption].nonNulls.join('，'),
+      label: brand
+          ? '一刻表盘'
+          : widget.semanticLabel ?? [digits, caption].nonNulls.join('，'),
       child: ExcludeSemantics(
         child: SizedBox(
           width: w,

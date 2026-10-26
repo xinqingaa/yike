@@ -67,9 +67,6 @@ class _FocusDialState extends ConsumerState<FocusDial> {
     final countdownMaximum = ref.watch(
       focusDataProvider.select((d) => d.countdownMaximum),
     );
-    final dialAdjusted = ref.watch(
-      focusDataProvider.select((d) => d.dialAdjusted),
-    );
     final now = ref.watch(clockProvider);
     final enabled =
         presentation.view.ready &&
@@ -100,7 +97,6 @@ class _FocusDialState extends ConsumerState<FocusDial> {
           completions: _completion,
           now: now,
           draft: draft,
-          hint: enabled && !dialAdjusted,
         ),
       ),
     );
@@ -114,11 +110,9 @@ class _FocusDialMotion extends StatefulWidget {
     required this.now,
     required this.completions,
     this.draft,
-    this.hint = false,
   });
   final FocusDialPresentation data;
   final double? draft;
-  final bool hint;
   FocusViewData get value => data.view;
   FocusSession? get session => data.session;
   final double width;
@@ -253,14 +247,15 @@ class _FocusDialMotionState extends State<_FocusDialMotion>
               widget.value,
               widget.now(),
             );
+            final digits = timerDigits(
+              widget.draft?.round().clamp(1, maxFocusSeconds) ??
+                  projection.seconds,
+            );
             return YikeDial(
               width: widget.width,
-              digits: timerDigits(
-                widget.draft?.round().clamp(1, maxFocusSeconds) ??
-                    projection.seconds,
-              ),
-              hint: widget.hint ? '拨动表盘调整本次时长' : null,
-              caption: widget.value.caption,
+              digits: digits,
+              semanticLabel:
+                  '${const ['番茄钟', '正计时', '倒计时'][widget.value.mode.index]}，${widget.value.caption}，$digits',
               progress: widget.draft == null
                   ? projection.progress
                   : widget.draft! / widget.value.scaleSeconds,

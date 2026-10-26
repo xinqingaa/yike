@@ -48,6 +48,8 @@ Map<String, dynamic> preferencesJson(TimingPreferences p) => {
   'shortSeconds': p.shortSeconds,
   'longSeconds': p.longSeconds,
   'interval': p.interval,
+  'shortInterval': p.shortInterval,
+  'totalRounds': p.totalRounds,
   'threshold': p.threshold,
   'sound': p.sound,
   'haptics': p.haptics,
@@ -70,9 +72,11 @@ TimingPreferences preferencesFromJson(Map<String, dynamic> j) {
   final groups = j['feedback'] as Map<String, dynamic>;
   return TimingPreferences(
     focusSeconds: boundedInt(j['focusSeconds'], 1, maxFocusSeconds),
-    shortSeconds: boundedInt(j['shortSeconds'], 1, 59),
+    shortSeconds: boundedInt(j['shortSeconds'], 1, maxFocusSeconds),
     longSeconds: boundedInt(j['longSeconds'], 1, maxFocusSeconds),
-    interval: boundedInt(j['interval'], 2, 8),
+    interval: boundedInt(j['interval'], 0, maxPomodoroRounds),
+    shortInterval: boundedInt(j['shortInterval'], 0, maxPomodoroRounds),
+    totalRounds: boundedInt(j['totalRounds'], 0, maxPomodoroRounds),
     threshold: boundedInt(j['threshold'], 1, 86399),
     sound: j['sound'] as bool,
     haptics: j['haptics'] as bool,
@@ -94,9 +98,11 @@ class FocusSession {
     required this.targetMs,
     required this.round,
     required this.longRest,
-    this.shortSeconds = 30,
+    this.shortSeconds = 300,
     this.longSeconds = 900,
     this.interval = 4,
+    this.shortInterval = 1,
+    this.totalRounds = 0,
     this.elapsedMs = 0,
     this.scaleSeconds = fullDialSeconds,
     this.days = const {},
@@ -113,7 +119,17 @@ class FocusSession {
   final int targetMs, elapsedMs, round, scaleSeconds;
   int get limitMs =>
       mode == TimerMode.stopwatch ? maxFocusSeconds * 1000 : targetMs;
-  final int shortSeconds, longSeconds, interval;
+  final int shortSeconds, longSeconds, interval, shortInterval, totalRounds;
+  TimerStage? get nextBreak => pomodoroBreak(
+    round,
+    shortInterval: shortInterval,
+    longInterval: interval,
+    totalRounds: totalRounds,
+  );
+  int get cycleLength =>
+      pomodoroCycleLength(shortInterval, interval, totalRounds);
+  bool get planComplete => totalRounds > 0 && round >= totalRounds;
+  bool get endsCycle => cycleLength > 0 && round >= cycleLength;
   final bool longRest, recovered, promptShort;
   final Map<String, int> days;
   final List<int> laps;
@@ -141,6 +157,8 @@ class FocusSession {
     shortSeconds: shortSeconds,
     longSeconds: longSeconds,
     interval: interval,
+    shortInterval: shortInterval,
+    totalRounds: totalRounds,
     elapsedMs: elapsedMs ?? this.elapsedMs,
     days: days ?? this.days,
     laps: laps ?? this.laps,
@@ -162,6 +180,8 @@ class FocusSession {
     'shortSeconds': shortSeconds,
     'longSeconds': longSeconds,
     'interval': interval,
+    'shortInterval': shortInterval,
+    'totalRounds': totalRounds,
     'days': days,
     'laps': laps,
     'promptShort': promptShort,
@@ -202,7 +222,6 @@ class FocusSession {
             ? elapsed != limit
             : elapsed >= limit) ||
         (mode != TimerMode.stopwatch && laps.isNotEmpty) ||
-        (stage == TimerStage.shortBreak && target > 59000) ||
         (mode == TimerMode.countdown
             ? scale * 1000 < target
             : scale != fullDialSeconds)) {
@@ -217,11 +236,13 @@ class FocusSession {
       targetMs: target,
       scaleSeconds: scale,
       elapsedMs: elapsed,
-      round: boundedInt(j['round'], 1, 8),
+      round: boundedInt(j['round'], 1, 1 << 31),
       longRest: j['longRest'] as bool,
-      shortSeconds: boundedInt(j['shortSeconds'], 1, 59),
+      shortSeconds: boundedInt(j['shortSeconds'], 1, maxFocusSeconds),
       longSeconds: boundedInt(j['longSeconds'], 1, maxFocusSeconds),
-      interval: boundedInt(j['interval'], 2, 8),
+      interval: boundedInt(j['interval'], 0, maxPomodoroRounds),
+      shortInterval: boundedInt(j['shortInterval'], 0, maxPomodoroRounds),
+      totalRounds: boundedInt(j['totalRounds'], 0, maxPomodoroRounds),
       days: Map.unmodifiable(days),
       laps: List.unmodifiable(laps),
       promptShort: j['promptShort'] as bool,
@@ -291,6 +312,10 @@ class FocusData {
   Map<TimerMode, FocusSession> get allSessions => sessions;
   final List<FocusRecord> records;
   final int cycles;
+  int get nextPomodoroRound =>
+      preferences.cycleLength > 0 && cycles >= preferences.cycleLength
+      ? 1
+      : cycles + 1;
   final int? _countdown;
   final int _countdownPreset;
   final TimerMode mode;
@@ -359,9 +384,14 @@ class FocusData {
           : s.mode == TimerMode.stopwatch
           ? s.elapsedMs ~/ 1000
           : ((s.targetMs - s.elapsedMs) / 1000).ceil(),
-      round: s?.round ?? cycles + 1,
+      round:
+          s?.round ??
+          (mode == TimerMode.pomodoro ? nextPomodoroRound : cycles + 1),
       laps: s?.laps.map((v) => v ~/ 1000).toList() ?? const [],
       recovered: s?.recovered ?? false,
+      breakStage: s?.nextBreak,
+      planComplete: s?.planComplete ?? false,
+      roundCount: s?.cycleLength ?? preferences.cycleLength,
     );
   }
 
@@ -402,7 +432,7 @@ class FocusData {
       preferences: prefs,
       sessions: Map.unmodifiable({for (final s in sessions) s.mode: s}),
       records: List.unmodifiable(records),
-      cycles: boundedInt(j['cycles'], 0, 8),
+      cycles: boundedInt(j['cycles'], 0, 1 << 31),
     );
   }
 }

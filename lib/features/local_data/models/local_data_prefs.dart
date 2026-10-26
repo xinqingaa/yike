@@ -4,7 +4,7 @@ import 'local_data.dart';
 final localDataPrefs = PrefsEntry<YikeData>(
   PrefsKey.snapshot,
   VersionedJsonPrefsCodec(
-    schemaVersion: 3,
+    schemaVersion: 4,
     fromJson: YikeData.fromJson,
     toJson: (data) => data.toJson(),
   ),

@@ -14,34 +14,24 @@ class YikeArtwork {
 }
 
 const yikeArtwork = <String, YikeArtwork>{
-  'yike/mechanical-light': YikeArtwork(
-    'asset/yike/artwork/mechanical-light.png',
-    300,
-    300,
-    {
-      'progress': 'asset/yike/artwork/mechanical-light--progress.png',
-      'rest': 'asset/yike/artwork/mechanical-light--rest.png',
-      'paused': 'asset/yike/artwork/mechanical-light--paused.png',
-    },
-    session: 'yike/mechanical-light-plain',
-  ),
+  'yike/mechanical-light':
+      YikeArtwork('asset/yike/artwork/mechanical-light.png', 300, 300, {
+        'progress': 'asset/yike/artwork/mechanical-light--progress.png',
+        'rest': 'asset/yike/artwork/mechanical-light--rest.png',
+        'paused': 'asset/yike/artwork/mechanical-light--paused.png',
+      }, session: 'yike/mechanical-light-plain'),
   'yike/mechanical-light-plain':
       YikeArtwork('asset/yike/artwork/mechanical-light-plain.png', 300, 300, {
         'progress': 'asset/yike/artwork/mechanical-light--progress.png',
         'rest': 'asset/yike/artwork/mechanical-light--rest.png',
         'paused': 'asset/yike/artwork/mechanical-light--paused.png',
       }),
-  'yike/mechanical-dark': YikeArtwork(
-    'asset/yike/artwork/mechanical-dark.png',
-    300,
-    300,
-    {
-      'progress': 'asset/yike/artwork/mechanical-dark--progress.png',
-      'rest': 'asset/yike/artwork/mechanical-dark--rest.png',
-      'paused': 'asset/yike/artwork/mechanical-dark--paused.png',
-    },
-    session: 'yike/mechanical-dark-plain',
-  ),
+  'yike/mechanical-dark':
+      YikeArtwork('asset/yike/artwork/mechanical-dark.png', 300, 300, {
+        'progress': 'asset/yike/artwork/mechanical-dark--progress.png',
+        'rest': 'asset/yike/artwork/mechanical-dark--rest.png',
+        'paused': 'asset/yike/artwork/mechanical-dark--paused.png',
+      }, session: 'yike/mechanical-dark-plain'),
   'yike/mechanical-dark-plain':
       YikeArtwork('asset/yike/artwork/mechanical-dark-plain.png', 300, 300, {
         'progress': 'asset/yike/artwork/mechanical-dark--progress.png',

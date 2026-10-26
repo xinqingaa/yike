@@ -99,7 +99,12 @@ abstract final class FocusEngine {
         (target < 1000 || target > maxFocusSeconds * 1000)) {
       return data;
     }
+    final prefs = data.preferences;
+    final round = data.mode == TimerMode.pomodoro
+        ? data.nextPomodoroRound
+        : data.cycles + 1;
     return data.copyWith(
+      cycles: data.mode == TimerMode.pomodoro ? round - 1 : data.cycles,
       clearPomodoroOnce: data.mode == TimerMode.pomodoro,
       session: FocusSession(
         id: id,
@@ -111,14 +116,16 @@ abstract final class FocusEngine {
         scaleSeconds: data.mode == TimerMode.countdown
             ? data.countdownScale
             : fullDialSeconds,
-        round: data.cycles + 1,
+        round: round,
         longRest:
             data.mode == TimerMode.pomodoro &&
-            data.cycles + 1 >= data.preferences.interval,
+            prefs.breakAfter(round) == TimerStage.longBreak,
         anchor: now,
         shortSeconds: data.preferences.shortSeconds,
         longSeconds: data.preferences.longSeconds,
-        interval: data.preferences.interval,
+        interval: prefs.interval,
+        shortInterval: prefs.shortInterval,
+        totalRounds: prefs.totalRounds,
       ),
     );
   }
@@ -234,7 +241,7 @@ abstract final class FocusEngine {
       cycles:
           s != null &&
               s.mode == TimerMode.pomodoro &&
-              s.longRest &&
+              s.endsCycle &&
               (s.resting || s.status == TimerStatus.finished)
           ? 0
           : data.cycles,
@@ -255,6 +262,7 @@ abstract final class FocusEngine {
         s == null ||
         s.mode != TimerMode.pomodoro ||
         s.resting ||
+        s.nextBreak == null ||
         s.status != TimerStatus.finished ||
         needsConfirmation(data) && !acceptShort) {
       return data;
@@ -264,15 +272,21 @@ abstract final class FocusEngine {
       session: FocusSession(
         id: id,
         mode: TimerMode.pomodoro,
-        stage: s.longRest ? TimerStage.longBreak : TimerStage.shortBreak,
+        stage: s.nextBreak!,
         status: TimerStatus.running,
         startedAt: now,
-        targetMs: (s.longRest ? s.longSeconds : s.shortSeconds) * 1000,
+        targetMs:
+            (s.nextBreak == TimerStage.longBreak
+                ? s.longSeconds
+                : s.shortSeconds) *
+            1000,
         round: s.round,
         longRest: s.longRest,
         shortSeconds: s.shortSeconds,
         longSeconds: s.longSeconds,
         interval: s.interval,
+        shortInterval: s.shortInterval,
+        totalRounds: s.totalRounds,
         anchor: now,
       ),
     );

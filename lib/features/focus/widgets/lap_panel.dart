@@ -210,6 +210,7 @@ class _LapPanelState extends ConsumerState<LapPanel>
                     CommonIconButton(
                       name: CommonIconName.x,
                       label: '关闭计圈',
+                      material: CommonSurfaceMaterial.glass,
                       variant: CommonIconButtonVariant.text,
                       onPressed: widget.close,
                     ),

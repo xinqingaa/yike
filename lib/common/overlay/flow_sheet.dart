@@ -46,6 +46,7 @@ abstract final class FlowSheetPopup {
                       : title ?? '',
                   start: controller.canPop
                       ? CommonIconButton(
+                          material: CommonSurfaceMaterial.glass,
                           name: CommonIconName.chevronLeft,
                           label: '返回上一步',
                           variant: CommonIconButtonVariant.tonal,

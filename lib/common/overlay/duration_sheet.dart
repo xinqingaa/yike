@@ -151,8 +151,10 @@ class DurationWheels extends StatelessWidget {
     this.minimum = 1,
     this.maximum = 86399,
     this.maxHour = 23,
+    this.visibleRows,
   });
   final int value, maxHour, minimum, maximum;
+  final int? visibleRows;
   final bool seconds, hours, secondsOnly, filled;
   final ValueChanged<int> onChanged;
   final ValueChanged<int>? onSettled;
@@ -217,7 +219,8 @@ class DurationWheels extends StatelessWidget {
     }
 
     return CommonWheelPicker(
-      visibleRows: 3,
+      visibleRows:
+          visibleRows ?? (MediaQuery.sizeOf(context).height < 700 ? 3 : 5),
       filled: filled,
       columns: columns,
       values: [

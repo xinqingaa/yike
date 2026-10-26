@@ -64,6 +64,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
       );
     } else if (_tabDuration != duration) {
       final previous = _tabs;
+      previous.removeListener(_swipedMode);
       _tabs = TabController(
         length: 3,
         vsync: this,
@@ -72,13 +73,25 @@ class _FocusPageState extends ConsumerState<FocusPage>
       );
       WidgetsBinding.instance.addPostFrameCallback((_) => previous.dispose());
     }
+    _tabs.removeListener(_swipedMode);
+    _tabs.addListener(_swipedMode);
     _tabDuration = duration;
+  }
+
+  void _swipedMode() {
+    if (_tabs.indexIsChanging) return;
+    final mode = TimerMode.values[_tabs.index];
+    if (ref.read(focusViewProvider).mode == mode) return;
+    _dial.finish();
+    _actions.switchMode(mode);
+    _presentPending();
   }
 
   @override
   void dispose() {
     appRouteActivity.removeListener(_presentPending);
     _dial.dispose();
+    _tabs.removeListener(_swipedMode);
     _tabs.dispose();
     super.dispose();
   }
@@ -262,7 +275,13 @@ class _FocusPageState extends ConsumerState<FocusPage>
     if (value.finished) {
       if (value.mode == TimerMode.pomodoro && !value.resting) {
         if (await _shortRecord() && mounted && session != null) {
-          _actions.command(session.mode, session.id, FocusCommand.beginBreak);
+          _actions.command(
+            session.mode,
+            session.id,
+            value.breakStage == null
+                ? FocusCommand.finish
+                : FocusCommand.beginBreak,
+          );
         }
       } else {
         if (value.mode == TimerMode.stopwatch && !await _shortRecord()) return;
@@ -408,7 +427,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
             ignoring: ref.watch(_switching),
             child: CommonTabView(
               controller: _tabs,
-              swipe: false,
+              swipe: true,
               children: [
                 for (final mode in TimerMode.values)
                   _panel(ref.watch(focusDialPresentationProvider(mode)).view),
@@ -439,6 +458,10 @@ class _FocusPageState extends ConsumerState<FocusPage>
               ? '准备下一轮'
               : value.mode != TimerMode.pomodoro
               ? '完成'
+              : value.planComplete
+              ? '完成本组'
+              : value.breakStage == null
+              ? '准备下一轮'
               : '开始休息'
         : value.status == TimerStatus.running
         ? '暂停'
@@ -449,18 +472,17 @@ class _FocusPageState extends ConsumerState<FocusPage>
         : value.mode == TimerMode.stopwatch
         ? '开始计时'
         : '开始 ${durationLabel(value.seconds)}';
-    final roundText = value.stage == TimerStage.longBreak
-        ? '${prefs.interval} 轮全部完成 · 好好休息'
+    final roundText = value.planComplete && value.finished
+        ? '${value.round} 轮已完成'
         : value.resting
-        ? '第 ${value.round} 轮已完成 · 休息一下'
-        : value.finished
-        ? '第 ${value.round} 轮已完成'
-        : value.ready
-        ? '第 ${value.round} 轮'
-        : '第 ${value.round} 轮专注';
+        ? '第 ${value.round} 轮 · ${value.stage == TimerStage.longBreak ? '长休息' : '短休息'}'
+        : '第 ${value.round} 轮${value.roundCount > 0 ? ' / ${value.roundCount}' : ''}';
     final compact = MediaQuery.sizeOf(context).height < 700;
     return FocusPanelLayout(
       compactUtility: value.mode == TimerMode.stopwatch,
+      utilityAlignment: value.mode == TimerMode.countdown
+          ? Alignment.bottomCenter
+          : Alignment.center,
       storageKey: PageStorageKey('focus-${value.mode.name}-scroll'),
       minimumUtilityHeight: (width) => math.max(
         CountdownUtility.heightFor(
@@ -475,6 +497,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
       utilityBuilder: (width) => _dim(
         value.mode == TimerMode.countdown
             ? Center(
+                heightFactor: 1,
                 child: CountdownUtility(
                   key: const ValueKey('countdown-utility'),
                   value: value,
@@ -501,6 +524,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
             ? value.ready
                   ? const SizedBox.shrink()
                   : Center(
+                      heightFactor: 1,
                       child: CommonButton(
                         key: const ValueKey('stopwatch-laps-entry'),
                         label: '计圈记录 · ${value.laps.length} 圈 ›',
@@ -509,6 +533,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
                       ),
                     )
             : Center(
+                heightFactor: 1,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -526,7 +551,11 @@ class _FocusPageState extends ConsumerState<FocusPage>
                         spacing: ts.spacing.xs,
                         runSpacing: ts.spacing.xs,
                         children: [
-                          for (var i = 0; i < prefs.interval; i++)
+                          for (
+                            var i = 0;
+                            i < math.min(value.roundCount, 12);
+                            i++
+                          )
                             _RoundMark(
                               active:
                                   i <
@@ -536,13 +565,6 @@ class _FocusPageState extends ConsumerState<FocusPage>
                             ),
                         ],
                       ),
-                      if (value.finished)
-                        Text(
-                          prefs.sound && prefs.pomodoroFeedback.sound
-                              ? '提示音已开启'
-                              : '提示音已关闭',
-                          style: ts.textStyle.caption,
-                        ),
                     ],
                     if (value.paused && value.recovered)
                       CommonButton(
@@ -630,7 +652,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
       );
     }
     if (value.resting || (value.finished && value.mode == TimerMode.pomodoro)) {
-      return value.finished && value.resting
+      return value.finished && (value.resting || value.breakStage == null)
           ? const SizedBox.shrink()
           : CommonButton(
               label: '跳过休息',

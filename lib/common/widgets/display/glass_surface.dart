@@ -5,7 +5,7 @@ import '../../../theme/ts.dart';
 
 enum CommonSurfaceMaterial { solid, glass }
 
-enum CommonGlassEdges { all, bottom }
+enum CommonGlassEdges { all, bottom, none }
 
 /// A material-only container; scrolling, input and navigation belong to its child.
 class CommonGlassSurface extends StatelessWidget {
@@ -17,6 +17,7 @@ class CommonGlassSurface extends StatelessWidget {
     this.reduceTransparency = false,
     this.tint,
     this.edges = CommonGlassEdges.all,
+    this.reveal = 1,
   });
 
   final Widget child;
@@ -26,6 +27,9 @@ class CommonGlassSurface extends StatelessWidget {
   final Color? tint;
   final CommonGlassEdges edges;
 
+  /// Scroll-driven blend from a solid surface to glass, without fading content.
+  final double reveal;
+
   @override
   Widget build(BuildContext context) {
     final ts = TS.of(context);
@@ -34,7 +38,9 @@ class CommonGlassSurface extends StatelessWidget {
       return DecoratedBox(
         decoration: BoxDecoration(
           color: ts.colors.surface,
-          border: edges == CommonGlassEdges.bottom
+          border: edges == CommonGlassEdges.none
+              ? null
+              : edges == CommonGlassEdges.bottom
               ? Border(bottom: ts.border.defaultBorder)
               : Border.fromBorderSide(ts.border.defaultBorder),
           borderRadius: radius,
@@ -46,7 +52,25 @@ class CommonGlassSurface extends StatelessWidget {
       borderRadius: radius,
       edgePainterBuilder: (radius, style) =>
           _RoundedGlassEdge(borderRadius: radius, style: style, edges: edges),
-      style: ts.glassStyle(clear: clear, tint: tint),
+      style: ts
+          .glassStyle(clear: clear, tint: tint)
+          .copyWith(
+            backgroundColor: Color.lerp(
+              ts.colors.surface,
+              tint ?? (clear ? ts.colors.glassClear : ts.colors.glassTint),
+              reveal,
+            ),
+            blurSigma: ts.effect.glassBackdropBlur * reveal,
+            borderColor: ts.colors.glassEdge.withValues(
+              alpha: ts.colors.glassEdge.a * reveal,
+            ),
+            topHighlightColor: ts.colors.glassEdge.withValues(
+              alpha: ts.colors.glassEdge.a * reveal,
+            ),
+            shadowColor: ts.elevation.glass.color.withValues(
+              alpha: ts.elevation.glass.color.a * reveal,
+            ),
+          ),
       enableShadow: edges == CommonGlassEdges.all,
       child: child,
     );
@@ -69,6 +93,7 @@ class _RoundedGlassEdge extends LiquidGlassEdgePainter {
       super.shouldRepaint(oldDelegate);
   @override
   void paint(Canvas canvas, Size size) {
+    if (edges == CommonGlassEdges.none) return;
     if (edges == CommonGlassEdges.bottom) {
       final width = style.source.outlineWidth;
       if (size.isEmpty || width <= 0) return;

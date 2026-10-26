@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/ts.dart';
 import '../widgets/action/icon.dart';
+import '../widgets/display/glass_surface.dart';
 import '../widgets/action/icon_button.dart';
 
 class AppSheetHeader extends StatelessWidget {
@@ -36,6 +37,7 @@ class AppSheetHeader extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: CommonIconButton(
+                material: CommonSurfaceMaterial.glass,
                 name: CommonIconName.x,
                 label: '关闭',
                 variant: CommonIconButtonVariant.tonal,

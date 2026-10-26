@@ -117,12 +117,19 @@ class CommonIconButton extends StatelessWidget {
             ),
     );
     if (material == CommonSurfaceMaterial.glass) {
-      result = CommonGlassSurface(
-        borderRadius: BorderRadius.circular(ts.radius.full),
-        tint: tone == CommonIconButtonTone.primary
-            ? ts.colors.iconButtonGlassPrimaryTint
-            : null,
-        child: result,
+      result = Align(
+        widthFactor: 1,
+        heightFactor: 1,
+        child: SizedBox.square(
+          dimension: _buttonSize(ts),
+          child: CommonGlassSurface(
+            borderRadius: BorderRadius.circular(ts.radius.full),
+            tint: tone == CommonIconButtonTone.primary
+                ? ts.colors.iconButtonGlassPrimaryTint
+                : null,
+            child: result,
+          ),
+        ),
       );
     }
     return Opacity(

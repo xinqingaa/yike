@@ -9,6 +9,7 @@ class FocusPanelLayout extends StatelessWidget {
     super.key,
     required this.minimumUtilityHeight,
     this.compactUtility = false,
+    this.utilityAlignment = Alignment.center,
     required this.dialBuilder,
     required this.utilityBuilder,
     required this.actions,
@@ -16,6 +17,7 @@ class FocusPanelLayout extends StatelessWidget {
   });
   final double Function(double width) minimumUtilityHeight;
   final bool compactUtility;
+  final Alignment utilityAlignment;
   final Widget Function(double width) dialBuilder;
   final Widget Function(double width) utilityBuilder;
   final Widget actions;
@@ -92,7 +94,12 @@ class FocusPanelLayout extends StatelessWidget {
                       child: utilityBuilder(width),
                     )
                   else
-                    Expanded(child: utilityBuilder(width)),
+                    Expanded(
+                      child: Align(
+                        alignment: utilityAlignment,
+                        child: utilityBuilder(width),
+                      ),
+                    ),
                   SizedBox(height: gap),
                   SizedBox(height: actionsHeight, child: actions),
                   SizedBox(height: gap),

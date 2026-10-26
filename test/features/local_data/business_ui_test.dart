@@ -27,6 +27,11 @@ void main() {
       var app = await pumpYike(tester, preferences: disk);
       await tester.tap(find.byTooltip('设置'));
       await pumpPresentation(tester);
+      await Scrollable.ensureVisible(
+        tester.element(find.text('专注时长')),
+        alignment: .3,
+      );
+      await pumpPresentation(tester);
       await tester.tap(find.text('专注时长'));
       await pumpPresentation(tester);
       disk.failWrite = true;

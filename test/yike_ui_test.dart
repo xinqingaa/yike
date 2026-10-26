@@ -210,6 +210,11 @@ void main() {
       await pumpPresentation(tester);
       final row = find.byKey(const ValueKey('pomodoro/focus'));
       expect(tester.getSize(row).height, closeTo(53, 1));
+      await Scrollable.ensureVisible(
+        tester.element(find.text('专注时长')),
+        alignment: .3,
+      );
+      await pumpPresentation(tester);
       await tester.tap(find.text('专注时长'));
       await pumpPresentation(tester);
       expect(find.byType(CommonWheelPicker), findsOneWidget);
@@ -339,13 +344,11 @@ void main() {
     await pumpPresentation(tester);
     await tester.tap(find.byTooltip('打开常用倒计时'));
     await pumpPresentation(tester);
-    await tester.tap(find.byTooltip('打开常用 1'));
+    await tester.tap(find.byKey(const ValueKey('preset-row-0')));
     await pumpPresentation(tester);
     expect(find.text('清空此项'), findsNothing);
     expect(container.read(timingPreferencesProvider).presets.first, 180);
-    await tester.tap(find.byTooltip('返回上一步'));
-    await pumpPresentation(tester);
-    await tester.tap(find.byTooltip('打开常用 2'));
+    await tester.tap(find.byKey(const ValueKey('preset-row-1')));
     await pumpPresentation(tester);
     await tester.tap(find.text('清空此项'));
     await pumpPresentation(tester);
@@ -355,12 +358,14 @@ void main() {
       600,
       1200,
     ]);
-    await tester.tap(find.byTooltip('打开常用 2'));
+    await tester.tap(find.byKey(const ValueKey('preset-row-1')));
     await pumpPresentation(tester);
-    final minutes = find.descendant(
-      of: find.byKey(const ValueKey('wheel-column-minute')),
-      matching: find.byType(ListWheelScrollView),
-    );
+    final minutes = find
+        .descendant(
+          of: find.byKey(const ValueKey('wheel-column-minute')),
+          matching: find.byType(ListWheelScrollView),
+        )
+        .hitTestable();
     await tester.tap(find.descendant(of: minutes, matching: find.text('04')));
     await pumpPresentation(tester);
     expect(container.read(timingPreferencesProvider).presets[1], 240);
@@ -373,12 +378,10 @@ void main() {
       600,
       1200,
     ]);
-    await tester.tap(find.byTooltip('返回上一步'));
-    await pumpPresentation(tester);
     await tester.tap(find.byTooltip('关闭'));
     await pumpPresentation(tester);
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('feedback/threshold')),
+      find.byKey(const ValueKey('general/threshold')),
       -250,
       scrollable: settingsScroll,
     );

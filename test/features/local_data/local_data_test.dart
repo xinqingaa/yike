@@ -307,7 +307,7 @@ void main() {
     final wire = YikeData.initial(now).toJson();
     (wire['focus'] as Map<String, dynamic>)['cycles'] = -1;
     disk.values[PrefsKey.snapshot.storageKey] = jsonEncode({
-      'schemaVersion': 3,
+      'schemaVersion': 4,
       'data': wire,
     });
     expect(app.read(localDataProvider).readError, isNotNull);

@@ -111,12 +111,15 @@ class FeedbackService {
   }
 
   /// Settings audition uses only the master sound gate and never vibrates.
-  void previewFinish({required String theme}) {
+  void previewFinish({required String theme}) =>
+      previewSound(theme: theme, cue: SoundCue.finish);
+
+  void previewSound({required String theme, required SoundCue cue}) {
     if (_disposed || !_foreground || !_sound) return;
-    unawaited(
-      _safely(() => soundPlayer.play(theme, SoundCue.finish, scope: 'preview')),
-    );
+    unawaited(_safely(() => soundPlayer.play(theme, cue, scope: 'preview')));
   }
+
+  void stopPreview() => stopScope('preview');
 
   void _cancelSecondImpact() {
     _secondImpact?.cancel();

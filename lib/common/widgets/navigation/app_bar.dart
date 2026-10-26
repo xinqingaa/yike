@@ -12,6 +12,8 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CommonAppBar({
     super.key,
     required this.title,
+    this.titleWidget,
+    this.glassProgress,
     this.dense = false,
     this.elevated = false,
     this.showBack = false,
@@ -26,6 +28,8 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   final String title;
+  final Widget? titleWidget;
+  final double? glassProgress;
   final bool dense;
   final bool elevated;
   final bool showBack;
@@ -39,7 +43,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   final CommonAppBarSurface background;
 
   @override
-  Size get preferredSize => Size.fromHeight(dense ? 48 : kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(dense ? 64 : 72);
 
   @override
   Widget build(BuildContext context) {
@@ -51,22 +55,31 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
     final transparent = glass || background == CommonAppBarSurface.transparent;
     return AppBar(
       automaticallyImplyLeading: false,
+      clipBehavior: Clip.none,
+      leadingWidth: ts.spacing.lg + ts.sizing.touch + ts.spacing.sm,
+      actionsPadding: EdgeInsetsDirectional.only(end: ts.spacing.lg),
       forceMaterialTransparency: transparent,
-      flexibleSpace: glass
-          ? const CommonGlassSurface(
-              edges: CommonGlassEdges.bottom,
+      flexibleSpace: glass || glassProgress != null
+          ? CommonGlassSurface(
+              reveal: glassProgress ?? 1,
+              clear: glassProgress != null,
+              edges: glassProgress != null
+                  ? CommonGlassEdges.none
+                  : CommonGlassEdges.bottom,
               child: SizedBox.expand(),
             )
           : null,
       toolbarHeight: preferredSize.height,
-      title: title.trim().isEmpty
-          ? null
-          : Text(
-              title,
-              style: ts.textStyle.subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+      title:
+          titleWidget ??
+          (title.trim().isEmpty
+              ? null
+              : Text(
+                  title,
+                  style: ts.textStyle.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )),
       centerTitle: true,
       elevation: elevated ? ts.elevation.card : ts.elevation.none,
       backgroundColor: transparent ? Colors.transparent : ts.colors.surface,
@@ -82,12 +95,19 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
       scrolledUnderElevation: ts.elevation.none,
       shape: transparent ? null : Border(bottom: ts.border.hairline),
       leading: showBack
-          ? CommonIconButton(
-              name: CommonIconName.chevronRight,
-              label: backLabel,
-              onPressed: onBack ?? () => Navigator.of(context).maybePop(),
-              quarterTurns: 2,
-              variant: CommonIconButtonVariant.text,
+          ? Padding(
+              padding: EdgeInsetsDirectional.only(
+                start: ts.spacing.lg,
+                end: ts.spacing.sm,
+              ),
+              child: CommonIconButton(
+                material: CommonSurfaceMaterial.glass,
+                name: CommonIconName.chevronRight,
+                label: backLabel,
+                onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+                quarterTurns: 2,
+                variant: CommonIconButtonVariant.text,
+              ),
             )
           : null,
       actions: showAction

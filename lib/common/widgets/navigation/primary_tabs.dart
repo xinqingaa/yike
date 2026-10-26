@@ -20,6 +20,10 @@ class CommonPrimaryTabs extends StatelessWidget {
     this.onSelectionRequested,
     this.disabled = false,
     this.size = CommonPrimaryTabsSize.md,
+    this.glassReveal = 1,
+    this.clear = false,
+    this.compactLabels = false,
+    this.showSurface = true,
   });
 
   final List<CommonTabItem> items;
@@ -29,6 +33,8 @@ class CommonPrimaryTabs extends StatelessWidget {
   final bool showDivider;
   final bool disabled;
   final CommonPrimaryTabsSize size;
+  final double glassReveal;
+  final bool clear, compactLabels, showSurface;
   final ValueChanged<String>? onSelected;
 
   /// With grow=true, requests selection without moving the controller first.
@@ -44,7 +50,11 @@ class CommonPrimaryTabs extends StatelessWidget {
     final compact = size == CommonPrimaryTabsSize.sm;
     final trackHeight = compact ? ts.sizing.controlSm : ts.sizing.controlMd;
     final trackRadius = BorderRadius.circular(
-      compact ? ts.radius.sm : ts.radius.md,
+      clear
+          ? ts.radius.md + (ts.radius.xl - ts.radius.md) * glassReveal
+          : compact
+          ? ts.radius.sm
+          : ts.radius.md,
     );
 
     final tabBar = TabBar(
@@ -84,7 +94,9 @@ class CommonPrimaryTabs extends StatelessWidget {
           Tab(
             height: trackHeight,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: ts.spacing.md),
+              padding: EdgeInsets.symmetric(
+                horizontal: compactLabels ? ts.spacing.sm : ts.spacing.md,
+              ),
               child: onSelectionRequested == null
                   ? Text(item.label)
                   : const SizedBox.shrink(),
@@ -93,86 +105,89 @@ class CommonPrimaryTabs extends StatelessWidget {
       ],
     );
 
-    final track = CommonGlassSurface(
-      key: const ValueKey('primary-tabs-track'),
-      borderRadius: trackRadius,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: ts.spacing.xs),
-        child: SizedBox(
-          width: double.infinity,
-          height: trackHeight,
-          child: IgnorePointer(
-            ignoring: disabled,
-            child: ExcludeFocus(
-              excluding: disabled,
-              child: Opacity(
-                opacity: disabled ? ts.opacity.disabled : 1,
-                child: onSelectionRequested == null
-                    ? tabBar
-                    : Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ExcludeSemantics(
-                            child: ExcludeFocus(
-                              child: IgnorePointer(child: tabBar),
-                            ),
+    final content = Padding(
+      padding: EdgeInsets.symmetric(horizontal: ts.spacing.xs),
+      child: SizedBox(
+        width: double.infinity,
+        height: trackHeight,
+        child: IgnorePointer(
+          ignoring: disabled,
+          child: ExcludeFocus(
+            excluding: disabled,
+            child: Opacity(
+              opacity: disabled ? ts.opacity.disabled : 1,
+              child: onSelectionRequested == null
+                  ? tabBar
+                  : Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ExcludeSemantics(
+                          child: ExcludeFocus(
+                            child: IgnorePointer(child: tabBar),
                           ),
-                          ListenableBuilder(
-                            listenable: controller!.animation!,
-                            builder: (context, _) => Row(
-                              children: [
-                                for (var i = 0; i < items.length; i++)
-                                  Expanded(
-                                    child: Semantics(
-                                      selected: controller!.index == i,
-                                      button: true,
-                                      child: InkWell(
-                                        onTap: () => onSelectionRequested!(
-                                          items[i].value,
-                                        ),
-                                        borderRadius: trackRadius,
-                                        child: Center(
-                                          child: Text(
-                                            items[i].label,
-                                            style:
-                                                (compact
-                                                        ? ts
-                                                              .textStyle
-                                                              .captionStrong
-                                                        : ts.textStyle.label)
-                                                    .copyWith(
-                                                      color: Color.lerp(
-                                                        ts
-                                                            .colors
-                                                            .onSurfaceMuted,
-                                                        ts
-                                                            .colors
-                                                            .sectionTabActive,
-                                                        (1 -
-                                                                (controller!
-                                                                            .animation!
-                                                                            .value -
-                                                                        i)
-                                                                    .abs())
-                                                            .clamp(0, 1),
-                                                      ),
+                        ),
+                        ListenableBuilder(
+                          listenable: controller!.animation!,
+                          builder: (context, _) => Row(
+                            children: [
+                              for (var i = 0; i < items.length; i++)
+                                Expanded(
+                                  child: Semantics(
+                                    selected: controller!.index == i,
+                                    button: true,
+                                    child: InkWell(
+                                      onTap: () =>
+                                          onSelectionRequested!(items[i].value),
+                                      borderRadius: trackRadius,
+                                      child: Center(
+                                        child: Text(
+                                          items[i].label,
+                                          style:
+                                              (compact
+                                                      ? ts
+                                                            .textStyle
+                                                            .captionStrong
+                                                      : ts.textStyle.label)
+                                                  .copyWith(
+                                                    color: Color.lerp(
+                                                      ts.colors.onSurfaceMuted,
+                                                      ts
+                                                          .colors
+                                                          .sectionTabActive,
+                                                      (1 -
+                                                              (controller!
+                                                                          .animation!
+                                                                          .value -
+                                                                      i)
+                                                                  .abs())
+                                                          .clamp(0, 1),
                                                     ),
-                                          ),
+                                                  ),
                                         ),
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
-                        ],
-                      ),
-              ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
       ),
     );
+    final track = showSurface
+        ? CommonGlassSurface(
+            key: const ValueKey('primary-tabs-track'),
+            reveal: glassReveal,
+            clear: clear,
+            borderRadius: trackRadius,
+            child: content,
+          )
+        : content;
+
     return showDivider
         ? DecoratedBox(
             decoration: BoxDecoration(

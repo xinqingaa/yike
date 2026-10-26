@@ -10,6 +10,7 @@ import 'package:yike/features/focus/focus.dart';
 import 'package:yike/features/focus/providers/focus_dial_presentation.dart';
 import 'package:yike/storage/providers.dart';
 import 'support/fake_app_prefs.dart';
+import 'package:yike/features/settings/providers/sound_audition.dart';
 import 'support/fake_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yike/common/feedback/feedback_cue.dart';
@@ -48,6 +49,53 @@ class _Haptics implements HapticPlayer {
 }
 
 void main() {
+  testWidgets(
+    'audition categories stop one another and master-off cancels the cadence',
+    (tester) async {
+      final sounds = _Sounds(), haptics = _Haptics();
+      final service = FeedbackService(
+        soundPlayer: sounds,
+        hapticPlayer: haptics,
+      );
+      service.setForeground(true);
+      final app = ProviderContainer(
+        overrides: [
+          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          feedbackServiceProvider.overrideWithValue(service),
+        ],
+      );
+      final subscription = app.listen(soundAuditionProvider, (_, _) {});
+      final audition = app.read(soundAuditionProvider.notifier);
+      audition.toggle(SoundCue.tick);
+      expect(sounds.calls.map((c) => c.$2), [SoundCue.tick]);
+      await tester.pump(const Duration(milliseconds: 2100));
+      expect(sounds.calls, hasLength(3));
+      audition.toggle(SoundCue.chime);
+      await tester.pump(const Duration(seconds: 6));
+      expect(sounds.calls.map((c) => c.$2), [
+        SoundCue.tick,
+        SoundCue.tick,
+        SoundCue.tick,
+        SoundCue.chime,
+      ]);
+      audition.toggle(SoundCue.finish);
+      expect(sounds.calls.last.$2, SoundCue.finish);
+      expect(haptics.calls, isEmpty);
+      audition.toggle(SoundCue.tick);
+      final count = sounds.calls.length;
+      app
+          .read(timingPreferencesProvider.notifier)
+          .update((p) => p.copyWith(sound: false));
+      await tester.pump(const Duration(seconds: 6));
+      expect(sounds.calls.length, count);
+      expect(app.read(soundAuditionProvider), isNull);
+      expect(sounds.stops, contains('preview'));
+      subscription.close();
+      app.dispose();
+      await service.dispose();
+    },
+  );
+
   testWidgets(
     'leaving a timer scope stops its sound and cancels its second strong impact',
     (tester) async {

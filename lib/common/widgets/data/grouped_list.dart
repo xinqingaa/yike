@@ -45,11 +45,13 @@ class CommonGroupedList extends StatelessWidget {
     this.onNavigate,
     this.onChanged,
     this.density = CommonDensity.regular,
+    this.headingStyle,
   });
   final List<CommonListGroup> groups;
   final void Function(String groupId, String itemId)? onNavigate;
   final void Function(String groupId, String itemId, bool value)? onChanged;
   final CommonDensity density;
+  final TextStyle? headingStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +73,10 @@ class CommonGroupedList extends StatelessWidget {
                     horizontal: ts.spacing.none,
                     vertical: ts.spacing.sm,
                   ),
-                  child: Text(group.title, style: ts.textStyle.captionStrong),
+                  child: Text(
+                    group.title,
+                    style: headingStyle ?? ts.textStyle.captionStrong,
+                  ),
                 ),
                 CommonCard(
                   padding: EdgeInsets.zero,

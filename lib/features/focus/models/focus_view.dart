@@ -3,6 +3,36 @@ import '../../../common/feedback/feedback_options.dart';
 
 const maxFocusSeconds = 3599;
 const fullDialSeconds = 3600;
+const maxPomodoroRounds = 99;
+
+TimerStage? pomodoroBreak(
+  int round, {
+  required int shortInterval,
+  required int longInterval,
+  required int totalRounds,
+}) {
+  if (totalRounds > 0 && round >= totalRounds) return null;
+  if (longInterval > 0 && round % longInterval == 0) {
+    return TimerStage.longBreak;
+  }
+  if (shortInterval > 0 && round % shortInterval == 0) {
+    return TimerStage.shortBreak;
+  }
+  return null;
+}
+
+int pomodoroCycleLength(int shortInterval, int longInterval, int totalRounds) {
+  if (totalRounds > 0) return totalRounds;
+  if (shortInterval == 0) return longInterval;
+  if (longInterval == 0) return shortInterval;
+  var a = shortInterval, b = longInterval;
+  while (b != 0) {
+    final remainder = a % b;
+    a = b;
+    b = remainder;
+  }
+  return shortInterval ~/ a * longInterval;
+}
 
 enum TimerMode { pomodoro, stopwatch, countdown }
 
@@ -22,13 +52,18 @@ class FocusViewData {
     this.round = 1,
     this.laps = const [],
     this.recovered = false,
+    this.breakStage,
+    this.planComplete = false,
+    this.roundCount = 4,
   });
   final TimerMode mode;
   final TimerStatus status;
   final TimerStage stage;
   final int seconds, target, round, scaleSeconds;
   final List<int> laps;
-  final bool recovered;
+  final bool recovered, planComplete;
+  final TimerStage? breakStage;
+  final int roundCount;
   bool get resting => stage != TimerStage.focus;
   bool get ready => status == TimerStatus.ready;
   bool get paused => status == TimerStatus.paused;
@@ -68,6 +103,9 @@ class FocusViewData {
       scaleSeconds == other.scaleSeconds &&
       round == other.round &&
       recovered == other.recovered &&
+      breakStage == other.breakStage &&
+      planComplete == other.planComplete &&
+      roundCount == other.roundCount &&
       listEquals(laps, other.laps);
   @override
   int get hashCode => Object.hash(
@@ -79,6 +117,9 @@ class FocusViewData {
     scaleSeconds,
     round,
     recovered,
+    breakStage,
+    planComplete,
+    roundCount,
     Object.hashAll(laps),
   );
   FocusViewData copyWith({
@@ -101,6 +142,9 @@ class FocusViewData {
     round: round ?? this.round,
     laps: laps ?? this.laps,
     recovered: recovered ?? this.recovered,
+    breakStage: breakStage,
+    planComplete: planComplete,
+    roundCount: roundCount,
   );
 }
 
@@ -122,9 +166,11 @@ class FocusRecordView {
 class TimingPreferences {
   const TimingPreferences({
     this.focusSeconds = 1500,
-    this.shortSeconds = 30,
+    this.shortSeconds = 300,
     this.longSeconds = 900,
     this.interval = 4,
+    this.shortInterval = 1,
+    this.totalRounds = 0,
     this.threshold = 10,
     this.sound = true,
     this.haptics = true,
@@ -138,6 +184,30 @@ class TimingPreferences {
     this.presets = const [180, 300, 600, 1200],
   });
   final int focusSeconds, shortSeconds, longSeconds, interval, threshold;
+  final int shortInterval, totalRounds;
+  int get cycleLength =>
+      pomodoroCycleLength(shortInterval, interval, totalRounds);
+  TimerStage? breakAfter(int round) => pomodoroBreak(
+    round,
+    shortInterval: shortInterval,
+    longInterval: interval,
+    totalRounds: totalRounds,
+  );
+  ({int short, int long}) get breakCounts {
+    var short = 0, long = 0;
+    for (var round = 1; round <= cycleLength; round++) {
+      switch (breakAfter(round)) {
+        case TimerStage.shortBreak:
+          short++;
+        case TimerStage.longBreak:
+          long++;
+        default:
+          break;
+      }
+    }
+    return (short: short, long: long);
+  }
+
   final bool sound, haptics;
   final FeedbackOptions pomodoroFeedback,
       stopwatchFeedback,
@@ -160,6 +230,8 @@ class TimingPreferences {
     int? shortSeconds,
     int? longSeconds,
     int? interval,
+    int? shortInterval,
+    int? totalRounds,
     int? threshold,
     bool? sound,
     bool? haptics,
@@ -173,6 +245,8 @@ class TimingPreferences {
     shortSeconds: shortSeconds ?? this.shortSeconds,
     longSeconds: longSeconds ?? this.longSeconds,
     interval: interval ?? this.interval,
+    shortInterval: shortInterval ?? this.shortInterval,
+    totalRounds: totalRounds ?? this.totalRounds,
     threshold: threshold ?? this.threshold,
     sound: sound ?? this.sound,
     haptics: haptics ?? this.haptics,

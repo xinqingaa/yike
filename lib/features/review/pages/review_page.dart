@@ -78,7 +78,7 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
     final selected = ref.watch(reviewSelectionProvider),
         summary = ref.watch(reviewSummaryProvider);
     final all = summary.allRecords, records = summary.records;
-    final total = summary.seconds, current = !selected.last.isBefore(today);
+    final total = summary.seconds;
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification is ScrollStartNotification) _card.close();
@@ -107,14 +107,6 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
                   );
                 },
               ),
-              CommonIconButton(
-                name: CommonIconName.calendarCurrent,
-                label: '返回当前周期',
-                disabled: current,
-                variant: CommonIconButtonVariant.text,
-                onPressed: () =>
-                    _update(selected.copyWith(anchor: today, clear: true)),
-              ),
             ],
           ),
           SizedBox(height: ts.spacing.md),
@@ -123,9 +115,7 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
             today: today,
             onChanged: _update,
           ),
-          SizedBox(height: ts.spacing.md),
-          const CommonDivider(),
-          SizedBox(height: ts.spacing.md),
+          SizedBox(height: ts.spacing.lg),
           MotionPage<(bool, String)>(
             value: (selected.month, dayId(selected.first)),
             direction: (a, b) => a.$1 != b.$1
@@ -155,9 +145,7 @@ class _ReviewPageState extends ConsumerState<ReviewPage> {
                     _summary(ts, '打卡', '${summary.checkins} 次'),
                   ],
                 ),
-                SizedBox(height: ts.spacing.md),
-                const CommonDivider(),
-                SizedBox(height: ts.spacing.md),
+                SizedBox(height: ts.spacing.lg),
                 if (all.isEmpty && summary.checkins == 0) ...[
                   Text(
                     selected.month ? '这一月还没有记录' : '这一周还没有记录',

@@ -1,9 +1,7 @@
 import '../../../common/motion/content_transition.dart';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../common/time.dart';
 import '../../../common/widgets.dart';
 import '../../../theme/ts.dart';
 import '../models/focus_view.dart';
@@ -33,14 +31,7 @@ class CountdownUtility extends StatelessWidget {
     double width,
     List<int> presets,
   ) {
-    final ts = TS.of(context);
-    final captionHeight =
-        MediaQuery.textScalerOf(context).scale(ts.textStyle.caption.fontSize!) *
-        (ts.textStyle.caption.height ?? 1);
-    return math.max(
-      CountdownChoices.metrics(context, width, presets).height,
-      ts.sizing.controlMd + ts.spacing.sm + captionHeight * 2,
-    );
+    return CountdownChoices.metrics(context, width, presets).height;
   }
 
   @override
@@ -79,16 +70,6 @@ class CountdownUtility extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          value.finished
-                              ? preferences.sound &&
-                                        preferences.countdownFeedback.sound
-                                    ? '提示音已开启'
-                                    : '提示音已关闭'
-                              : '本次 ${durationLabel(value.target)}',
-                          textAlign: TextAlign.center,
-                          style: ts.textStyle.caption,
-                        ),
                         if (value.paused && value.recovered) ...[
                           SizedBox(height: ts.spacing.sm),
                           CommonButton(
