@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../common/clock.dart';
 import '../../common/notifications/notification_adapter.dart';
 import '../../common/notifications/notification_models.dart';
@@ -8,7 +10,6 @@ import '../../common/notifications/notification_metadata.dart';
 import '../../common/overlay/app_pop.dart';
 import '../../common/overlay/popup_activity.dart';
 import '../../common/route_activity.dart';
-import '../../router/routes.dart';
 import '../../common/time.dart';
 import '../../features/local_data/local_data.dart';
 import '../../storage/providers.dart';
@@ -309,7 +310,7 @@ class NotificationCoordinator extends Notifier<NotificationStatus> {
       return;
     }
     if (ref.read(popupActivityProvider) == 0 &&
-        appRouteActivity.current != AppRoutes.bootstrap) {
+        appRouteActivity.current != null) {
       final ids = due.map((h) => h.id).toList();
       final message = due.length == 1
           ? '${due.first.name} · 今日尚未完成'

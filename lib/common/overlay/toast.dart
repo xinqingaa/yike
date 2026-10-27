@@ -45,6 +45,7 @@ abstract final class ToastPopup {
           behavior: PopupBehaviorConfig(
             key: replacementKey,
             conflictPolicy: PopupConflictPolicy.replaceExisting,
+            backPolicy: PopupBackPolicy.ignore,
           ),
         ),
       );
@@ -86,6 +87,7 @@ abstract final class ToastPopup {
         behavior: PopupBehaviorConfig(
           key: replacementKey,
           conflictPolicy: PopupConflictPolicy.replaceExisting,
+          backPolicy: PopupBackPolicy.ignore,
         ),
       ),
     );

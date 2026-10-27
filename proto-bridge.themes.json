@@ -1863,10 +1863,10 @@
         "textarea.rows": 3,
         "toast.duration": 4000,
         "toast.gap": 10,
-        "tracking.caption": "0.24em",
-        "tracking.display": "0em",
-        "tracking.heading": "-0.01em",
-        "tracking.label": "0em",
+        "tracking.caption": "0.02em",
+        "tracking.display": "0.02em",
+        "tracking.heading": "0.02em",
+        "tracking.label": "0.02em",
         "typography.body-lg": {
           "family": [
             "system-ui",
@@ -2601,10 +2601,10 @@
         "textarea.rows": 3,
         "toast.duration": 4000,
         "toast.gap": 10,
-        "tracking.caption": "0.2em",
-        "tracking.display": "-0.02em",
-        "tracking.heading": "0em",
-        "tracking.label": "0.08em",
+        "tracking.caption": "0.02em",
+        "tracking.display": "0.02em",
+        "tracking.heading": "0.02em",
+        "tracking.label": "0.02em",
         "typography.body-lg": {
           "family": [
             "system-ui",
@@ -3339,10 +3339,10 @@
         "textarea.rows": 3,
         "toast.duration": 4000,
         "toast.gap": 10,
-        "tracking.caption": "0.2em",
-        "tracking.display": "0.04em",
-        "tracking.heading": "0.12em",
-        "tracking.label": "0.24em",
+        "tracking.caption": "0.02em",
+        "tracking.display": "0.02em",
+        "tracking.heading": "0.02em",
+        "tracking.label": "0.02em",
         "typography.body-lg": {
           "family": [
             "system-ui",
@@ -4077,10 +4077,10 @@
         "textarea.rows": 3,
         "toast.duration": 4000,
         "toast.gap": 10,
-        "tracking.caption": "0.24em",
-        "tracking.display": "0em",
-        "tracking.heading": "-0.01em",
-        "tracking.label": "0em",
+        "tracking.caption": "0.02em",
+        "tracking.display": "0.02em",
+        "tracking.heading": "0.02em",
+        "tracking.label": "0.02em",
         "typography.body-lg": {
           "family": [
             "system-ui",
@@ -4815,10 +4815,10 @@
         "textarea.rows": 3,
         "toast.duration": 4000,
         "toast.gap": 10,
-        "tracking.caption": "0.2em",
-        "tracking.display": "-0.02em",
-        "tracking.heading": "0em",
-        "tracking.label": "0.08em",
+        "tracking.caption": "0.02em",
+        "tracking.display": "0.02em",
+        "tracking.heading": "0.02em",
+        "tracking.label": "0.02em",
         "typography.body-lg": {
           "family": [
             "system-ui",
@@ -5553,10 +5553,10 @@
         "textarea.rows": 3,
         "toast.duration": 4000,
         "toast.gap": 10,
-        "tracking.caption": "0.2em",
-        "tracking.display": "0.04em",
-        "tracking.heading": "0.12em",
-        "tracking.label": "0.24em",
+        "tracking.caption": "0.02em",
+        "tracking.display": "0.02em",
+        "tracking.heading": "0.02em",
+        "tracking.label": "0.02em",
         "typography.body-lg": {
           "family": [
             "system-ui",

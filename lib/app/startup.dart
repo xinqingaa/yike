@@ -1,9 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/launch/pages/launch_page.dart';
 import '../common/accessibility/reduce_transparency.dart';
 import '../storage/app_prefs.dart';
 import '../storage/providers.dart';
@@ -29,10 +29,25 @@ class _StartupBody extends ConsumerStatefulWidget {
 }
 
 class _StartupBodyState extends ConsumerState<_StartupBody> {
+  bool _holdingFirstFrame = true;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.deferFirstFrame();
     ReduceTransparency.start();
+  }
+
+  void _releaseFirstFrame() {
+    if (!_holdingFirstFrame) return;
+    _holdingFirstFrame = false;
+    WidgetsBinding.instance.allowFirstFrame();
+  }
+
+  @override
+  void dispose() {
+    _releaseFirstFrame();
+    super.dispose();
   }
 
   late final _preferencesProvider = FutureProvider.autoDispose<AppPrefs>((
@@ -50,6 +65,10 @@ class _StartupBodyState extends ConsumerState<_StartupBody> {
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(_preferencesProvider);
+    if (snapshot.hasValue || snapshot.hasError) {
+      // Build the themed home or the retry UI before taking down native splash.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _releaseFirstFrame());
+    }
     if (snapshot.hasValue) {
       return ProviderScope(
         overrides: [appPrefsProvider.overrideWithValue(snapshot.requireValue)],
@@ -92,7 +111,7 @@ class _StartupBodyState extends ConsumerState<_StartupBody> {
                         ],
                       ),
                     )
-                  : const YikeLaunchPage(),
+                  : const SizedBox.expand(),
             ),
           ),
         );

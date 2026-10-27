@@ -10,35 +10,29 @@ import 'support/pump_presentation.dart';
 import 'yike_ui_test.dart' show pumpYike;
 
 void main() {
-  testWidgets(
-    'fresh install explains modes, selects a theme and stays complete',
-    (tester) async {
-      final prefs = FakeAppPrefs();
-      var app = await pumpYike(tester, preferences: prefs, freshInstall: true);
-      expect(find.text('找到适合你的节奏'), findsOneWidget);
-      expect(find.bySemanticsLabel('第1步，共2步'), findsNothing);
-      expect(find.text('从零开始，记录投入的时间'), findsOneWidget);
-      await tester.tap(find.text('继续'));
-      await pumpPresentation(tester);
-      expect(find.text('选择你的表盘'), findsOneWidget);
-      expect(find.bySemanticsLabel('第2步，共2步'), findsNothing);
-      await tester.tap(find.byTooltip('返回上一步'));
-      await pumpPresentation(tester);
-      expect(find.text('找到适合你的节奏'), findsOneWidget);
-      await tester.tap(find.text('继续'));
-      await pumpPresentation(tester);
-      await tester.tap(find.byKey(const ValueKey('theme-yike/water')));
-      await pumpPresentation(tester);
-      expect(app.read(themePackProvider).id, 'yike/water');
-      await tester.tap(find.text('开始使用'));
-      await pumpPresentation(tester);
-      expect(prefs.read(localDataPrefs)!.onboardingComplete, isTrue);
-      await tester.pumpWidget(const SizedBox.shrink());
-      app = await pumpYike(tester, preferences: prefs, freshInstall: true);
-      expect(find.text('认识一刻'), findsNothing);
-      expect(app.read(themePackProvider).id, 'yike/water');
-    },
-  );
+  testWidgets('single glass introduction selects a theme and stays complete', (
+    tester,
+  ) async {
+    final prefs = FakeAppPrefs();
+    var app = await pumpYike(tester, preferences: prefs, freshInstall: true);
+    expect(find.text('找到适合你的节奏'), findsOneWidget);
+    expect(find.bySemanticsLabel('第1步，共2步'), findsNothing);
+    expect(find.text('从零开始，记录投入的时间'), findsOneWidget);
+    expect(find.byKey(const ValueKey('onboarding-glass')), findsOneWidget);
+    expect(find.text('选择你的表盘'), findsOneWidget);
+    expect(find.text('继续'), findsNothing);
+    await tester.ensureVisible(find.byKey(const ValueKey('theme-yike/water')));
+    await tester.tap(find.byKey(const ValueKey('theme-yike/water')));
+    await pumpPresentation(tester);
+    expect(app.read(themePackProvider).id, 'yike/water');
+    await tester.tap(find.text('开始使用'));
+    await pumpPresentation(tester);
+    expect(prefs.read(localDataPrefs)!.onboardingComplete, isTrue);
+    await tester.pumpWidget(const SizedBox.shrink());
+    app = await pumpYike(tester, preferences: prefs, freshInstall: true);
+    expect(find.text('认识一刻'), findsNothing);
+    expect(app.read(themePackProvider).id, 'yike/water');
+  });
 
   testWidgets(
     'skip persists, reset does not reopen and settings offers replay',
@@ -49,7 +43,7 @@ void main() {
         preferences: prefs,
         freshInstall: true,
       );
-      await tester.tap(find.text('跳过'));
+      await tester.tap(find.byTooltip('跳过'));
       await pumpPresentation(tester);
       expect(prefs.read(localDataPrefs)!.onboardingComplete, isTrue);
       app.read(localDataProvider.notifier).reset();
@@ -82,8 +76,6 @@ void main() {
       freshInstall: true,
       size: const Size(320, 640),
     );
-    await tester.tap(find.text('继续'));
-    await pumpPresentation(tester);
     expect(find.text('选择你的表盘'), findsOneWidget);
     expect(find.text('开始使用'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -101,8 +93,6 @@ void main() {
         });
         await pumpYike(tester, preferences: prefs, freshInstall: true);
         expect(find.text('找到适合你的节奏'), findsOneWidget);
-        await tester.tap(find.text('继续'));
-        await pumpPresentation(tester);
         expect(find.text('选择你的表盘'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });

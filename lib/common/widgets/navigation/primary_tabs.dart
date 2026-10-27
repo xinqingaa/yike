@@ -24,6 +24,7 @@ class CommonPrimaryTabs extends StatelessWidget {
     this.clear = false,
     this.compactLabels = false,
     this.showSurface = true,
+    this.fitLabels = false,
   });
 
   final List<CommonTabItem> items;
@@ -35,6 +36,9 @@ class CommonPrimaryTabs extends StatelessWidget {
   final CommonPrimaryTabsSize size;
   final double glassReveal;
   final bool clear, compactLabels, showSurface;
+
+  /// Fits equal-width, single-line labels with one shared downscale factor.
+  final bool fitLabels;
   final ValueChanged<String>? onSelected;
 
   /// With grow=true, requests selection without moving the controller first.
@@ -46,6 +50,7 @@ class CommonPrimaryTabs extends StatelessWidget {
       onSelectionRequested == null ||
           (grow && controller != null && onSelected == null),
     );
+    assert(!fitLabels || grow);
     final ts = TS.of(context);
     final compact = size == CommonPrimaryTabsSize.sm;
     final trackHeight = compact ? ts.sizing.controlSm : ts.sizing.controlMd;
@@ -56,6 +61,43 @@ class CommonPrimaryTabs extends StatelessWidget {
           ? ts.radius.sm
           : ts.radius.md,
     );
+    final labelStyle = compact
+        ? ts.textStyle.captionStrong
+        : ts.textStyle.label;
+    var labelSize = Size.zero;
+    if (fitLabels) {
+      for (final item in items) {
+        final painter = TextPainter(
+          text: TextSpan(text: item.label, style: labelStyle),
+          maxLines: 1,
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+          locale: Localizations.maybeLocaleOf(context),
+        )..layout();
+        labelSize = Size(
+          labelSize.width > painter.width ? labelSize.width : painter.width,
+          labelSize.height > painter.height ? labelSize.height : painter.height,
+        );
+        painter.dispose();
+      }
+    }
+    Widget label(String value, {TextStyle? style}) {
+      final text = Text(
+        value,
+        style: style,
+        maxLines: fitLabels ? 1 : null,
+        softWrap: fitLabels ? false : null,
+      );
+      return fitLabels
+          ? FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox.fromSize(
+                size: labelSize,
+                child: Center(child: text),
+              ),
+            )
+          : text;
+    }
 
     final tabBar = TabBar(
       onTap: (index) => onSelected?.call(items[index].value),
@@ -68,10 +110,8 @@ class CommonPrimaryTabs extends StatelessWidget {
           : TabAlignment.start,
       labelColor: ts.colors.sectionTabActive,
       unselectedLabelColor: ts.colors.onSurfaceMuted,
-      labelStyle: compact ? ts.textStyle.captionStrong : ts.textStyle.label,
-      unselectedLabelStyle: compact
-          ? ts.textStyle.captionStrong
-          : ts.textStyle.label,
+      labelStyle: labelStyle,
+      unselectedLabelStyle: labelStyle,
       labelPadding: EdgeInsets.zero,
       dividerColor: Colors.transparent,
       dividerHeight: 0,
@@ -98,8 +138,8 @@ class CommonPrimaryTabs extends StatelessWidget {
                 horizontal: compactLabels ? ts.spacing.sm : ts.spacing.md,
               ),
               child: onSelectionRequested == null
-                  ? Text(item.label)
-                  : const SizedBox.shrink(),
+                  ? label(item.label)
+                  : const SizedBox.expand(),
             ),
           ),
       ],
@@ -139,30 +179,41 @@ class CommonPrimaryTabs extends StatelessWidget {
                                       onTap: () =>
                                           onSelectionRequested!(items[i].value),
                                       borderRadius: trackRadius,
-                                      child: Center(
-                                        child: Text(
-                                          items[i].label,
-                                          style:
-                                              (compact
-                                                      ? ts
-                                                            .textStyle
-                                                            .captionStrong
-                                                      : ts.textStyle.label)
-                                                  .copyWith(
-                                                    color: Color.lerp(
-                                                      ts.colors.onSurfaceMuted,
-                                                      ts
-                                                          .colors
-                                                          .sectionTabActive,
-                                                      (1 -
-                                                              (controller!
-                                                                          .animation!
-                                                                          .value -
-                                                                      i)
-                                                                  .abs())
-                                                          .clamp(0, 1),
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: !fitLabels
+                                              ? ts.spacing.none
+                                              : compactLabels
+                                              ? ts.spacing.sm
+                                              : ts.spacing.md,
+                                        ),
+                                        child: Center(
+                                          child: label(
+                                            items[i].label,
+                                            style:
+                                                (compact
+                                                        ? ts
+                                                              .textStyle
+                                                              .captionStrong
+                                                        : ts.textStyle.label)
+                                                    .copyWith(
+                                                      color: Color.lerp(
+                                                        ts
+                                                            .colors
+                                                            .onSurfaceMuted,
+                                                        ts
+                                                            .colors
+                                                            .sectionTabActive,
+                                                        (1 -
+                                                                (controller!
+                                                                            .animation!
+                                                                            .value -
+                                                                        i)
+                                                                    .abs())
+                                                            .clamp(0, 1),
+                                                      ),
                                                     ),
-                                                  ),
+                                          ),
                                         ),
                                       ),
                                     ),

@@ -7,25 +7,6 @@ import 'popup_activity.dart';
 import 'popup_theme.dart';
 import 'sheet_header.dart';
 
-/// Binds a sheet handle inside the facade so a prebuilt child can finish it.
-final class SheetCompletion<T> {
-  PopupHandle<T>? _handle;
-
-  void attach(PopupHandle<T> handle) => _handle = handle;
-
-  Future<void> complete([T? value]) {
-    final handle = _handle;
-    if (handle == null) return Future<void>.value();
-    return handle.complete(value);
-  }
-
-  Future<void> dismiss() {
-    final handle = _handle;
-    if (handle == null) return Future<void>.value();
-    return handle.dismiss();
-  }
-}
-
 abstract final class SheetPopup {
   static Future<T?> show<T>({
     String? title,

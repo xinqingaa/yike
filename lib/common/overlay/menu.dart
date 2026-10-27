@@ -6,6 +6,7 @@ import '../widgets/display/glass_surface.dart';
 import 'popup_activity.dart';
 import 'popup_theme.dart';
 import 'sheet.dart';
+import 'popup_completion.dart';
 import 'sheet_actions.dart';
 
 abstract final class MenuPopup {
@@ -54,7 +55,7 @@ abstract final class MenuPopup {
     required List<AppSheetAction<T>> actions,
     CommonSurfaceMaterial material = CommonSurfaceMaterial.solid,
   }) {
-    final completion = SheetCompletion<T>();
+    final completion = PopupCompletion<T>();
     return SheetPopup.show<T>(
       title: title,
       material: material,

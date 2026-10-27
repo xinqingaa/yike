@@ -11,7 +11,9 @@ import 'package:yike/storage/app_prefs.dart';
 import 'package:yike/storage/providers.dart';
 import 'package:yike/storage/preference_writer.dart';
 import 'package:yike/theme/ts.dart';
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart'
+    show ThemeMode, WidgetsBinding, AppLifecycleState;
+import 'package:yike/features/local_data/models/local_data_prefs.dart';
 
 class FaultPrefs extends AppPrefs {
   final values = <String, String>{};
@@ -115,30 +117,118 @@ void main() {
       expect(app.read(localDataProvider).data.firstUsed, '2026-10-16');
     },
   );
-  test(
-    'ticks do not save; pause checkpoint cold-restores without closed time',
-    () {
-      final actions = app.read(focusActionsProvider);
-      actions.switchMode(TimerMode.stopwatch);
+  test('periodic checkpoints preserve recent progress without closed time', () {
+    final actions = app.read(focusActionsProvider);
+    actions.switchMode(TimerMode.stopwatch);
+    actions.start();
+    final id = app.read(focusDataProvider).session!.id;
+    final count = disk.writes;
+    advance(const Duration(seconds: 4));
+    expect(disk.writes, count);
+    advance(const Duration(seconds: 1));
+    expect(disk.writes, count + 1);
+    advance(const Duration(seconds: 2));
+    expect(disk.writes, count + 1);
+    app.dispose();
+    now = now.add(const Duration(days: 1));
+    app = open();
+    app.read(focusActionsProvider).switchMode(TimerMode.stopwatch);
+    expect(app.read(focusViewProvider).seconds, 5);
+    expect(app.read(focusDataProvider).session!.id, id);
+    expect(app.read(focusViewProvider).paused, isTrue);
+    expect(app.read(focusViewProvider).recovered, isTrue);
+  });
+
+  test('background saves 4:53 and cold restore remains paused at 4:53', () {
+    final actions = app.read(focusActionsProvider);
+    app
+        .read(timingPreferencesProvider.notifier)
+        .update((prefs) => prefs.copyWith(focusSeconds: 300));
+    actions.start();
+    advance(const Duration(seconds: 5));
+    advance(const Duration(seconds: 2));
+    final id = app.read(focusDataProvider).session!.id;
+    final writes = disk.writes;
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.inactive,
+    );
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.hidden,
+    );
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.paused,
+    );
+    expect(disk.writes, writes + 1);
+    // Background saves the two seconds since the last periodic checkpoint;
+    // subsequent same-time lifecycle transitions must coalesce.
+    expect(disk.read(localDataPrefs)!.focus.session!.elapsedMs, 7000);
+    expect(app.read(focusDataProvider).session!.status, TimerStatus.running);
+    app.dispose();
+    now = now.add(const Duration(minutes: 10));
+    app = open();
+    expect(app.read(focusViewProvider).seconds, 293);
+    expect(app.read(focusViewProvider).paused, isTrue);
+    expect(app.read(focusDataProvider).session!.id, id);
+    advance(const Duration(minutes: 1));
+    expect(app.read(focusViewProvider).seconds, 293);
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.resumed,
+    );
+  });
+
+  test('background checkpoints all sessions between periodic saves', () {
+    final actions = app.read(focusActionsProvider);
+    for (final mode in TimerMode.values) {
+      actions.switchMode(mode);
       actions.start();
-      final id = app.read(focusDataProvider).session!.id;
-      final count = disk.writes;
-      advance(const Duration(seconds: 20));
-      expect(disk.writes, count);
-      expect(app.read(focusViewProvider).seconds, 20);
-      actions.pause();
-      actions.resume();
-      advance(const Duration(seconds: 10));
-      app.dispose();
-      now = now.add(const Duration(days: 1));
-      app = open();
-      app.read(focusActionsProvider).switchMode(TimerMode.stopwatch);
-      expect(app.read(focusViewProvider).seconds, 20);
-      expect(app.read(focusDataProvider).session!.id, id);
-      expect(app.read(focusViewProvider).paused, isTrue);
-      expect(app.read(focusViewProvider).recovered, isTrue);
-    },
-  );
+    }
+    advance(const Duration(seconds: 5));
+    advance(const Duration(seconds: 2));
+    final writes = disk.writes;
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.inactive,
+    );
+    expect(disk.writes, writes + 1);
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.hidden,
+    );
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.paused,
+    );
+    expect(disk.writes, writes + 1);
+    for (final mode in TimerMode.values) {
+      expect(
+        disk.read(localDataPrefs)!.focus.sessionFor(mode)!.elapsedMs,
+        7000,
+      );
+    }
+    app.dispose();
+    now = now.add(const Duration(hours: 2));
+    app = open();
+    for (final mode in TimerMode.values) {
+      final session = app.read(focusDataProvider).sessionFor(mode)!;
+      expect(session.elapsedMs, 7000);
+      expect(session.status, TimerStatus.paused);
+    }
+    WidgetsBinding.instance.handleAppLifecycleStateChanged(
+      AppLifecycleState.resumed,
+    );
+  });
+
+  test('failed checkpoint remains visible and retries latest progress', () {
+    final actions = app.read(focusActionsProvider);
+    actions.start();
+    disk.failWrite = true;
+    advance(const Duration(seconds: 5));
+    expect(app.read(localDataProvider).writeError, isNotNull);
+    expect(app.read(focusDataProvider).session!.elapsedMs, 5000);
+    advance(const Duration(seconds: 2));
+    disk.failWrite = false;
+    expect(app.read(localDataProvider.notifier).retry(), isTrue);
+    expect(disk.read(localDataPrefs)!.focus.session!.elapsedMs, 7000);
+    expect(app.read(localDataProvider).writeError, isNull);
+  });
+
   test(
     'completion atomically persists result and cannot duplicate after reopen',
     () {

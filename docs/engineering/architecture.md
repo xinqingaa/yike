@@ -41,7 +41,7 @@ lib/
 | review | 消费专注和习惯事实，维护周期浏览 | `review.dart` |
 | settings | 经公开 API 修改配置 | 设置命名路由 |
 | home | 组合三个根页面 | 根命名路由 |
-| launch | 品牌展示 | 应用启动流程 |
+| onboarding | 单页新手介绍与表盘选择 | `onboarding.dart` |
 
 `LocalDataController` 拥有组合业务快照；计时规则留在 FocusEngine，习惯规则留在 habits，统计由记录派生。UI、动效与 feature 规则分别由各自模块维护。只有出现独立数据源、明显性能问题或职责冲突时，再评估拆分 Repository/协调器。
 
@@ -99,4 +99,4 @@ Android 使用最小 MethodChannel / AlarmManager 接收桥：发布前读取原
 
 Swift WidgetKit / ActivityKit 与 Kotlin RemoteViews 只读取原子展示缓存，不读取 MMKV 或独立结算。外部动作通过 URL / PendingIntent 打开主应用，校准后验证代次、会话、阶段、预期状态及状态转换 token，保存消费回执后调用 `FocusActions.commandResult`。状态 token 只保留在本进程，旧进程按钮只定位应用并提示状态更新。命令是否接受、业务是否保存及原生展示是否成功分别表达。
 
-`app/external_targets.dart` 统一通知与组件的查看目标，延迟跨越读取阻断、启动页及模态草稿；命令消费不等待导航。平台适配只消费投影与统一命令，协议和验证要求见 [原生组件与实时活动](system-surfaces.md)。
+`app/external_targets.dart` 统一通知与组件的查看目标，延迟跨越读取阻断、导航就绪及模态草稿；命令消费不等待导航。平台适配只消费投影与统一命令，协议和验证要求见 [原生组件与实时活动](system-surfaces.md)。

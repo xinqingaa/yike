@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../common/widgets.dart';
 import '../../../common/widgets/yike/layout.dart';
 import '../../../theme/ts.dart';
@@ -75,22 +76,12 @@ class ReviewPeriodControls extends StatelessWidget {
                 },
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: ts.sizing.touch),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          reviewPeriodLabel(selection),
-                          textAlign: TextAlign.center,
-                          style: ts.textStyle.captionStrong,
-                        ),
-                      ),
-                      SizedBox(width: ts.spacing.xs),
-                      CommonIcon(
-                        name: CommonIconName.chevronDown,
-                        dimension: ts.sizing.iconSm,
-                      ),
-                    ],
+                  child: Center(
+                    child: Text(
+                      reviewPeriodLabel(selection),
+                      textAlign: TextAlign.center,
+                      style: ts.textStyle.captionStrong,
+                    ),
                   ),
                 ),
               ),

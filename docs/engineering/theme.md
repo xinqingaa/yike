@@ -13,7 +13,7 @@ Text('标题', style: ts.textStyle.title);
 
 一刻在设置页选择机械、水位或日影表盘，并独立选择浅色、深色或跟随系统。默认机械、跟随系统；选择作用于页面、组件及弹层，并经 AppPrefs 恢复。`themePackProvider` 与 `themeModeProvider` 是唯一选择状态；组件通过最近的 TS ThemeExtension 读取。
 
-主题包、导入清单与映射身份由生成工具维护；本地设计量通过类型化扩展点提供。机械主题的正文 / 数字字重 400、标题 / 标签字重 500 直接维护在对应字体 value 中，不叠加排版覆盖层；这项本地字体维护不涉及外部 DS。其它生成值遵守同步边界，只有明确的外部 DS 任务才使用 [DS Target Sync Skill](../../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。主题组件键参与解析；图片资源按明暗模式选择，并由组件指定逻辑尺寸。
+主题包、导入清单与映射身份由生成工具维护；本地设计量通过类型化扩展点提供。机械主题的正文 / 数字字重 400、标题 / 标签字重 500，以及三主题统一的标题 / 标签 / 说明 / 展示字距 `0.02em`，直接维护在对应字体与 tracking value 中，并同步本地主题矩阵，不叠加排版覆盖层。这些本地排版值不涉及外部 DS，显式重新生成主题时须保留。其它生成值遵守同步边界，只有明确的外部 DS 任务才使用 [DS Target Sync Skill](../../.agents/skills/proto-bridge-ds-target-sync/SKILL.md)。主题组件键参与解析；图片资源按明暗模式选择，并由组件指定逻辑尺寸。
 
 `proto-bridge.themes.json` 记录选择范围、主题与模式矩阵、源摘要和解析值。同步门禁同时核对生成的 Dart 内容和这个矩阵，不能只凭 accessor 存在或源端 fingerprint 声明主题已落地。仅显式固定 Handoff 专项需要使用其固定主题表，不读取 active/latest。
 
@@ -27,9 +27,9 @@ Text('标题', style: ts.textStyle.title);
 
 ## 主题切换
 
-Material Theme 和 TS 使用同一主题包。`TS.lerp` 与 `theme_interpolation.dart` 连续插值颜色、文字、间距、尺寸、圆角、透明度、布局、阴影和效果参数。主题包身份、明暗枚举、motion、layer 与资源引用采用对应端点；表盘通过 `artworkThemes` 按同一进度混合原图层，比例连续插值。组件不得缓存 BuildContext 对应的主题供其它页面使用。
+Material Theme 和 TS 使用同一主题包。`TS.lerp` 与 `theme_interpolation.dart` 连续插值颜色、文字、间距、尺寸、圆角、透明度、布局、阴影和效果参数。主题包身份、明暗枚举、motion、layer 与资源引用采用对应端点；表盘通过 `artworkThemes` 按同一进度混合原图层，比例连续插值；快速反向切回已有端点时累加相同图层的贡献，保证总权重为 1。主题选择卡片的边框读取同一组权重，选择语义即时更新，视觉从当前进度衔接。组件不得缓存 BuildContext 对应的主题供其它页面使用。
 
-主题过渡使用 `motion.durationSlow` 与 `motion.easingStandard`；系统减少动态效果时主题动画时长归零。相关检查见 [测试与视觉验证](testing.md)。
+主题过渡使用 `motion.durationSlow` 与 `motion.easingGentle`；系统减少动态效果时主题动画时长归零。相关检查见 [测试与视觉验证](testing.md)。
 
 ## 原稿与分层资源
 
@@ -51,6 +51,6 @@ Flutter 的正文、标签与标题使用 Target 的紧凑文字档位上限，�
 
 ## Flutter 自有扩展
 
-新增本地能力先复用现有 TS 设计量；新的跨组件颜色/尺寸按语义增加类型化本地主题属性，并在浅深模式和插值中验证。几何比例、幅度和节拍可进入本地 YikeGeometry/YikeMotion。除本页规定的机械字体本地维护项外，生成文件与 proto-bridge 清单只在显式同步中更新；普通组件使用本地扩展点。
+新增本地能力先复用现有 TS 设计量；新的跨组件颜色/尺寸按语义增加类型化本地主题属性，并在浅深模式和插值中验证。几何比例、幅度和节拍可进入本地 YikeGeometry/YikeMotion。除本页规定的机械字重及三主题统一字距维护项外，生成文件与 proto-bridge 清单只在显式同步中更新；普通组件使用本地扩展点。
 
 类型环与图例使用本地 `AppChartColors`，通过 `ts.chartTypeColors` 读取三种类型颜色；三主题共用，按浅深模式提供颜色。该配色是 Flutter 产品扩展，不改写生成主题包。

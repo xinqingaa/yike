@@ -16,6 +16,7 @@ class YikeThemeSelector extends ConsumerWidget {
         .watch(themePacksProvider)
         .where((pack) => pack.id.startsWith('yike/'))
         .toList();
+    final weights = ts.artworkThemes;
     return Row(
       children: [
         for (var i = 0; i < packs.length; i++) ...[
@@ -34,9 +35,14 @@ class YikeThemeSelector extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: ts.colors.surface,
                     border: Border.fromBorderSide(
-                      selected.id == packs[i].id
-                          ? ts.border.focus
-                          : ts.border.defaultBorder,
+                      BorderSide.lerp(
+                        ts.border.defaultBorder,
+                        ts.border.focus,
+                        weights.entries
+                            .where((entry) => entry.key.pack.id == packs[i].id)
+                            .fold<double>(0, (sum, entry) => sum + entry.value)
+                            .clamp(0, 1),
+                      ),
                     ),
                     borderRadius: BorderRadius.circular(ts.radius.md),
                   ),
@@ -53,9 +59,14 @@ class YikeThemeSelector extends ConsumerWidget {
                         ),
                       ),
                       SizedBox(height: ts.spacing.sm),
-                      Text(
-                        const ['机械', '水位', '日影'][i],
-                        style: ts.textStyle.label,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          const ['机械', '水位', '日影'][i],
+                          style: ts.textStyle.label,
+                          maxLines: 1,
+                          softWrap: false,
+                        ),
                       ),
                     ],
                   ),

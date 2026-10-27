@@ -52,31 +52,20 @@ class SettingsHeader extends SliverPersistentHeaderDelegate {
           edges: CommonGlassEdges.bottom,
           borderRadius: BorderRadius.circular(ts.radius.md * (1 - progress)),
           child: Center(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final labelWidth =
-                    MediaQuery.textScalerOf(
-                          context,
-                        ).scale(ts.textStyle.label.fontSize!) *
-                        3 +
-                    ts.spacing.sm * 2;
-                return CommonPrimaryTabs(
-                  key: const ValueKey('settings-navigation'),
-                  items: [
-                    for (var i = 0; i < settingsSections.length; i++)
-                      CommonTabItem(value: '$i', label: settingsSections[i]),
-                  ],
-                  controller: controller,
-                  grow:
-                      labelWidth * settingsSections.length <=
-                      constraints.maxWidth - ts.spacing.xs * 2,
-                  compactLabels: true,
-                  showSurface: false,
-                  clear: true,
-                  glassReveal: progress,
-                  onSelected: (value) => onSelected(int.parse(value)),
-                );
-              },
+            child: CommonPrimaryTabs(
+              key: const ValueKey('settings-navigation'),
+              items: [
+                for (var i = 0; i < settingsSections.length; i++)
+                  CommonTabItem(value: '$i', label: settingsSections[i]),
+              ],
+              controller: controller,
+              grow: true,
+              fitLabels: true,
+              compactLabels: true,
+              showSurface: false,
+              clear: true,
+              glassReveal: progress,
+              onSelected: (value) => onSelected(int.parse(value)),
             ),
           ),
         ),

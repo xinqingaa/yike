@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../common/overlay/app_pop.dart';
 import '../common/overlay/popup_activity.dart';
 import '../common/route_activity.dart';
@@ -46,8 +47,7 @@ class ExternalTargets extends Notifier<SurfaceIntent?> {
                   AppLifecycleState.resumed) ||
           ref.read(popupActivityProvider) > 0 ||
           ref.read(localDataProvider).readError != null ||
-          appRouteActivity.current == null ||
-          appRouteActivity.current == AppRoutes.bootstrap) {
+          appRouteActivity.current == null) {
         return;
       }
       final target = state!;

@@ -90,6 +90,38 @@ void main() {
     );
     expect(container.read(themePackProvider).id, 'yike/mechanical');
   });
+  test('Yike typography shares 0.02em tracking in every theme and mode', () {
+    for (final pack in generatedThemePacks.where((p) => p.id.startsWith('yike/'))) {
+      for (final brightness in Brightness.values) {
+        final ts = TS(brightness: brightness, pack: pack);
+        for (final tracking in [ts.textStyle.trackingDisplay, ts.textStyle.trackingHeading,
+          ts.textStyle.trackingLabel, ts.textStyle.trackingCaption]) {
+          expect(tracking.relative, isTrue);
+          expect(tracking.value, .02);
+        }
+        for (final style in [ts.textStyle.headline, ts.textStyle.title,
+          ts.textStyle.label, ts.textStyle.caption]) {
+          expect(style.letterSpacing, closeTo(style.fontSize! * .02, .00001));
+        }
+      }
+    }
+  });
+
+  test('reversing to an existing artwork endpoint preserves all weights', () {
+    final a = TS(brightness: Brightness.light,
+      pack: generatedThemePacks.firstWhere((p) => p.id == 'yike/mechanical'));
+    final b = TS(brightness: Brightness.light,
+      pack: generatedThemePacks.firstWhere((p) => p.id == 'yike/water'));
+    final interrupted = a.lerp(b, .3);
+    final reversed = interrupted.lerp(a, .5);
+    expect(reversed.artworkThemes.values.fold<double>(0, (sum, value) => sum + value),
+      closeTo(1, .00001));
+    expect(reversed.artworkThemes[a], closeTo(.85, .00001));
+    expect(reversed.artworkThemes[b], closeTo(.15, .00001));
+    final continued = interrupted.lerp(a, .00001);
+    expect(continued.artworkThemes[a], closeTo(interrupted.artworkThemes[a]!, .00001));
+  });
+
   test('numeric styles never fall back during theme transitions', () {
     for (final pack in generatedThemePacks.where(
       (p) => p.id.startsWith('yike/'),

@@ -61,13 +61,14 @@
 | `confirm`                                | DialogPanel             |
 | `sheet`                                  | BottomSheet             |
 | `flowSheet`                              | FlowSheet（多步页面栈） |
+| `custom`                                 | 居中自定义模态内容 |
 | `loading` / `hideLoading` / `runLoading` | 全局阻塞 Loading        |
 | `dropMenu`                               | 有限选项锚定菜单        |
 | `actionSheet`                            | Sheet 内的受控动作列表   |
 
-业务代码只调 `AppPop` 或 `AppSheet`，不直接调 `Pop`。公开方法不接收调用处 `BuildContext`；封装用已挂载导航器上的主题解析 Token 与材质。页面把正文做成 `child`。需要从按钮带回结果时，先建 `AppSheet<T>`，用 `sheet.show(child: ...)` 打开，用 `sheet.complete` 或 `sheet.dismiss` 结束。只展示、靠标题栏关闭的面板用 `AppPop.sheet(child: ...)`。
+业务代码只调 `AppPop`、`AppSheet` 或 `AppCustom`，不直接调 `Pop`。公开方法不接收调用处 `BuildContext`；封装用已挂载导航器上的主题解析 Token 与材质。页面把正文做成 `child`。需要从按钮带回结果时，先建 `AppSheet<T>`，用 `sheet.show(child: ...)` 打开，用 `sheet.complete` 或 `sheet.dismiss` 结束。只展示、靠标题栏关闭的面板用 `AppPop.sheet(child: ...)`。
 
-`CommonGlassSurface` 组合使用 unified_popups 的 LiquidGlass；明确轮廓，提供清透和实色降级。`AppPop.actionSheet` 是 Sheet 内的动作列表组合。`app_pop.dart` 只维护公开调用边界，内部实现按 `toast.dart`、`confirm.dart`、`sheet.dart`、`flow_sheet.dart`、`loading.dart`、`menu.dart` 分工；`popup_theme.dart` 负责材质与外壳，`sheet_header.dart` 负责紧凑头部。库的 builder 与 `PopupHandle` 留在这一层。
+`CommonGlassSurface` 组合使用 unified_popups 的 LiquidGlass；明确轮廓，提供清透和实色降级。`AppPop.actionSheet` 是 Sheet 内的动作列表组合。`app_pop.dart` 只维护公开调用边界，内部实现按 `toast.dart`、`confirm.dart`、`sheet.dart`、`flow_sheet.dart`、`loading.dart`、`menu.dart` 分工；`popup_theme.dart` 负责材质与外壳，`sheet_header.dart` 负责紧凑头部。`custom.dart` 提供居中自定义模态，`AppCustom<T>` 接收预构建内容并用 complete / dismiss 关闭，`popup_completion.dart` 与 Sheet 共用类型化关闭桥；内容负责材质、布局和滚动。自定义模态纳入 PopupActivity，返回结果等待真实退场，主题从当前宿主实时读取。玻璃自定义层采用短距离平移，避免将背景模糊包入透明度缓冲。库的 builder 与 `PopupHandle` 留在这一层。
 
 `SheetStyle` 统一提供左右 md 留白，正文不得再次添加同一层左右 Padding。`AppSheetContent`（从 AppPop 导出）是可选的滚动正文与固定操作区，可按需启用分隔线；普通短内容直接用 `Column`。`CommonFlowSheetContent` 在同一外壳内提供步骤与固定页脚，默认不绘制分隔线。
 
@@ -103,7 +104,7 @@ PrimaryTabs 本身只提供选择条，TabView 是可选的独立视口。局部
 
 ## 尺寸与交互约定
 
-`CommonPrimaryTabs.size` 支持 `md`（controlMd 轨道）和 `sm`（controlSm 轨道），选中面使用上下 xs 内缩。`CommonTabView` 持有真实的可滑动面板；受控业务确认由页面 Provider 协调。需要先确认再切换时，等宽 PrimaryTabs 使用 `onSelectionRequested`，该回调只发出请求，选中位置由调用者在确认后更新 controller；请求点击和键盘激活不提前推进 TabBar。
+`CommonPrimaryTabs.size` 支持 `md`（controlMd 轨道）和 `sm`（controlSm 轨道），选中面使用上下 xs 内缩。`grow: true` 配合 `fitLabels: true` 时，按真实字体、字距、locale 与系统 TextScaler 测量所有标签，始终单行并以最长标签确定共用的缩小比例；只缩文字，不缩轨道、指示器或点击区域。`CommonTabView` 持有真实的可滑动面板；受控业务确认由页面 Provider 协调。需要先确认再切换时，等宽 PrimaryTabs 使用 `onSelectionRequested`，该回调只发出请求，选中位置由调用者在确认后更新 controller；文字点击层与官方 Tab 占满同一等分区域，紧凑受控选择使用单行缩放，避免大字号字形溢出后偏离选中面中心；请求点击和键盘激活不提前推进 TabBar。
 
 `CommonListCell` 导航行的标题、数值和留白共用整行 InkWell，箭头仅用于提示。普通文字行以 content 行高加上下 md 内边距布局，避免嵌套箭头按钮把行撑到 76px。开关行保留独立开关触摸范围，行背景点击也能切换；disabled 禁止两种入口。`CommonGroupedList` 标题与容器左边对齐，无额外卡片外边距，并裁剪整行反馈到容器圆角。
 

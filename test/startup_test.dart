@@ -7,10 +7,11 @@ import 'package:yike/app/app.dart';
 import 'package:yike/router/router.dart';
 import 'package:yike/common/widgets.dart';
 import 'package:yike/storage/app_prefs.dart';
+
 import 'support/fake_app_prefs.dart';
 
 void main() {
-  testWidgets('pending preparation fills the screen and enters automatically', (
+  testWidgets('preparation enters home directly without a Flutter brand page', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -25,16 +26,21 @@ void main() {
         },
       ),
     );
-    expect(tester.getSize(find.byType(CommonLaunchScreen)).width, 390);
+    expect(find.byType(CommonLaunchScreen), findsNothing);
+    expect(find.byType(PbApp), findsNothing);
     expect(find.text('开始'), findsNothing);
     await tester.pump(const Duration(seconds: 10));
-    expect(find.byType(CommonLaunchScreen), findsOneWidget);
+    expect(find.byType(CommonLaunchScreen), findsNothing);
     expect(calls, 1);
     ready.complete(FakeAppPrefs());
     await tester.pumpAndSettle();
     expect(find.byType(CommonLaunchScreen), findsNothing);
     expect(find.byType(PbApp), findsOneWidget);
     expect(appNavigatorKey.currentState!.canPop(), isFalse);
+    expect(
+      ModalRoute.of(tester.element(find.text('开始专注')))?.settings.name,
+      AppRoutes.home,
+    );
     expect(calls, 1);
   });
 
@@ -55,7 +61,7 @@ void main() {
       expect(find.text('本机存储暂不可用，请重试'), findsOneWidget);
       await tester.tap(find.text('重试'));
       await tester.pump();
-      expect(find.byType(CommonLaunchScreen), findsOneWidget);
+      expect(find.byType(CommonLaunchScreen), findsNothing);
       expect(find.text('本机存储暂不可用，请重试'), findsNothing);
       retryReady.complete(FakeAppPrefs());
       await tester.pumpAndSettle();

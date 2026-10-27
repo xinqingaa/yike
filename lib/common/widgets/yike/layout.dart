@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../../theme/ts.dart';
 import '../../widgets.dart';
 
@@ -77,6 +79,8 @@ class _YikeSelectionBarState extends State<YikeSelectionBar>
     items: widget.items,
     size: widget.size,
     grow: true,
+    fitLabels: true,
+    compactLabels: true,
     controller: _controller,
     onSelectionRequested: (value) async {
       await widget.onSelected(value);

@@ -11,6 +11,8 @@ import 'menu.dart';
 import 'sheet.dart';
 import 'sheet_actions.dart';
 import 'toast.dart';
+import 'custom.dart';
+import 'popup_completion.dart';
 
 export 'package:unified_popups/unified_popups.dart'
     show
@@ -25,6 +27,7 @@ export 'package:unified_popups/unified_popups.dart'
         SheetDirection,
         SheetDragConfig,
         SheetSizeConfig;
+
 export 'data_card.dart';
 export 'sheet_actions.dart';
 export 'status_popup.dart' show AppStatusPopup;
@@ -32,6 +35,11 @@ export 'sheet_content.dart';
 
 /// Application popup boundary. Pages pass a child; SDK handles stay here.
 abstract final class AppPop {
+  static bool get handlesSystemBack => Pop.interceptsSystemBack;
+
+  static Future<T?> custom<T>({required Widget child}) =>
+      PopupActivity.modal(() => CustomPopup.show<T>(child: child));
+
   static AppStatusPopup? status({required Widget content}) =>
       AppStatusPopup.show(content);
 
@@ -187,7 +195,7 @@ abstract final class AppPop {
 
 /// Sheet the caller can finish from a button inside [show]'s child.
 final class AppSheet<T> {
-  final _completion = SheetCompletion<T>();
+  final _completion = PopupCompletion<T>();
 
   Future<void> complete([T? value]) => _completion.complete(value);
 
@@ -214,5 +222,17 @@ final class AppSheet<T> {
     material: material,
     timerPanel: timerPanel,
     attach: _completion.attach,
+  );
+}
+
+/// A centered custom modal whose prebuilt content can finish or dismiss it.
+final class AppCustom<T> {
+  final _completion = PopupCompletion<T>();
+
+  Future<void> complete([T? value]) => _completion.complete(value);
+  Future<void> dismiss() => _completion.dismiss();
+
+  Future<T?> show({required Widget child}) => PopupActivity.modal(
+    () => CustomPopup.show<T>(child: child, attach: _completion.attach),
   );
 }

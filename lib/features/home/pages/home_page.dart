@@ -5,9 +5,12 @@ import '../../../router/routes.dart';
 import '../../local_data/local_data.dart';
 import '../../onboarding/onboarding.dart';
 import '../../../app/navigation.dart';
+import '../../../app/root_back_boundary.dart';
 import '../../../common/motion/motion_activity.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../common/widgets.dart';
 import '../../../theme/ts.dart';
 import '../../../common/widgets/yike/layout.dart';
@@ -109,42 +112,44 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
         curve: TS.of(context).motion.easingGentle,
       ),
     );
-    return Scaffold(
-      body: MotionVisibility(
-        child: SafeArea(
-          bottom: false,
-          child: YikePageWidth(
-            child: CommonTabView(
-              controller: _controller,
-              selectedNow: (index) => ref.read(rootTabProvider) == index,
-              swipe: false,
-              children: const [FocusPage(), CheckinPage(), ReviewPage()],
+    return RootBackBoundary(
+      child: Scaffold(
+        body: MotionVisibility(
+          child: SafeArea(
+            bottom: false,
+            child: YikePageWidth(
+              child: CommonTabView(
+                controller: _controller,
+                selectedNow: (index) => ref.read(rootTabProvider) == index,
+                swipe: false,
+                children: const [FocusPage(), CheckinPage(), ReviewPage()],
+              ),
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: YikePageWidth(
-        child: CommonBottomNav(
-          currentIndex: tab,
-          selection: _controller.animation,
-          onTap: (value) => ref.read(rootTabProvider.notifier).set(value),
-          items: const [
-            CommonBottomNavItem(
-              value: 'focus',
-              label: '专注',
-              icon: CommonIconName.yikeModeStopwatch,
-            ),
-            CommonBottomNavItem(
-              value: 'checkin',
-              label: '打卡',
-              icon: CommonIconName.circleCheck,
-            ),
-            CommonBottomNavItem(
-              value: 'review',
-              label: '回顾',
-              icon: CommonIconName.chartColumn,
-            ),
-          ],
+        bottomNavigationBar: YikePageWidth(
+          child: CommonBottomNav(
+            currentIndex: tab,
+            selection: _controller.animation,
+            onTap: (value) => ref.read(rootTabProvider.notifier).set(value),
+            items: const [
+              CommonBottomNavItem(
+                value: 'focus',
+                label: '专注',
+                icon: CommonIconName.yikeModeStopwatch,
+              ),
+              CommonBottomNavItem(
+                value: 'checkin',
+                label: '打卡',
+                icon: CommonIconName.circleCheck,
+              ),
+              CommonBottomNavItem(
+                value: 'review',
+                label: '回顾',
+                icon: CommonIconName.chartColumn,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -38,7 +38,7 @@ class PbApp extends ConsumerWidget {
           themeAnimationDuration: MediaQuery.disableAnimationsOf(context)
               ? Duration.zero
               : pack.motion.durationSlow,
-          themeAnimationCurve: pack.motion.easingStandard,
+          themeAnimationCurve: pack.motion.easingGentle,
           navigatorKey: appNavigatorKey,
           navigatorObservers: [
             Pop.routeObserver,
@@ -58,7 +58,14 @@ class PbApp extends ConsumerWidget {
               ),
             ),
           ),
-          initialRoute: AppRoutes.bootstrap,
+          initialRoute: AppRoutes.home,
+          // A single initial route avoids generating an intermediate '/' page.
+          onGenerateInitialRoutes: (_) => [
+            MaterialPageRoute<void>(
+              settings: const RouteSettings(name: AppRoutes.home),
+              builder: appRoutes[AppRoutes.home]!,
+            ),
+          ],
           routes: appRoutes,
         );
       },

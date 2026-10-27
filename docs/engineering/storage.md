@@ -10,7 +10,7 @@
 - `system_surfaces`：版本 1 原生展示元数据，保存重置代次 `epoch`、默认开启的 `liveEnabled` 与最多 64 个已消费命令回执 `consumed`；不保存会话 / 习惯副本。首次生成与重置先保存代次，失败禁用外部动作并允许重试。共享 JSON 文件为可重建展示缓存，不是 MMKV 业务入口。
 - `business_snapshot`：版本化业务快照，包含初始化日期、计时偏好、会话、周期、专注记录、习惯与打卡身份。由 `features/local_data` 负责组合序列化和单 key 保存；feature 只通过 AppPrefs，禁止直接 MMKV。
 
-计时与习惯各自保留模型与规则；跨模块快照协调放在 local_data 模块。公开的 focus_models.dart / habit_models.dart 只导出模型和纯逻辑，避免反向导入页面。单一 LocalData Notifier 拥有业务事实，页面 Provider 只派生投影；tick 不写存储，阶段边界和用户操作才保存。
+计时与习惯各自保留模型与规则；跨模块快照协调放在 local_data 模块。公开的 focus_models.dart / habit_models.dart 只导出模型和纯逻辑，避免反向导入页面。单一 LocalData Notifier 拥有业务事实，页面 Provider 只派生投影。250ms tick 更新内存；进度变化后距上次保存尝试至少 5 秒时写入同一业务快照，应用进入 inactive / hidden / paused / detached 时额外校准并保存。相同进度的连续生命周期事件合并，不重复写入；用户操作和阶段边界仍立即保存。检查点不暂停当前进程中的会话，不增加快照字段或版本；冷进程继续按已保存进度恢复暂停。周期保存失败沿用未保存提示、节流重试和手动重试，不重复结算。系统后台挂起时周期保存可能停止，不能保证精确保存到杀进程的瞬间。
 
 `app/local_data_boundary.dart` 处理读取阻断和保存失败重试；`storage/preference_writer.dart` 保留失败的外观写入。重置由 `app/reset_data.dart` 协调业务快照、外观、根导航、回顾选择和撤销提示，feature 不相互导入私有页面。业务快照为单 key 写入，外观两项独立保存；重置任一写入失败均显示未保存状态，重试当前结果。
 

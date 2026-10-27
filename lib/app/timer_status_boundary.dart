@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../common/overlay/popup_activity.dart';
 import '../common/route_activity.dart';
 import '../common/time.dart';
@@ -68,8 +70,7 @@ class _TimerStatusBoundaryState extends ConsumerState<TimerStatusBoundary>
   bool get _shown =>
       _foreground &&
       ref.read(popupActivityProvider) == 0 &&
-      appRouteActivity.current != null &&
-      appRouteActivity.current != AppRoutes.bootstrap;
+      appRouteActivity.current != null;
   TimerMode? get _current =>
       appRouteActivity.current == AppRoutes.home &&
           ref.read(rootTabProvider) == 0

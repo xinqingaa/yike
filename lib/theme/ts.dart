@@ -14,6 +14,7 @@ import 'app_tokens.dart';
 import 'app_metrics.dart';
 import 'theme_pack.dart';
 import 'theme_interpolation.dart';
+
 import 'dart:ui' show lerpDouble;
 
 export 'theme_pack.dart';
@@ -134,14 +135,25 @@ class TS extends ThemeExtension<TS> {
   bool get _blending => transitionFrom != null && transitionTo != null;
 
   /// Stable artwork endpoints, composited with the same progress as token colors.
-  Map<TS, double> get artworkThemes => _blending
-      ? {
-          for (final e in transitionFrom!.artworkThemes.entries)
-            e.key: e.value * (1 - transitionProgress),
-          for (final e in transitionTo!.artworkThemes.entries)
-            e.key: e.value * transitionProgress,
-        }
-      : {this: 1};
+  Map<TS, double> get artworkThemes {
+    if (!_blending) return {this: 1};
+    final weights = <TS, double>{};
+    void add(Map<TS, double> endpoints, double factor) {
+      for (final entry in endpoints.entries) {
+        weights.update(
+          entry.key,
+          (value) => value + entry.value * factor,
+          ifAbsent: () => entry.value * factor,
+        );
+      }
+    }
+
+    // Rapidly reversing to an existing endpoint must add its contributions.
+    add(transitionFrom!.artworkThemes, 1 - transitionProgress);
+    add(transitionTo!.artworkThemes, transitionProgress);
+    return weights;
+  }
+
   double get artworkAspectRatio => _blending
       ? lerpDouble(
           transitionFrom!.artworkAspectRatio,
