@@ -75,7 +75,7 @@ lib/
 
 应用 / focus 协调层组合路由、根 Tab、所选模式与弹层用途，决定允许计时反馈的来源；通用反馈服务不依赖业务页面。本模式计圈面板允许反馈，通用模态静默，状态条在所有模态期间隐藏。声触门控和视觉 MotionGate 各自处理对应条件，状态条消费 feature 公开投影，系统适配不依赖 feature。具体规则见 [运行时](runtime.md#计时反馈可见性规则)。
 
-表盘纯映射、吸附与阻尼规则位于 focus/logic，输入与局部 Ticker 位于 focus/widgets；FocusActions 只接受合法最终时长，FocusEngine / FocusProjection 共享 3599 秒上限。设置编辑通过类型化路由参数自动展开既有面板，feature 不跨导入私有页面。完成音试听由通用服务提供声音专用 API，页面不直接操作音频引擎。
+表盘纯映射、吸附与阻尼规则位于 focus/logic，输入与局部 Ticker 位于 focus/widgets；FocusActions 只接受合法最终时长，FocusEngine / FocusProjection 共享 3599 秒上限。设置编辑通过类型化路由参数自动展开既有面板，feature 不跨导入私有页面。分类试听由通用服务提供声音专用 API，页面不直接操作音频引擎。
 
 ## 回顾与统计
 
@@ -87,7 +87,7 @@ FeedbackService.select 的可选 scope 支持只受总开关控制的回顾查�
 
 ## 通知与应用级状态区域
 
-`common/notifications` 定义类型化目标、请求、权限、可替换适配器与调度元数据；不依赖 feature。`app/notifications/notification_plan.dart` 消费公开事实，输出三路计时和按日期全局排序的最多 60 个习惯请求；`notification_coordinator.dart` 串行对账、代次失效、保存截止占位、前台到点合并、权限和安全导航。原生成功与业务保存分开报告，设置页通知入口位于“记录与反馈”。
+`common/notifications` 定义类型化目标、请求、权限、可替换适配器与调度元数据；不依赖 feature。`app/notifications/notification_plan.dart` 消费公开事实，输出三路计时和按日期全局排序的最多 60 个习惯请求；`notification_coordinator.dart` 串行对账、代次失效、保存截止占位、前台到点合并、权限和安全导航。原生成功与业务保存分开报告，设置页通知入口位于“通用”。
 
 Android 使用最小 MethodChannel / AlarmManager 接收桥：发布前读取原生前后台状态；一次性预约落在独立原生调度缓存，重启 / 升级 / 时区变化重建，前台跳过系统通知。缓存不包含会话或打卡快照，不承担业务结算。iOS 使用 flutter_local_notifications 22.3.2 / UNUserNotificationCenter，前台展示选项全部关闭；单项取消 pending 与清理 delivered 分开。设备时区来自 flutter_timezone 5.1.1，timezone 0.11.2 提供日历换算；时区不可读时显示故障，不假定 UTC 成功。
 

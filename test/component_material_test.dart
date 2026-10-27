@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:unified_popups/unified_popups.dart';
 
 import 'package:yike/common/overlay/app_pop.dart';
+import 'package:yike/common/accessibility/reduce_transparency.dart';
 import 'package:yike/common/widgets.dart';
 import 'package:yike/router/navigator_key.dart';
 import 'package:yike/theme/ts.dart';
@@ -156,6 +157,12 @@ void main() {
       expect(find.byType(LiquidGlass), findsOneWidget);
       await tester.tap(find.text('内容操作'));
       expect(calls, 1);
+      ReduceTransparency.enabled.value = true;
+      await tester.pump();
+      expect(find.byType(LiquidGlass), findsNothing);
+      ReduceTransparency.enabled.value = false;
+      await tester.pump();
+      expect(find.byType(LiquidGlass), findsOneWidget);
       await tester.pumpWidget(body(true));
       expect(find.byType(LiquidGlass), findsNothing);
       await tester.tap(find.text('内容操作'));

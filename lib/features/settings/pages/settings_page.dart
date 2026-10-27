@@ -1,4 +1,5 @@
 import '../../../common/motion/content_transition.dart';
+import '../../onboarding/onboarding.dart';
 import '../../focus/focus.dart';
 import '../../../app/reset_data.dart';
 import '../../../app/notifications/notification_settings.dart';
@@ -15,7 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../common/state/local_value.dart';
 import '../../../common/overlay/app_pop.dart';
 import '../../../common/widgets.dart';
-import '../../../common/widgets/yike/dial.dart';
+import '../../../common/widgets/yike/theme_selector.dart';
 import '../../../common/widgets/yike/layout.dart';
 import '../../../router/routes.dart';
 import '../../../theme/ts.dart';
@@ -166,6 +167,11 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage>
           id: 'general',
           title: '通用',
           items: [
+            const CommonListItem(
+              id: 'onboarding',
+              title: '新手引导',
+              navigation: true,
+            ),
             const CommonListItem(
               id: 'notifications',
               title: '通知提醒',
@@ -344,12 +350,7 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage>
 
   Widget _appearance() {
     final ts = TS.of(context);
-    final pack = ref.watch(themePackProvider),
-        mode = ref.watch(themeModeProvider);
-    final packs = ref
-        .watch(themePacksProvider)
-        .where((p) => p.id.startsWith('yike/'))
-        .toList();
+    final mode = ref.watch(themeModeProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -360,57 +361,7 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage>
         SizedBox(height: ts.spacing.sm),
         Text('表盘', style: ts.textStyle.caption.copyWith(letterSpacing: 0)),
         SizedBox(height: ts.spacing.sm),
-        Row(
-          children: [
-            for (var i = 0; i < packs.length; i++) ...[
-              if (i > 0) SizedBox(width: ts.spacing.sm),
-              Expanded(
-                child: Semantics(
-                  selected: pack.id == packs[i].id,
-                  button: true,
-                  child: InkWell(
-                    key: ValueKey('theme-${packs[i].id}'),
-                    onTap: () => ref
-                        .read(themePackProvider.notifier)
-                        .select(packs[i].id),
-                    borderRadius: BorderRadius.circular(ts.radius.md),
-                    child: Container(
-                      padding: EdgeInsets.all(ts.spacing.sm),
-                      decoration: BoxDecoration(
-                        color: ts.colors.surface,
-                        border: Border.fromBorderSide(
-                          pack.id == packs[i].id
-                              ? ts.border.focus
-                              : ts.border.defaultBorder,
-                        ),
-                        borderRadius: BorderRadius.circular(ts.radius.md),
-                      ),
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: ts.sizing.brand,
-                            child: FittedBox(
-                              child: YikeDial(
-                                tokens: ts.forPack(packs[i]),
-                                digits: '12:34',
-                                progress: 12.5 / 60,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: ts.spacing.sm),
-                          Text(
-                            const ['机械', '水位', '日影'][i],
-                            style: ts.textStyle.label,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
+        const YikeThemeSelector(),
         SizedBox(height: ts.spacing.md),
         Text('显示模式', style: ts.textStyle.caption.copyWith(letterSpacing: 0)),
         SizedBox(height: ts.spacing.sm),
@@ -464,6 +415,11 @@ class _YikeSettingsPageState extends ConsumerState<YikeSettingsPage>
   }
 
   Future<void> _navigate(String group, String item) async {
+    if (item == 'onboarding') {
+      ref.read(soundAuditionProvider.notifier).stop();
+      await showYikeOnboarding();
+      return;
+    }
     if (item == 'audition') {
       await _openAudition();
       return;

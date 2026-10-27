@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/launch/pages/launch_page.dart';
+import '../common/accessibility/reduce_transparency.dart';
 import '../storage/app_prefs.dart';
 import '../storage/providers.dart';
 import '../theme/ts.dart';
@@ -28,6 +29,12 @@ class _StartupBody extends ConsumerStatefulWidget {
 }
 
 class _StartupBodyState extends ConsumerState<_StartupBody> {
+  @override
+  void initState() {
+    super.initState();
+    ReduceTransparency.start();
+  }
+
   late final _preferencesProvider = FutureProvider.autoDispose<AppPrefs>((
     ref,
   ) async {

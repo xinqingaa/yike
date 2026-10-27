@@ -80,7 +80,7 @@ void main() {
       var now = start;
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           clockProvider.overrideWithValue(() => now),
         ],
       );
@@ -261,7 +261,7 @@ void main() {
       final native = FakeNotifications();
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(native),
           clockProvider.overrideWithValue(() => start),
         ],
@@ -317,7 +317,7 @@ void main() {
       final native = FakeNotifications();
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(native),
           clockProvider.overrideWithValue(() => start),
         ],
@@ -354,7 +354,7 @@ void main() {
       final native = FakeNotifications();
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(native),
           clockProvider.overrideWithValue(() => start),
         ],
@@ -415,7 +415,7 @@ void main() {
         ..permission = const NotificationAccess();
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(native),
           clockProvider.overrideWithValue(() => now),
         ],
@@ -508,7 +508,7 @@ void main() {
       var now = start;
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(FakeNotifications()),
           clockProvider.overrideWithValue(() => now),
         ],
@@ -593,7 +593,7 @@ void main() {
       var now = start;
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(FakeNotifications()),
           clockProvider.overrideWithValue(() => now),
         ],
@@ -692,7 +692,7 @@ void main() {
     (tester) async {
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(FakeNotifications()),
           clockProvider.overrideWithValue(() => start),
         ],
@@ -786,7 +786,7 @@ void main() {
       );
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(FakeNotifications()),
           clockProvider.overrideWithValue(() => start),
         ],
@@ -819,7 +819,7 @@ void main() {
     (tester) async {
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(FakeNotifications()),
           clockProvider.overrideWithValue(() => start),
         ],

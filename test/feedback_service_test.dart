@@ -60,7 +60,7 @@ void main() {
       service.setForeground(true);
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           feedbackServiceProvider.overrideWithValue(service),
         ],
       );
@@ -131,7 +131,7 @@ void main() {
       var now = DateTime(2026, 10, 24, 12);
       final app = ProviderContainer(
         overrides: [
-          appPrefsProvider.overrideWithValue(FakeAppPrefs()),
+          appPrefsProvider.overrideWithValue(returningAppPrefs()),
           notificationAdapterProvider.overrideWithValue(FakeNotifications()),
           feedbackServiceProvider.overrideWithValue(service),
           clockProvider.overrideWithValue(() => now),

@@ -8,12 +8,15 @@ class YikeData {
     required this.focus,
     required this.habits,
     this.backgroundReminders = false,
+    this.onboardingComplete = true,
   });
   final bool backgroundReminders;
+  final bool onboardingComplete;
   final String firstUsed;
   final FocusData focus;
   final List<HabitViewData> habits;
   factory YikeData.initial(DateTime now) => YikeData(
+    onboardingComplete: false,
     firstUsed: dayId(now),
     focus: const FocusData(),
     habits: [
@@ -48,14 +51,17 @@ class YikeData {
     FocusData? focus,
     List<HabitViewData>? habits,
     bool? backgroundReminders,
+    bool? onboardingComplete,
   }) => YikeData(
     firstUsed: firstUsed,
     backgroundReminders: backgroundReminders ?? this.backgroundReminders,
+    onboardingComplete: onboardingComplete ?? this.onboardingComplete,
     focus: focus ?? this.focus,
     habits: habits ?? this.habits,
   );
   Map<String, dynamic> toJson() => {
     'firstUsed': firstUsed,
+    'onboardingComplete': onboardingComplete,
     'backgroundReminders': backgroundReminders,
     'focus': focus.toJson(),
     'habits': habits.map((h) => h.toJson()).toList(),
@@ -70,6 +76,7 @@ class YikeData {
     }
     return YikeData(
       firstUsed: first,
+      onboardingComplete: j['onboardingComplete'] as bool? ?? true,
       backgroundReminders: j['backgroundReminders'] as bool,
       focus: FocusData.fromJson(j['focus'] as Map<String, dynamic>),
       habits: List.unmodifiable(habits),

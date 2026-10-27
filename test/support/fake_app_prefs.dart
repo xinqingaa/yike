@@ -1,4 +1,6 @@
 import 'package:yike/storage/app_prefs.dart';
+import 'package:yike/features/local_data/local_data.dart';
+import 'package:yike/features/local_data/models/local_data_prefs.dart';
 
 /// Test double only; application builds always use MMKV.
 final class FakeAppPrefs extends AppPrefs {
@@ -19,3 +21,10 @@ final class FakeAppPrefs extends AppPrefs {
   @override
   void removeRaw(PrefsKey key) => _values.remove(key.storageKey);
 }
+
+/// Existing installation for tests unrelated to first-run behavior.
+FakeAppPrefs returningAppPrefs() => FakeAppPrefs()
+  ..write(
+    localDataPrefs,
+    YikeData.initial(DateTime(2026, 10, 16)).copyWith(onboardingComplete: true),
+  );

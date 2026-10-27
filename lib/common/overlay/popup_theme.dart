@@ -9,11 +9,16 @@ abstract final class PopupTheme {
     BuildContext context,
     CommonSurfaceMaterial material,
   ) {
-    if (material == CommonSurfaceMaterial.solid ||
-        MediaQuery.highContrastOf(context)) {
+    if (material == CommonSurfaceMaterial.solid) {
       return const PopupSurface.solid();
     }
-    return PopupSurface.glass(style: TS.of(context).glassStyle());
+    return PopupSurface.builder(
+      (context, slot) => CommonGlassSurface(
+        borderRadius: slot.borderRadius,
+        backdropBlendMode: BlendMode.src,
+        child: slot.child,
+      ),
+    );
   }
 
   static SheetStyle sheetStyle(

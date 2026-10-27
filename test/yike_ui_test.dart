@@ -13,6 +13,7 @@ import 'package:yike/common/time.dart';
 import 'package:yike/common/clock.dart';
 import 'package:yike/features/focus/focus_models.dart';
 import 'package:yike/features/local_data/local_data.dart';
+import 'package:yike/features/local_data/models/local_data_prefs.dart';
 import 'package:yike/features/home/pages/home_page.dart';
 import 'package:yike/features/settings/pages/settings_page.dart';
 import 'package:yike/features/habits/pages/habit_editor.dart';
@@ -34,18 +35,33 @@ Future<ProviderContainer> pumpYike(
   List<FocusRecordView>? records,
   AppPrefs? preferences,
   DateTime Function()? clock,
+  bool freshInstall = false,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.view.resetPhysicalSize);
+  final appPreferences =
+      preferences ??
+      FakeAppPrefs({'theme_pack': 'yike/$theme', 'theme_mode': mode});
+  if (!freshInstall) {
+    try {
+      if (appPreferences.read(localDataPrefs) == null) {
+        appPreferences.write(
+          localDataPrefs,
+          YikeData.initial(
+            DateTime.utc(2026, 10, 16),
+          ).copyWith(onboardingComplete: true),
+        );
+      }
+    } catch (_) {
+      // Tests can provide a deliberately unreadable store.
+    }
+  }
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        appPrefsProvider.overrideWithValue(
-          preferences ??
-              FakeAppPrefs({'theme_pack': 'yike/$theme', 'theme_mode': mode}),
-        ),
+        appPrefsProvider.overrideWithValue(appPreferences),
         todayProvider.overrideWithValue(DateTime.utc(2026, 10, 16)),
         clockProvider.overrideWithValue(
           clock ?? () => DateTime.utc(2026, 10, 16, 12),

@@ -4,6 +4,8 @@ import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  private var accessibilityChannel: FlutterMethodChannel?
+  private var transparencyObserver: NSObjectProtocol?
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -16,6 +18,23 @@ import UserNotifications
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "YikeSystemSurfaces") {
       YikeSystemSurfaces.shared.install(registrar)
+    }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "YikeAccessibility") {
+      let channel = FlutterMethodChannel(name: "yike/accessibility", binaryMessenger: registrar.messenger())
+      accessibilityChannel = channel
+      channel.setMethodCallHandler { call, result in
+        if call.method == "reduceTransparency" {
+          result(UIAccessibility.isReduceTransparencyEnabled)
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      }
+      transparencyObserver = NotificationCenter.default.addObserver(
+        forName: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
+        object: nil, queue: .main
+      ) { [weak channel] _ in
+        channel?.invokeMethod("reduceTransparencyChanged", arguments: UIAccessibility.isReduceTransparencyEnabled)
+      }
     }
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "YikeNotifications") {
       let channel = FlutterMethodChannel(name: "yike/notifications", binaryMessenger: registrar.messenger())

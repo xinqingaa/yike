@@ -24,7 +24,7 @@
 | `CommonCheckbox`                   | 独立勾选项                                                       |
 | `CommonSwitch`                     | 二值开关设置；不能用 Checkbox 静默替代                           |
 | `CommonButton`                     | 主要、次要、描边、强调、危险、轻量六种动作；页面不配色槽                     |
-| `CommonIconButton`                 | 单图标动作（含 loading）；必须提供 tooltip                       |
+| `CommonIconButton`                 | 单图标动作（含 loading），可选玻璃容器；必须提供 tooltip        |
 | `PbPageTransitions`                | 栈级页面转场；默认 iOS 侧滑，可选 Android zoom                   |
 | `CommonPrimaryTabs`                | 玻璃轨道 + 官方 TabBar indicator 连续定位的选中面 |
 | `CommonSecondaryTabs`              | 官方 TabBar + 从文字行盒定位的 10×5 caret 指示器                 |

@@ -1,3 +1,9 @@
+import '../../../app/external_targets.dart';
+import '../../../common/overlay/popup_activity.dart';
+import '../../../common/route_activity.dart';
+import '../../../router/routes.dart';
+import '../../local_data/local_data.dart';
+import '../../onboarding/onboarding.dart';
 import '../../../app/navigation.dart';
 import '../../../common/motion/motion_activity.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +25,38 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
     with TickerProviderStateMixin {
   late TabController _controller;
   Duration? _tabDuration;
+  bool _introductionScheduled = false;
+  bool _introductionOpen = false;
+
+  void _scheduleIntroduction() {
+    if (_introductionScheduled || _introductionOpen) return;
+    _introductionScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _introductionScheduled = false;
+      if (!mounted ||
+          _introductionOpen ||
+          appRouteActivity.current != AppRoutes.home ||
+          ref.read(rootTabProvider) != 0 ||
+          ref.read(externalTargetsProvider) != null ||
+          ref.read(popupActivityProvider) != 0) {
+        return;
+      }
+      final local = ref.read(localDataProvider);
+      if (local.readError != null || local.data.onboardingComplete) return;
+      _introductionOpen = true;
+      showYikeOnboarding().whenComplete(() {
+        if (!mounted) return;
+        final data = ref.read(localDataProvider);
+        if (data.readError == null && !data.data.onboardingComplete) {
+          ref
+              .read(localDataProvider.notifier)
+              .commit(data.data.copyWith(onboardingComplete: true));
+        }
+        _introductionOpen = false;
+      });
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -47,6 +85,7 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
 
   @override
   void dispose() {
+    appRouteActivity.removeListener(_scheduleIntroduction);
     _controller.dispose();
     super.dispose();
   }
@@ -54,6 +93,12 @@ class _YikeHomePageState extends ConsumerState<YikeHomePage>
   @override
   Widget build(BuildContext context) {
     final tab = ref.watch(rootTabProvider);
+    ref.listen(externalTargetsProvider, (_, _) => _scheduleIntroduction());
+    ref.listen(popupActivityProvider, (_, _) => _scheduleIntroduction());
+    ref.listen(localDataProvider, (_, _) => _scheduleIntroduction());
+    appRouteActivity.removeListener(_scheduleIntroduction);
+    appRouteActivity.addListener(_scheduleIntroduction);
+    _scheduleIntroduction();
     ref.listen(
       rootTabProvider,
       (_, next) => _controller.animateTo(

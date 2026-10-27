@@ -269,23 +269,26 @@ class TS extends ThemeExtension<TS> {
     );
   }
 
-  LiquidGlassStyle glassStyle({bool clear = false, Color? tint}) =>
-      LiquidGlassStyle(
-        backgroundColor: tint ?? (clear ? colors.glassClear : colors.glassTint),
-        borderColor: colors.glassEdge,
-        topHighlightColor: colors.glassEdge,
-        pressHighlightColor: colors.primary.withValues(alpha: opacity.pressed),
-        shadowColor: elevation.glass.color,
-        blurSigma: effect.glassBackdropBlur,
-        outlineWidth: border.widthHairline,
-        topStrokeWidth: border.widthStrong,
-        shadowBlurRadius: elevation.glass.blurRadius,
-        shadowOffset: elevation.glass.offset,
-        pressColorDuration: motion.durationFast,
-        pressScaleDuration: motion.durationNormal,
-        pressScale: motion.scalePressed,
-        pressCurve: motion.easingStandard,
-      );
+  /// Shared material for popup surfaces and in-page glass controls.
+  LiquidGlassStyle glassStyle({bool clear = false, Color? tint}) {
+    final base = tint ?? (clear ? colors.glassClear : colors.glassTint);
+    return LiquidGlassStyle(
+      backgroundColor: base.withValues(alpha: base.a * .92),
+      borderColor: colors.glassEdge,
+      topHighlightColor: colors.glassEdge,
+      pressHighlightColor: colors.primary.withValues(alpha: opacity.pressed),
+      shadowColor: elevation.glass.color,
+      blurSigma: effect.glassBackdropBlur * 1.4,
+      outlineWidth: border.widthHairline,
+      topStrokeWidth: border.widthStrong,
+      shadowBlurRadius: elevation.glass.blurRadius,
+      shadowOffset: elevation.glass.offset,
+      pressColorDuration: motion.durationFast,
+      pressScaleDuration: motion.durationNormal,
+      pressScale: motion.scalePressed,
+      pressCurve: motion.easingStandard,
+    );
+  }
 
   /// System icons follow the effective surface, including transparent AppBars.
   SystemUiOverlayStyle get systemOverlayStyle =>

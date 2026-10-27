@@ -99,7 +99,9 @@ class LocalDataController extends Notifier<LocalDataState> {
   }
 
   bool reset() {
-    final data = YikeData.initial(ref.read(clockProvider)());
+    final data = YikeData.initial(
+      ref.read(clockProvider)(),
+    ).copyWith(onboardingComplete: true);
     state = LocalDataState(data: data, revision: state.revision + 1);
     return commit(data);
   }
