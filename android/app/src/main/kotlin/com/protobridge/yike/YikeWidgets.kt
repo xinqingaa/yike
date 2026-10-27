@@ -177,7 +177,7 @@ object YikeWidgets {
             addEmpty(context, view, if (habits) "今日待更新" else "专注待更新", "打开一刻更新${if (habits) "今日打卡" else "专注进度"}", foreground, secondary, small)
             return view
         }
-        val projection = p!!
+        val projection = p
         val updated = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(projection.getLong("generatedMs")))
         view.setTextViewText(R.id.widget_updated, "$updated 更新")
         view.setContentDescription(R.id.widget_updated, "数据更新于 $updated；时间为展示快照，不连续走秒")

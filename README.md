@@ -42,7 +42,7 @@
 
 ## 快速开始
 
-建议使用与 CI 一致的 Flutter 3.44.0（Dart 3.12.0）及 Node.js 22。Android 需要 JDK 和 Android SDK；iOS 需要 macOS、Xcode、CocoaPods 与 CMake。安装、换设备和版本升级见 [开发环境](docs/engineering/development-environment.md)。
+使用 Flutter 3.47.8（Dart 3.13.7）及 Node.js 22。Flutter 版本写在 `pubspec.yaml`，本地与 CI 读取同一处。Android 需要 JDK 和 Android SDK；iOS 需要 macOS、Xcode、CocoaPods 与 CMake。安装、换设备和版本升级见 [开发环境](docs/engineering/development-environment.md)。
 
 ```bash
 flutter pub get
@@ -67,7 +67,7 @@ main 推送和 PR 更新只运行检查，不打包；纯 Markdown 变更只检�
 
 本地可运行 `node tool/build-android.mjs --preview` 构建内测 APK；正式包使用长期签名。云端内测包使用临时签名，日常手机安装和后续覆盖更新应使用同一长期正式签名。
 
-CI 在 GitHub runner 上独立准备 Flutter 3.44.0、Node.js 22、Java 17、Android SDK 36、NDK 28.2.13676358、CMake 3.22.1；本地换设备不会改变云端环境。升级入口和兼容性说明见 [环境版本与配置位置](docs/engineering/development-environment.md#环境版本与配置位置)。
+本地与 CI 使用 Flutter 3.47.8、Node.js 22、Java 17、Android SDK 36、NDK 28.2.13676358、CMake 3.22.1。换设备不会改变云端已安装的工具。版本与配置位置见 [环境版本与配置位置](docs/engineering/development-environment.md#环境版本与配置位置)。
 
 ## 文档与协作
 

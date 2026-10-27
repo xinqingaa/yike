@@ -1,17 +1,17 @@
 # 开发环境
 
-本地开发和 GitHub Actions 使用各自安装的工具链。换电脑或修改本地 PATH 不会改变云端；提交依赖升级或新 SDK 语法后，仍需保证 CI 的版本兼容。优先使用与 CI 一致的 Flutter 版本，依赖解析遵守 `pubspec.lock`。
+本地和 GitHub Actions 使用同一套版本。Flutter 版本写在 `pubspec.yaml` 的 `environment.flutter`，工作流用 `flutter-version-file` 读取。换电脑或修改本机 PATH 不会改变云端安装的工具。依赖解析遵守 `pubspec.lock`。
 
 ## 环境版本与配置位置
 
 | 工具 / 配置 | 当前约定 | 配置位置与升级影响 |
 | --- | --- | --- |
-| Flutter / Dart | CI 为 Flutter 3.44.0 / Dart 3.12.0，stable；项目要求 Dart `^3.12.0` | `.github/workflows/android-build.yml` 的两个 Flutter 安装步骤；Dart 随 Flutter 提供，约束在 `pubspec.yaml` |
+| Flutter / Dart | Flutter 3.47.8 / Dart 3.13.7，stable；Dart 约束 `^3.12.0` | `pubspec.yaml` 的 `environment.flutter`；工作流两个 Flutter 安装步骤用 `flutter-version-file: pubspec.yaml` 读取。Dart 随 Flutter 提供，约束在 `environment.sdk` |
 | Node.js | 项目脚本使用 22 主版本 | 工作流各 `node-version`；本地需自行安装；小版本可能更新 |
-| Java | 构建使用 Temurin 17 | 工作流 `setup-java`、`android/app/build.gradle.kts` 的 Java / Kotlin 目标；Android SDK 工具安装步骤单独使用 runner 提供的 Java 21 |
-| Android SDK / NDK | platform 36，NDK 28.2.13676358；当前 min 24 / target 36 | 工作流安装所需组件，app Gradle 的 compile / min / target / NDK 从 Flutter 工具链读取；升级 Flutter 后须重新核对解析值 |
+| Java | 构建使用 Temurin 17；Java / Kotlin 目标为 17 | 工作流 `setup-java`、`android/app/build.gradle.kts`；根工程把 Android library 的编译目标设为 17。Android SDK 工具安装使用 runner 的 Java 21 |
+| Android SDK / NDK | platform 36，NDK 28.2.13676358；min 24 / target 36 | 工作流安装所需组件；app Gradle 的 compile / min / target / NDK 从 Flutter 工具链读取 |
 | Android CMake | 3.22.1 | 工作流通过 Android SDK 的 sdkmanager 安装，原生插件构建使用 Android 工具链 |
-| Gradle / Android 插件 / Kotlin | Gradle 8.14、AGP 8.11.1、Kotlin 2.2.20 | `android/gradle/wrapper/gradle-wrapper.properties`、`android/settings.gradle.kts` |
+| Gradle / Android 插件 / Kotlin | Gradle 9.3.1、AGP 9.1.0、Kotlin 2.4.0；应用使用 AGP 内置 Kotlin，`android.newDsl=false` | `android/gradle/wrapper/gradle-wrapper.properties`、`android/settings.gradle.kts`、`android/gradle.properties` |
 | CI runner | ubuntu-22.04 | 工作流 `runs-on`；runner 镜像与预装工具可能更新，不是完全冻结的构建镜像 |
 | iOS 本地工具 | macOS、Xcode、CocoaPods、可在 PATH 找到的 CMake | Xcode 选择与签名由本机管理；仓库使用 CocoaPods，`pubspec.yaml` 关闭 Swift Package Manager |
 | iOS 部署与身份 | iOS 15.0；主应用 `com.protobridge.yike`，扩展 `.widgets` | `ios/Runner.xcodeproj/project.pbxproj`、entitlements 与 [原生组件](system-surfaces.md)；工程中的 Team 字段不代表新设备自动具备签名权限 |
